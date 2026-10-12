@@ -10,3 +10,7 @@
 - [ ] `GET /api/v1/periods/:yyyy-mm` fetches the user's data and returns the payload of §6.2 by calling `resolvePeriod`, including overdue occurrences from earlier periods for the current period; invalid period → 400
 - [ ] Monthly screen with the period navigator (`< Outubro 2026 >`, one click or ←/→ keys), the summary bar (Entradas and Saídas, each Previsto and Realizado) and a flat list of items, amounts and dates formatted with `Intl` pt-BR / BRL
 - [ ] Integration tests: one user never sees another's recurrences or occurrences; deleting a user cascades to their recurrences and occurrences; a check constraint violation is rejected by the database
+
+## Comments
+
+- From ticket 02: when the requested period is the current one, pass `resolvePeriod` every persisted occurrence of earlier periods (all statuses), not only PENDING ones. A recurrence's settled or skipped earlier occurrence is what stops it being projected as an overdue virtual occurrence there.

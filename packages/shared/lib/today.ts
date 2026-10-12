@@ -15,5 +15,10 @@ export function today(now: Date = new Date()): string {
 
 /** The period ('YYYY-MM-01') containing `now` in America/Sao_Paulo. */
 export function currentPeriod(now: Date = new Date()): string {
-  return `${today(now).slice(0, 8)}01`;
+  return periodOf(today(now));
+}
+
+/** The period ('YYYY-MM-01') containing `date` ('YYYY-MM-DD'). */
+export function periodOf(date: string): string {
+  return `${date.slice(0, 8)}01`;
 }
