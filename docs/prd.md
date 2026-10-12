@@ -1,266 +1,372 @@
 # Product Requirements Document (PRD)
 
-## Aplicação Minimalista de Gestão de Contas a Pagar e Receber
+## Mensal: Minimalist Monthly Cash-Flow Tracker
+
+> Vocabulary follows [`GLOSSARY.md`](../GLOSSARY.md). Code, data and docs are in English; only the user interface is in Brazilian Portuguese.
 
 ---
 
-## 1. Visão Geral e Proposta de Valor
+## 1. Overview and Value Proposition
 
-### 1.1 Contexto e Problema
+### 1.1 Context and Problem
 
-A maioria das ferramentas de controle financeiro peca pelo excesso: planilhas complexas, categorizações profundas e dezenas de gráficos que geram fricção diária de preenchimento. Usuários individuais buscam frequentemente apenas responder a duas perguntas simples no início de cada mês:
+Most personal-finance tools overdo it: complex spreadsheets, deep categorization and dozens of charts that create daily data-entry friction. Individuals usually want to answer only two questions at the start of each month:
 
-1. *Quais contas vencem este mês e quanto vai sobrar do meu salário?*
-2. *Essa conta específica já foi paga ou ainda está pendente?*
+1. *Which bills are due this month, and how much of my salary will be left?*
+2. *Has this specific bill been paid yet, or is it still pending?*
 
-### 1.2 Proposta de Valor
+### 1.2 Value Proposition
 
-Um SaaS **minimalista e opinativo** focado estritamente na previsão e liquidação de fluxo de caixa mensal. O sistema antecipa os compromissos por meio de recorrências e permite ao usuário auditar e liquidar as ocorrências de forma direta, sem configurações burocráticas.
+A **minimalist, opinionated** SaaS focused strictly on forecasting and settling monthly cash flow. The system anticipates commitments through recurrences and lets the user review and settle occurrences directly, without bureaucratic configuration.
+
+### 1.3 Non-Goals (MVP)
+
+- Periodicity other than monthly. Annual bills are one-off occurrences; installments are recurrences with an `endPeriod`.
+- Balances, categories, multiple currencies, charts. Amounts are always BRL.
+- Billing or paid plans.
+- Sending email of any kind (verification, password reset, notifications).
+- Internationalization: the UI is Brazilian Portuguese only.
 
 ---
 
-## 2. Diagnóstico de Gaps e Decisões de Design (Arquitetura de Produto)
+## 2. Key Design Decisions
 
-A análise do rascunho inicial identificou seis gaps centrais de concepção que foram solucionados nesta versão:
-
-| Gap Identificado | Risco / Problema | Solução Incorporada no PRD |
+| Problem | Risk | Decision |
 | :--- | :--- | :--- |
-| **Ausência de Despesas Avulsas** | Na vida real, nem toda despesa é recorrente (ex.: conserto de carro, consulta médica). Se tudo exigir uma recorrência, o usuário criará "recorrências descartáveis". | `id_recorrencia` em `Ocorrência` passa a ser opcional (`nullable`). Se nulo, trata-se de um lançamento pontual naquele mês. |
-| **Dias de Vencimento Inválidos (Fevereiro/Meses de 30 dias)** | Se uma recorrência vence no dia 31, em fevereiro ou abril a data quebrará se não for normalizada. | Regra de *clamping*: a data calculada é sempre $\min(\text{dia\_do\_mes}, \text{ultimo\_dia\_do\_mes})$. |
-| **Exclusão em Cascata Destrutiva** | Deletar uma recorrência e apagar todas as ocorrências passadas destrói o histórico contábil de meses anteriores já liquidados. | Implementação de encerramento (`data_fim = mes_anterior`) em vez de *hard delete* quando já houver ocorrências liquidadas. |
-| **Ambiguidade de Status (`pulado` vs `cancelado`)** | Não estava claro quando usar cada um e faltava o conceito de vencido (*overdue*). | `pulado` aplica-se a uma competência isolada; `cancelado` invalida aquela conta. O status `atrasado` é um estado computado em tempo de execução. |
-| **Data Real de Pagamento vs Competência** | A ocorrência só tinha competência. Não permitia saber em que dia a conta foi de fato paga ou se foi paga com atraso. | Adicionado campo opcional `liquidado_em` (data/timestamp). |
-| **Fuso Horário e Armazenamento de Datas** | Tratar competências com timestamps UTC pode mover `2026-05-01` para o mês anterior dependendo do fuso do cliente (`-03:00`). | Competência armazenada estritamente como string `YYYY-MM` ou `DATE` fixado sem hora. |
+| **One-off expenses** | Not every expense recurs (car repair, a doctor's visit). Forcing a recurrence creates "throwaway recurrences". | `recurrenceId` on `Occurrence` is nullable. When null, it is a **one-off occurrence**. |
+| **Invalid due days (February / 30-day months)** | A recurrence due on the 31st breaks in February or April. | *Clamping*: the effective day is `min(dueDay, daysInMonth(period))`. |
+| **Destructive cascade delete** | Deleting a recurrence and its past occurrences destroys settled history. | A recurrence with persisted occurrences cannot be deleted, only **ended**. |
+| **Redundant statuses** | `SKIPPED` and `CANCELLED` had the same effect. | Only `PENDING`, `SETTLED`, `SKIPPED`. Cancelling a one-off is deleting it; cancelling a recurrence is ending it. Overdue is derived, never stored. |
+| **Settlement date vs period** | Only knowing the period hides when, or how late, a bill was actually paid. | Optional `settledAt` date. Totals are always grouped by period, never by `settledAt`. |
+| **Time zones** | Storing periods as UTC timestamps can shift `2026-05-01` into the previous month for `-03:00` clients. | Periods are stored as `DATE` (no time), always the 1st (`YYYY-MM-01`). "Today" is always computed in `America/Sao_Paulo`. |
+| **Generating future months** | Pre-creating occurrences needs a scheduled job and goes stale whenever a recurrence is edited. | **Virtual occurrences** are projected at read time and materialized on first touch. See [ADR 0001](./adr/0001-virtual-occurrences.md). |
+| **Forgotten past bills** | An unpaid bill from last month is invisible unless the user navigates back. | When viewing the current period, overdue occurrences from previous periods are listed too, outside the summary. |
 
 ---
 
-## 3. Modelo de Domínio e Dados
+## 3. Domain Model and Data
 
-### 3.1 Entidade: Recorrência (`recurrences`)
+Tables are plural. Columns are `snake_case` in the database and `camelCase` in TypeScript and JSON; Drizzle maps them with `casing: 'snake_case'`. Amounts are integers in BRL cents (R$ 50,00 → `5000`). App ids are `uuid DEFAULT gen_random_uuid()`; Better-Auth ids keep its default (text).
 
-Representa o contrato gerador de eventos financeiros mensais.
+### 3.1 Entity: Recurrence (`recurrences`)
+
+The monthly commitment that projects one occurrence per period.
 
 ```typescript
-type TipoTransacao = 'CREDITO' | 'DEBITO';
+type Direction = 'INFLOW' | 'OUTFLOW';
 
-interface Recorrencia {
-  id: string; // UUIDv7
-  usuario_id: string; // FK do Better-Auth
-  tipo: TipoTransacao;
-  descricao: string; // Max 120 caracteres
-  valor_padrao: number | null; // Em centavos de BRL (ex: R$ 50,00 -> 5000). Opcional para contas variáveis (ex: fatura do cartão)
-  dia_vencimento: number | null; // 1 a 31. Opcional
-  data_inicio: string; // Formato 'YYYY-MM-01'
-  data_fim: string | null; // Formato 'YYYY-MM-01'. Null = indeterminado
-  observacao: string | null;
-  ativo: boolean; // Flag para soft delete / desativação
-  criado_em: string; // ISO 8601 UTC
-  atualizado_em: string; // ISO 8601 UTC
+interface Recurrence {
+  id: string;                   // uuid
+  userId: string;               // FK users.id, ON DELETE CASCADE
+  direction: Direction;         // Immutable after creation
+  description: string;          // Max 120 characters
+  defaultAmount: number | null; // Cents, > 0 when present. Null for variable bills (e.g. credit card statement)
+  dueDay: number | null;        // 1 to 31. Optional
+  startPeriod: string;          // 'YYYY-MM-01'. Immutable. Must be >= current period at creation
+  endPeriod: string | null;     // 'YYYY-MM-01', inclusive. Null = open-ended. Must be >= startPeriod
+  notes: string | null;
+  createdAt: string;            // ISO 8601 UTC
+  updatedAt: string;            // ISO 8601 UTC
 }
 ```
 
-### 3.2 Entidade: Ocorrência (`occurrences`)
+There is no `active` flag. A recurrence is **active** when `endPeriod IS NULL OR endPeriod >= currentPeriod`, which includes recurrences starting in the future.
 
-Representa a materialização de uma despesa/receita em uma competência específica.
+### 3.2 Entity: Occurrence (`occurrences`)
+
+An inflow or outflow in a specific period.
 
 ```typescript
-type StatusOcorrencia = 'PENDENTE' | 'LIQUIDADO' | 'PULADO' | 'CANCELADO';
+type OccurrenceStatus = 'PENDING' | 'SETTLED' | 'SKIPPED';
 
-interface Ocorrencia {
-  id: string; // UUIDv7
-  usuario_id: string; // FK do Better-Auth
-  recorrencia_id: string | null; // FK opcional (null se for avulsa)
-  tipo: TipoTransacao; // Copiado da recorrência na persistência para integridade
-  descricao: string; // Copiado da recorrência ou definido na criação
-  status: StatusOcorrencia;
-  valor: number; // Em centavos. Obrigatório na persistência
-  competencia: string; // Formato 'YYYY-MM-01'
-  data_vencimento: string | null; // Calculada ou customizada para o mês específico
-  liquidado_em: string | null; // Data efetiva do pagamento/recebimento
-  observacao: string | null;
-  criado_em: string;
-  atualizado_em: string;
+interface Occurrence {
+  id: string;                  // uuid
+  userId: string;              // FK users.id, ON DELETE CASCADE
+  recurrenceId: string | null; // Null for one-off occurrences
+  direction: Direction;        // Snapshot of the recurrence at materialization
+  description: string;         // Snapshot of the recurrence, or set at creation
+  status: OccurrenceStatus;
+  amount: number | null;       // Cents, > 0 when present. Null = "to be defined"
+  period: string;              // 'YYYY-MM-01'
+  dueDate: string | null;      // 'YYYY-MM-DD', must fall within period
+  settledAt: string | null;    // 'YYYY-MM-DD'. Non-null if and only if status = SETTLED
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 ```
 
-### 3.3 Objeto Transiente: Ocorrência Virtual ("Fantasma")
+Database constraints:
 
-Objeto em memória retornado pela API para itens ainda não persistidos na competência consultada:
+- `UNIQUE (user_id, recurrence_id, period) WHERE recurrence_id IS NOT NULL`
+- `CHECK (amount IS NULL OR amount > 0)`
+- `CHECK (status <> 'SETTLED' OR amount IS NOT NULL)`
+- `CHECK ((status = 'SETTLED') = (settled_at IS NOT NULL))`
+- `CHECK (due_date IS NULL OR date_trunc('month', due_date) = period)`
+
+### 3.3 Transient Object: Virtual Occurrence
+
+Built in memory and returned by the API for a recurrence that has no persisted occurrence in the requested period:
 
 ```typescript
-interface OcorrenciaVirtual {
-  id_temporario: string; // Ex: 'virtual_<recorrencia_id>_<competencia>'
-  recorrencia_id: string;
-  is_virtual: true;
-  tipo: TipoTransacao;
-  descricao: string;
-  status: 'PENDENTE';
-  valor: number | null; // Herda valor_padrao
-  competencia: string;
-  data_vencimento: string | null;
-  liquidado_em: null;
-  observacao: string | null;
+interface VirtualOccurrence {
+  id: string;                  // Deterministic: 'virtual_<recurrenceId>_<period>'
+  recurrenceId: string;
+  isVirtual: true;
+  direction: Direction;
+  description: string;         // Current recurrence description
+  status: 'PENDING';
+  amount: number | null;       // Current recurrence defaultAmount
+  period: string;
+  dueDate: string | null;      // Clamped from dueDay
+  settledAt: null;
+  notes: null;
 }
 ```
+
+A virtual occurrence always reflects the recurrence as it is **now**. Editing a recurrence changes all its virtual occurrences, past and future. Only persisted occurrences keep a snapshot.
+
+### 3.4 User Approval
+
+Sign-up is open, but a new user cannot use the product until an administrator approves them.
+
+- Better-Auth `user.additionalFields.approved`: `boolean`, default `false`, `input: false` (so it cannot be set on sign-up).
+- The administrator approves users by setting `approved = true` directly in the database.
+- No email verification is required.
 
 ---
 
-## 4. Algoritmo de Resolução de Ocorrências do Mês
+## 4. Period Resolution Algorithm
 
-Para renderizar o extrato da competência $M$ (onde $M = \text{YYYY-MM-01}$):
+To render period $P$ (`YYYY-MM-01`):
 
 ```mermaid
 flowchart TD
-    A[Requisição: GET /competencias/YYYY-MM] --> B[Buscar Ocorrências Persistidas de M]
-    A --> C[Buscar Recorrências Ativas para M]
-    C -->|Filtro: data_inicio <= M AND data_fim >= M ou null| D[Lista de Recorrências Vigentes]
-    B --> E[Mapear IDs de Recorrências já Persistidas em M]
-    D --> F{Recorrência já tem Ocorrência em M?}
-    F -- Sim --> G[Ignorar Recorrência]
-    F -- Não --> H[Gerar Ocorrência Virtual]
-    B --> I[Unificar Ocorrências Persistidas + Virtuais]
+    A[Request: GET /periods/YYYY-MM] --> B[Fetch persisted occurrences of P]
+    A --> C[Fetch recurrences in effect for P]
+    C -->|startPeriod <= P AND endPeriod >= P or null| D[Recurrences in effect]
+    B --> E[Map recurrence ids already persisted in P]
+    D --> F{Recurrence already has an occurrence in P?}
+    F -- Yes --> G[Skip recurrence]
+    F -- No --> H[Build virtual occurrence]
+    B --> I[Merge persisted + virtual]
     H --> I
-    I --> J[Ordenar por data_vencimento ASC]
-    J --> K[Calcular Sumários do Mês]
-    K --> L[Retornar Payload Consolidado]
+    I --> J[Sort by dueDate ASC, no due date last]
+    J --> K[Compute period summary]
+    A --> O{P is the current period?}
+    O -- Yes --> Q[Collect overdue occurrences from earlier periods, persisted and virtual]
+    K --> L[Return consolidated payload]
+    Q --> L
 ```
 
-### Regra de Clamping de Vencimento
+This logic is a pure function in `@shared` (`resolvePeriod`) that takes the persisted occurrences, the recurrences, the period and "today". The API only fetches data and calls it.
 
-Quando a ocorrência for gerada a partir de `dia_vencimento`:
-$$\text{dia\_efetivo} = \min(\text{recorrencia.dia\_vencimento}, \text{dias\_no\_mes}(M))$$
-$$\text{data\_vencimento} = \text{formatar}(M.\text{ano}, M.\text{mes}, \text{dia\_efetivo})$$
+### Due Date Clamping
+
+When an occurrence is projected from `dueDay`:
+
+$$\text{effectiveDay} = \min(\text{recurrence.dueDay}, \text{daysInMonth}(P))$$
+$$\text{dueDate} = \text{format}(P.\text{year}, P.\text{month}, \text{effectiveDay})$$
+
+If `dueDay` is `null`, the occurrence has no `dueDate`.
+
+### Summary
+
+`SKIPPED` occurrences are excluded from every total. For each direction (`INFLOW`, `OUTFLOW`):
+
+- **expected** = sum of `amount` over `PENDING` and `SETTLED` occurrences, persisted and virtual. A null amount counts as 0.
+- **settled** = sum of `amount` over `SETTLED` occurrences only.
+
+Overdue occurrences from earlier periods do **not** enter the summary of the current period.
+
+The API returns no balance. Any difference between inflows and outflows is computed by the client.
+
+### Overdue from Earlier Periods
+
+Only when $P$ is the current period, the payload also lists every overdue occurrence from earlier periods:
+
+- persisted `PENDING` occurrences with `dueDate < today`;
+- virtual occurrences of earlier periods (within each recurrence's `startPeriod`..`endPeriod`) with `dueDate < today`.
 
 ---
 
-## 5. Regras de Negócio Detalhadas
+## 5. Business Rules
 
-1. **Unicidade de Ocorrência por Recorrência:**
-   - Índice único composto no banco de dados: `UNIQUE (usuario_id, recorrencia_id, competencia) WHERE recorrencia_id IS NOT NULL`.
-2. **Materialização no Primeiro Toque:**
-   - Ao alterar o status de uma ocorrência virtual ou editar seu valor/vencimento, ela deixa de ser virtual e é executado um `INSERT` em `occurrences`.
-3. **Imutabilidade e Snapshot Histórico:**
-   - Se uma `Recorrência` tiver seu `valor_padrao` alterado em Junho, as ocorrências persistidas de Maio ou anteriores permanecem inalteradas.
-4. **Política de Exclusão de Recorrência:**
-   - Se a recorrência possuir ocorrências já persistidas: a exclusão direta é **bloqueada**. A API deve sugerir o encerramento da recorrência (`data_fim = mes_atual - 1`).
-   - Se a recorrência não possuir nenhuma ocorrência persistida: permite-se o *hard delete*.
-5. **Estado Derivado "Atrasado" (*Overdue*):**
-   - Não existe valor `ATRASADO` no enum de banco. O frontend e a API calculam o indicador `atrasado: boolean`:
-   $$\text{atrasado} = (\text{status} == \text{'PENDENTE'}) \land (\text{data\_vencimento} < \text{hoje})$$
-6. **Contas de Valor Variável:**
-   - Quando `valor_padrao` for `null`, a ocorrência virtual exibirá valor pendente de definição ($0,00$ ou indicativo visual). O usuário só pode marcá-la como `LIQUIDADO` após informar um valor maior que zero.
+1. **One occurrence per recurrence per period:** enforced by the partial unique index in 3.2.
+2. **Materialization on first touch:**
+   - Any mutation of a virtual occurrence (status, amount, due date, notes) materializes it.
+   - The API accepts the virtual id on `PATCH /occurrences/:id` and `PATCH /occurrences/:id/status` and performs an idempotent upsert (`INSERT ... ON CONFLICT` on the unique index). It copies `direction`, `description`, `defaultAmount` and the clamped `dueDate` from the recurrence.
+3. **Snapshot on materialization:** editing a recurrence never changes persisted occurrences. A `defaultAmount` change in June leaves May's persisted occurrence untouched.
+4. **Deleting and ending a recurrence:**
+   - Without persisted occurrences: hard delete.
+   - With persisted occurrences: `DELETE` returns `409 RECURRENCE_HAS_OCCURRENCES` and the client offers to **end** the recurrence instead.
+   - Ending asks the user for the last period (inclusive), **defaulting to the current period**.
+   - Ending deletes nothing. Persisted occurrences stay as they are, even those after `endPeriod`. Virtual occurrences are no longer projected after `endPeriod`.
+5. **Overdue (derived):** there is no `OVERDUE` status in the database. API and client compute:
+   $$\text{overdue} = (\text{status} = \text{PENDING}) \land (\text{dueDate} \neq \text{null}) \land (\text{dueDate} < \text{today})$$
+   - Occurrences without a `dueDate` are never overdue.
+   - "Today" is always computed in `America/Sao_Paulo` (shared helper in `@shared`).
+6. **Variable amounts:** when `defaultAmount` is null, the occurrence shows the amount as "to be defined". It can be persisted with a null amount (for example when skipped, or when only the due date changes). It can only be settled after an amount greater than zero is entered.
+7. **Status transitions:** any transition between `PENDING`, `SETTLED` and `SKIPPED` is allowed, as long as the invariants hold:
+   - `SETTLED` requires `amount > 0` (`AMOUNT_REQUIRED_TO_SETTLE`). `settledAt` defaults to today when not given.
+   - Leaving `SETTLED` clears `settledAt`.
+8. **Editable occurrence fields:** `description`, `amount`, `dueDate` (within the period), `settledAt` (only when `SETTLED`) and `notes`. `direction`, `period` and `recurrenceId` are immutable. To move a one-off occurrence to another period, delete it and create it again.
+9. **One-off occurrences:** created directly, and they can be hard-deleted. Occurrences that came from a recurrence cannot be deleted; they are skipped instead.
+10. **Recurrence start:** `startPeriod` cannot be earlier than the current period. Earlier history is entered as one-off occurrences.
+11. **Ordering:** by `dueDate` ascending; occurrences without a `dueDate` come **last**.
+12. **Tenant isolation:** every query is filtered by `userId`.
+13. **Account deletion:** deleting a user cascades to all of their recurrences and occurrences.
 
 ---
 
-## 6. Endpoints e Contratos de API (Hono)
+## 6. API Contracts (Express)
 
-### 6.1 Recorrências (`/api/v1/recorrencias`)
+All routes under `/api/v1` require an authenticated, approved user (see 8.2). Errors carry an English machine-readable `code`, which the frontend translates into Portuguese. Examples: `USER_NOT_APPROVED`, `RECURRENCE_HAS_OCCURRENCES`, `AMOUNT_REQUIRED_TO_SETTLE`, `DUE_DATE_OUTSIDE_PERIOD`, `START_PERIOD_IN_PAST`, `ONLY_ONE_OFF_DELETABLE`.
 
-- `GET /` — Lista todas as recorrências do usuário (com filtros `status=ativas|todas`).
-- `POST /` — Cria uma nova recorrência.
-- `GET /:id` — Detalhes de uma recorrência específica.
-- `PATCH /:id` — Atualiza metadados (descrição, valor padrão, dia, data fim). Bloqueia edição de `tipo` e `data_inicio`.
-- `DELETE /:id` — Executa desativação ou hard delete conforme regras de integridade.
+### 6.1 Recurrences (`/api/v1/recurrences`)
 
-### 6.2 Competências e Ocorrências (`/api/v1/competencias`)
+- `GET /`: lists the user's recurrences (`?status=active|all`, as defined in 3.1).
+- `POST /`: creates a recurrence.
+- `GET /:id`: details of one recurrence.
+- `PATCH /:id`: updates `description`, `defaultAmount`, `dueDay`, `endPeriod` and `notes`. Rejects changes to `direction` and `startPeriod`. Ending a recurrence is a `PATCH` of `endPeriod`.
+- `DELETE /:id`: hard delete when no persisted occurrences exist; otherwise `409 RECURRENCE_HAS_OCCURRENCES` (rule 5.4).
 
-- `GET /:ano_mes` (ex: `2026-10`)
-  - Retorna o conjunto unificado (persistidas + virtuais) e o resumo financeiro consolidado:
+### 6.2 Periods (`/api/v1/periods`)
+
+- `GET /:yyyy-mm` (e.g. `2026-10`): returns persisted and virtual occurrences merged, the summary, and (current period only) overdue occurrences from earlier periods:
 
   ```json
   {
-    "competencia": "2026-10-01",
-    "resumo": {
-      "total_receitas_previsto": 650000,
-      "total_receitas_realizado": 650000,
-      "total_despesas_previsto": 420000,
-      "total_despesas_realizado": 280000,
-      "saldo_projetado": 230000,
-      "saldo_atual": 370000
+    "period": "2026-10-01",
+    "summary": {
+      "inflowExpected": 650000,
+      "inflowSettled": 650000,
+      "outflowExpected": 420000,
+      "outflowSettled": 280000
     },
-    "itens": [
+    "items": [
       {
-        "id": "occ_123456",
-        "is_virtual": false,
-        "recorrencia_id": "rec_789",
-        "tipo": "DEBITO",
-        "descricao": "Aluguel",
-        "status": "LIQUIDADO",
-        "valor": 220000,
-        "data_vencimento": "2026-10-10",
-        "liquidado_em": "2026-10-09"
+        "id": "0b6f6c1e-7a51-4d1a-9a8e-3f1f4c2d9b10",
+        "isVirtual": false,
+        "recurrenceId": "5d2c8a4b-1e3f-4b6a-8c9d-2a7e6f1b3c40",
+        "direction": "OUTFLOW",
+        "description": "Aluguel",
+        "status": "SETTLED",
+        "amount": 220000,
+        "period": "2026-10-01",
+        "dueDate": "2026-10-10",
+        "settledAt": "2026-10-09",
+        "overdue": false
       },
       {
-        "id": "virtual_rec_999_2026-10-01",
-        "is_virtual": true,
-        "recorrencia_id": "rec_999",
-        "tipo": "DEBITO",
-        "descricao": "Energia Elétrica",
-        "status": "PENDENTE",
-        "valor": 18000,
-        "data_vencimento": "2026-10-25",
-        "liquidado_em": null
+        "id": "virtual_9e1d3b7a-4c2f-4e8b-b6a1-7f3c2d1e0a99_2026-10-01",
+        "isVirtual": true,
+        "recurrenceId": "9e1d3b7a-4c2f-4e8b-b6a1-7f3c2d1e0a99",
+        "direction": "OUTFLOW",
+        "description": "Energia Elétrica",
+        "status": "PENDING",
+        "amount": 18000,
+        "period": "2026-10-01",
+        "dueDate": "2026-10-25",
+        "settledAt": null,
+        "overdue": false
       }
-    ]
+    ],
+    "overdueFromPreviousPeriods": []
   }
   ```
 
-### 6.3 Mutação de Ocorrência (`/api/v1/ocorrencias`)
+### 6.3 Occurrences (`/api/v1/occurrences`)
 
-- `POST /materializar` — Converte uma virtual em persistida ou cria um lançamento avulso.
-- `PATCH /:id/status` — Altera status (`LIQUIDADO`, `PENDENTE`, `PULADO`, `CANCELADO`).
-- `PATCH /:id` — Atualiza valor, data de liquidação ou observação de uma ocorrência existente.
-
----
-
-## 7. Requisitos de Frontend e UX Minimalista
-
-1. **Navegador de Competência Centralizado:**
-   - Seletor de mês fixo no topo (`< Outubro 2026 >`), permitindo avançar e recuar com um clique ou atalhos de teclado (`←` e `→`).
-2. **Barra de Resumo Sintética:**
-   - Exibição de 3 blocos: **Entradas**, **Saídas** e **Saldo Restante Estimado**.
-3. **Liquidação em 1 Clique:**
-   - Botão de checkbox ou ação rápida ao lado de cada linha para alternar entre `PENDENTE` e `LIQUIDADO`.
-   - Se a conta tiver valor pendente (nulo), o clique abre um popover inline exigindo apenas o input do valor.
-4. **Agrupamento e Ordenação:**
-   - Agrupamento visual: **Vencidas / Hoje**, **A Vencer no Mês**, **Liquidadas / Puladas**.
-5. **Tratamento Optimistic UI:**
-   - Alterações de status no TanStack Query devem atualizar a interface instantaneamente com rollback em caso de falha de rede.
+- `POST /`: creates a one-off occurrence.
+- `PATCH /:id/status`: changes the status (rule 5.7) and adjusts `settledAt`. Accepts a virtual id and materializes it (rule 5.2).
+- `PATCH /:id`: updates the editable fields (rule 5.8). Accepts a virtual id and materializes it.
+- `DELETE /:id`: hard-deletes a one-off occurrence; otherwise `409 ONLY_ONE_OFF_DELETABLE`.
 
 ---
 
-## 8. Arquitetura e Engenharia
+## 7. Frontend and Minimalist UX
 
-### 8.1 Estrutura do Monorepo (npm workspaces)
+All UI text is Brazilian Portuguese, written directly in the components (no i18n library). Currency and dates are formatted with `Intl` (`pt-BR`, `BRL`). API error codes are mapped to Portuguese messages.
+
+1. **Period navigator:** fixed month selector at the top (`< Outubro 2026 >`), moving back and forward with one click or the `←` / `→` keys.
+2. **Summary bar:** two blocks, **Entradas** and **Saídas**, each with **Previsto** and **Realizado**.
+3. **One-click settle:** a checkbox or quick action on each row toggles between `PENDING` and `SETTLED`. If the amount is null, the click opens an inline popover asking only for the amount.
+4. **Groups (in this order):**
+   - **Atrasadas**, including overdue occurrences from earlier periods (current period only), each labeled with its period;
+   - **Vencem hoje**;
+   - **A vencer no mês**, with pending occurrences without a due date at the end;
+   - **Liquidadas e puladas**.
+5. **Optimistic UI:** status changes update the screen instantly through TanStack Query, with rollback on failure.
+6. **Recurrences screen:** a second screen listing recurrences (filter active/all) with edit, end and delete actions. The same actions are reachable from an occurrence row.
+7. **One-off and recurrence dialog:** creating a one-off occurrence or a recurrence from the monthly screen.
+8. **Auth screens:** sign-up, sign-in, and an **"Aguardando aprovação"** screen (with sign-out) shown to unapproved users.
+
+---
+
+## 8. Architecture and Engineering
+
+### 8.1 Monorepo (npm workspaces)
 
 ```text
 ├── apps/
-│   ├── web/               # React + Vite + Mantine UI + TanStack Router +  TanStack Query
-│   └── api/               # Express
+│   ├── web/               # React + Vite + Mantine UI + TanStack Router + TanStack Query
+│   └── api/               # Express + Better-Auth
 ├── packages/
-│   ├── shared/            # Schemas Zod, tipos TypeScript, Regras de Negócio e helpers de data
-│   ├── config/            # Prettier e Linter
-│   └── database/          # Migrations Knex, seeds e conexão Postgres
-├── docker-compose.yml     # Postgres 16 local + pgAdmin/Adminer
-└── package.json
+│   ├── shared/            # Runtime only: Zod schemas, TS types, domain rules (resolvePeriod), date helpers
+│   └── database/          # Drizzle schema (app + Better-Auth), drizzle-kit migrations, connection
+├── eslint.config.js       # Single flat config for every workspace
+├── .prettierrc            # Single Prettier config for every workspace
+├── docker-compose.yml     # Local Postgres 17 + Adminer
+├── Dockerfile             # API image: copies only api, shared and database workspaces
+└── package.json           # Lint/format devDependencies live here
 ```
 
-### 8.2 Autenticação (Better-Auth)
+- No Turborepo/Nx; scripts are orchestrated with `npm run -w <workspace>`.
+- `@shared` is consumed as TypeScript source, without its own build step: Vite and the API's TypeScript runner compile it.
 
-- Better-Auth executado integrado ao backend Hono ou como micro-servidor de auth.
-- Estratégia de sessão via cookies HttpOnly com middleware no Hono injetando o `usuario_id` verificado no contexto (`c.get('user')`).
-- Isolamento estrito de dados (*multi-tenancy* lógico): todas as queries do Knex são filtradas obrigatoriamente por `usuario_id`.
+### 8.2 Authentication (Better-Auth)
+
+- Better-Auth is mounted inside the Express app (no separate auth service).
+- Email and password sign-in; sessions in HttpOnly cookies (`SameSite=Lax`).
+- An Express middleware injects the verified `userId` and rejects unapproved users with `403 USER_NOT_APPROVED`. The `approved` field travels with the session, so the frontend can show the "Aguardando aprovação" screen.
+- Password reset: `sendResetPassword` writes the reset URL to the server log, and the administrator forwards it to the user manually. No email provider in the MVP.
+
+### 8.3 Data Layer (Drizzle + Postgres)
+
+- Drizzle is the only data layer. Better-Auth uses `drizzleAdapter` on the **same `db` instance** as the app, with `usePlural: true` (`users`, `sessions`, `accounts`, `verifications`).
+- The Better-Auth schema is generated with `npx auth generate --adapter drizzle` into `packages/database/src/schema/auth.ts`, next to the app schema.
+- drizzle-kit (`generate` + `migrate`) is the only migration system; `auth migrate` is never used.
+- Postgres 17, pinned to the same version in `docker-compose.yml` and production.
+
+### 8.4 Deployment
+
+- Coolify on a VPS hosts the static frontend, the API container and Postgres.
+- **Same origin:** the proxy serves the static frontend at `/` and forwards `/api` to Express. No CORS.
+- **Backups:** daily Postgres backups through Coolify to S3-compatible storage outside the VPS (e.g. Backblaze B2, Cloudflare R2), with 30-day retention.
+
+### 8.5 Testing
+
+- Vitest across the monorepo.
+- **Primary seam:** the pure `resolvePeriod` function in `@shared`, unit-tested for clamping (February, leap years), virtual projection, ordering, summary, overdue (including earlier periods) and the `America/Sao_Paulo` "today".
+- **API integration tests** against a real Postgres (docker-compose), with no database mocks: upsert idempotency, the uniqueness constraint, tenant isolation, the approval gate and the deletion rules.
 
 ---
 
-## 9. Próximos Passos e Critérios de Aceite para o MVP
+## 9. MVP Milestones and Acceptance Criteria
 
-- [ ] **M1: Core Domain & Schemas**
-  - Implementar pacote `@shared` com schemas Zod para Recorrência e Ocorrência.
-  - Implementar migrações do banco no Knex com restrições e índices únicos.
-- [ ] **M2: API de Competência**
-  - Implementar endpoint `GET /competencias/:ano_mes` com a lógica de junção de ocorrências persistidas e virtuais.
-- [ ] **M3: Frontend Minimalista**
-  - Criar tela única mensal com navegação de competências, checklist de liquidação e dialog para lançamentos avulsos/recorrentes.
-- [ ] **M4: Testes de Integridade**
-  - Testes unitários para clamping de datas de vencimento em fevereiro e anos bissextos.
+- [ ] **M1: Core Domain and Schemas**
+  - `@shared` with Zod schemas for Recurrence and Occurrence, and `resolvePeriod` with its unit tests.
+  - `@database` with the Drizzle schema (app + Better-Auth), constraints, unique index and migrations.
+- [ ] **M2: API**
+  - Better-Auth with approval gate and logged password-reset links.
+  - Recurrence CRUD with the delete/end rules.
+  - `GET /periods/:yyyy-mm` merging persisted and virtual occurrences, plus overdue from earlier periods.
+  - Occurrence mutations with materialization by upsert.
+  - Integration tests against Postgres.
+- [ ] **M3: Minimalist Frontend**
+  - Monthly screen with period navigation, groups, one-click settle and optimistic UI.
+  - Recurrences screen; one-off and recurrence dialogs.
+  - Auth screens and "Aguardando aprovação".
+- [ ] **M4: Deployment**
+  - Coolify setup with same-origin proxy, Postgres 17 and off-VPS daily backups.
