@@ -1,0 +1,11 @@
+# Allowlist: the API image only needs the root manifests and its three workspaces.
+*
+!package.json
+!package-lock.json
+!apps/api
+!packages/shared
+!packages/database
+
+**/node_modules
+**/.env
+**/tests

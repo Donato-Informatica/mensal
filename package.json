@@ -15,6 +15,7 @@
   ],
   "scripts": {
     "prepare": "node setup-links.ts && husky",
+    "build:web": "npm run -w @mensal/web build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",

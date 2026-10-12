@@ -16,6 +16,11 @@ const auth = createAuth({
 });
 const port = Number(process.env.PORT ?? 3000);
 
-createApp({ auth, db }).listen(port, () => {
+const server = createApp({ auth, db }).listen(port, () => {
   console.log(`API listening on http://localhost:${port}`);
+});
+
+// In the container Node is PID 1, which ignores SIGTERM unless it is handled.
+process.on("SIGTERM", () => {
+  server.close(() => void db.$client.end());
 });
