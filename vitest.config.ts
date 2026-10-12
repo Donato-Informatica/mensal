@@ -1,6 +1,7 @@
 import { defineConfig } from "vitest/config";
 
 const integration = "apps/api/tests/**/*.test.ts";
+const web = "apps/web/tests/**/*.test.{ts,tsx}";
 
 export default defineConfig({
   test: {
@@ -9,7 +10,7 @@ export default defineConfig({
         test: {
           name: "unit",
           include: ["{apps,packages}/*/tests/**/*.test.{ts,tsx}"],
-          exclude: [integration],
+          exclude: [integration, web],
         },
       },
       {
@@ -18,6 +19,15 @@ export default defineConfig({
           name: "api",
           include: [integration],
           globalSetup: ["apps/api/tests/global-setup.ts"],
+        },
+      },
+      {
+        // The web app rendered in jsdom, with only the network faked.
+        test: {
+          name: "web",
+          include: [web],
+          environment: "jsdom",
+          setupFiles: ["apps/web/tests/setup.ts"],
         },
       },
     ],
