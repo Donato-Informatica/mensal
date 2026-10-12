@@ -36,6 +36,7 @@ import { NewOneOffButton } from "./new-one-off.tsx";
 import { NewRecurrenceButton } from "./new-recurrence.tsx";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
 import { periodQuery } from "./period-query.ts";
+import { RecurrenceActions } from "./recurrence-actions.tsx";
 import {
   SettleCheckbox,
   SkipButton,
@@ -343,7 +344,14 @@ function Row({
         </Text>
         {status && <Badge {...status.badge}>{status.label}</Badge>}
         <SkipButton item={item} onChange={onStatusChange} />
-        {item.recurrenceId === null && <DeleteOneOffButton item={item} />}
+        {item.recurrenceId === null ? (
+          <DeleteOneOffButton item={item} />
+        ) : (
+          <RecurrenceActions
+            description={item.description}
+            recurrenceId={item.recurrenceId}
+          />
+        )}
       </Group>
     </Group>
   );

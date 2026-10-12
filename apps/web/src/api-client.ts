@@ -6,6 +6,8 @@ import {
   type OccurrenceEdit,
   type PeriodPayload,
   type Recurrence,
+  type RecurrenceEdit,
+  type RecurrenceListQuery,
   type StatusChange,
 } from "@mensal/shared";
 import { ApiError } from "./api-error.ts";
@@ -46,8 +48,23 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
     period: (period: string) =>
       send<PeriodPayload>(`/periods/${monthOf(period)}`),
 
+    /** The user's recurrences: the active ones, or all of them. */
+    recurrences: (status: RecurrenceListQuery["status"]) =>
+      send<Recurrence[]>(`/recurrences?status=${status}`),
+
+    recurrence: (id: string) =>
+      send<Recurrence>(`/recurrences/${encodeURIComponent(id)}`),
+
     createRecurrence: (recurrence: NewRecurrence) =>
       sendJson<Recurrence>("POST", "/recurrences", recurrence),
+
+    /** Edits recurrence `id`, and with it its virtual occurrences. */
+    editRecurrence: (id: string, edit: RecurrenceEdit) =>
+      sendJson<Recurrence>(
+        "PATCH",
+        `/recurrences/${encodeURIComponent(id)}`,
+        edit
+      ),
 
     createOneOff: (oneOff: NewOneOff) =>
       sendJson<Occurrence>("POST", "/occurrences", oneOff),

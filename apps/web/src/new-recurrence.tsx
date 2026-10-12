@@ -23,6 +23,7 @@ import { useState } from "react";
 import { errorMessage } from "./api-error.ts";
 import { invalidatePeriods } from "./period-query.ts";
 import { monthPickerProps } from "./pickers.ts";
+import { invalidateRecurrences } from "./recurrence-query.ts";
 
 /** "Nova recorrência": opens the dialog that creates a recurrence (PRD §7.7). */
 export function NewRecurrenceButton({ period }: { period: string }) {
@@ -64,7 +65,10 @@ function NewRecurrenceForm({
     mutationFn: (recurrence: NewRecurrence) => api.createRecurrence(recurrence),
     // Its virtual occurrences reach every period from its start on.
     onSuccess: async () => {
-      await invalidatePeriods(queryClient);
+      await Promise.all([
+        invalidatePeriods(queryClient),
+        invalidateRecurrences(queryClient),
+      ]);
       onCreated();
     },
   });

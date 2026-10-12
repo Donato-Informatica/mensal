@@ -61,6 +61,29 @@ export const NewRecurrenceSchema = z
   );
 export type NewRecurrence = z.output<typeof NewRecurrenceSchema>;
 
+/**
+ * The body of `PATCH /recurrences/:id`: the editable fields (PRD §6.1), each
+ * left as it is when absent. Any other field, e.g. the immutable `direction`
+ * and `startPeriod`, is rejected.
+ */
+export const RecurrenceEditSchema = z.strictObject({
+  description: DescriptionInputSchema.optional(),
+  defaultAmount: AmountSchema.nullable().optional(),
+  dueDay: z.int().min(1).max(31).nullable().optional(),
+  endPeriod: PeriodSchema.nullable().optional(),
+  notes: NotesInputSchema.optional(),
+});
+export type RecurrenceEdit = z.output<typeof RecurrenceEditSchema>;
+
+/**
+ * The query of `GET /recurrences`: the active ones (PRD §3.1), by default, or
+ * all of them.
+ */
+export const RecurrenceListQuerySchema = z.object({
+  status: z.enum(["active", "all"]).default("active"),
+});
+export type RecurrenceListQuery = z.output<typeof RecurrenceListQuerySchema>;
+
 export const OccurrenceSchema = z.object({
   id: z.uuid(),
   userId: z.string(),

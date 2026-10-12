@@ -6,6 +6,8 @@ export {
   OccurrenceEditSchema,
   OccurrenceSchema,
   OccurrenceStatusSchema,
+  RecurrenceEditSchema,
+  RecurrenceListQuerySchema,
   RecurrenceSchema,
   StatusChangeSchema,
   VirtualOccurrenceSchema,
@@ -16,12 +18,14 @@ export {
   type OccurrenceEdit,
   type OccurrenceStatus,
   type Recurrence,
+  type RecurrenceEdit,
+  type RecurrenceListQuery,
   type StatusChange,
   type VirtualOccurrence,
 } from "./lib/schemas.ts";
 export { editRefusal } from "./lib/occurrence-edit.ts";
 export { monthOf, periodOfMonth, shiftPeriod } from "./lib/period.ts";
-export { isInEffect } from "./lib/recurrence.ts";
+export { isActive, isInEffect } from "./lib/recurrence.ts";
 export {
   resolvePeriod,
   withStatusChange,

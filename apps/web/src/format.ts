@@ -30,8 +30,13 @@ export function formatDayAndMonth(date: string): string {
 
 /** A period ('YYYY-MM-01') as month and year, e.g. "Outubro 2026". */
 export function formatPeriod(period: string): string {
-  const month = monthName.format(new Date(period));
-  return `${month.charAt(0).toUpperCase()}${month.slice(1)} ${period.slice(0, 4)}`;
+  const inline = formatPeriodInline(period);
+  return `${inline.charAt(0).toUpperCase()}${inline.slice(1)}`;
+}
+
+/** A period ('YYYY-MM-01') within a sentence, e.g. "outubro 2026". */
+export function formatPeriodInline(period: string): string {
+  return `${monthName.format(new Date(period))} ${period.slice(0, 4)}`;
 }
 
 const fullDate = new Intl.DateTimeFormat("pt-BR", {

@@ -13,6 +13,8 @@ import type { AuthClient } from "./auth-client.ts";
 import { AwaitingApproval } from "./awaiting-approval.tsx";
 import { Month } from "./month.tsx";
 import { periodQuery } from "./period-query.ts";
+import { recurrencesQuery } from "./recurrence-query.ts";
+import { Recurrences } from "./recurrences.tsx";
 import { sessionQuery } from "./session.ts";
 import { SignIn } from "./sign-in.tsx";
 import { SignUp } from "./sign-up.tsx";
@@ -70,6 +72,24 @@ const month = createRoute({
   },
 });
 
+/** The recurrences screen: the active ones, or all on `?filtro=todas`. */
+const recurrences = createRoute({
+  getParentRoute: () => approved,
+  path: "/recorrencias",
+  validateSearch: (search): { filtro?: "todas" | undefined } => ({
+    filtro: search.filtro === "todas" ? "todas" : undefined,
+  }),
+  loaderDeps: ({ search }) => ({
+    status: search.filtro === "todas" ? ("all" as const) : ("active" as const),
+  }),
+  loader: ({ context: { api, queryClient }, deps: { status } }) =>
+    queryClient.ensureQueryData(recurrencesQuery(api, status)),
+  component: function RecurrencesRoute() {
+    const { status } = recurrences.useLoaderDeps();
+    return <Recurrences status={status} />;
+  },
+});
+
 const routeTree = root.addChildren([
   anonymous.addChildren([
     createRoute({
@@ -90,7 +110,7 @@ const routeTree = root.addChildren([
       component: AwaitingApproval,
     }),
   ]),
-  approved.addChildren([month]),
+  approved.addChildren([month, recurrences]),
 ]);
 
 export function createAppRouter(context: RouterContext) {

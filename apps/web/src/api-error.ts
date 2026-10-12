@@ -35,6 +35,8 @@ const messages = new Map<string, string>([
   ["INVALID_PERIOD", "Mês inválido."],
   ["INVALID_INPUT", "Confira os campos e tente novamente."],
   ["START_PERIOD_IN_PAST", "O início não pode ser antes do mês atual."],
+  ["RECURRENCE_NOT_FOUND", "Esta recorrência não existe mais."],
+  ["END_PERIOD_BEFORE_START", "O término não pode ser antes do início."],
   ["AMOUNT_REQUIRED_TO_SETTLE", "Informe o valor para liquidar."],
   ["OCCURRENCE_NOT_FOUND", "Esta conta não existe mais."],
   ["DUE_DATE_OUTSIDE_PERIOD", "O vencimento deve cair no mês da conta."],

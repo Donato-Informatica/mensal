@@ -3,11 +3,14 @@ import {
   clampDueDate,
   currentPeriod,
   editRefusal,
+  isActive,
   isInEffect,
   NewOneOffSchema,
   NewRecurrenceSchema,
   OccurrenceEditSchema,
   parseVirtualId,
+  RecurrenceEditSchema,
+  RecurrenceListQuerySchema,
   periodOfMonth,
   resolvePeriod,
   StatusChangeSchema,
@@ -99,6 +102,60 @@ export function fakeApi() {
     };
     signedIn.recurrences.push(recurrence);
     return json(201, recurrence);
+  }
+
+  /** GET /api/v1/recurrences?status=active|all, behind the approval gate. */
+  function getRecurrences(search: URLSearchParams): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const query = RecurrenceListQuerySchema.safeParse(
+      Object.fromEntries(search)
+    );
+    if (!query.success) return json(400, { code: "INVALID_INPUT" });
+    const period = currentPeriod();
+    return json(
+      200,
+      signedIn.recurrences
+        .filter(
+          (recurrence) =>
+            query.data.status === "all" || isActive(recurrence, period)
+        )
+        .toSorted((a, b) => a.description.localeCompare(b.description))
+    );
+  }
+
+  /** GET /api/v1/recurrences/:id, behind the approval gate. */
+  function getRecurrence(id: string): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const recurrence = signedIn.recurrences.find(
+      (candidate) => candidate.id === id
+    );
+    if (!recurrence) return json(404, { code: "RECURRENCE_NOT_FOUND" });
+    return json(200, recurrence);
+  }
+
+  /** PATCH /api/v1/recurrences/:id, behind the approval gate. */
+  function patchRecurrence(id: string, body: unknown): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const input = RecurrenceEditSchema.safeParse(body);
+    if (!input.success) return json(400, { code: "INVALID_INPUT" });
+    const recurrence = signedIn.recurrences.find(
+      (candidate) => candidate.id === id
+    );
+    if (!recurrence) return json(404, { code: "RECURRENCE_NOT_FOUND" });
+    const { endPeriod } = input.data;
+    if (endPeriod && endPeriod < recurrence.startPeriod) {
+      return json(400, { code: "END_PERIOD_BEFORE_START" });
+    }
+    if (Object.values(input.data).every((value) => value === undefined)) {
+      return json(200, recurrence);
+    }
+    Object.assign(recurrence, input.data, {
+      updatedAt: new Date().toISOString(),
+    });
+    return json(200, recurrence);
   }
 
   /** POST /api/v1/occurrences, behind the approval gate. */
@@ -256,7 +313,16 @@ export function fakeApi() {
       if (stalled) await stalled.promise;
       if (down) return json(500, { message: "Internal Server Error" });
       const request = new Request(input, init);
-      const { pathname } = new URL(request.url);
+      const { pathname, searchParams } = new URL(request.url);
+      if (request.method === "GET" && pathname === "/api/v1/recurrences") {
+        return getRecurrences(searchParams);
+      }
+      const recurrenceMatch = /^\/api\/v1\/recurrences\/([^/]+)$/.exec(
+        pathname
+      );
+      if (request.method === "GET" && recurrenceMatch) {
+        return getRecurrence(decodeURIComponent(recurrenceMatch[1]!));
+      }
       const periodMatch = /^\/api\/v1\/periods\/([^/]+)$/.exec(pathname);
       if (request.method === "GET" && periodMatch) {
         return getPeriod(decodeURIComponent(periodMatch[1]!));
@@ -265,6 +331,9 @@ export function fakeApi() {
       const body = text ? JSON.parse(text) : {};
       if (request.method === "POST" && pathname === "/api/v1/recurrences") {
         return postRecurrence(body);
+      }
+      if (request.method === "PATCH" && recurrenceMatch) {
+        return patchRecurrence(decodeURIComponent(recurrenceMatch[1]!), body);
       }
       if (request.method === "POST" && pathname === "/api/v1/occurrences") {
         return postOccurrence(body);

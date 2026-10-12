@@ -1,9 +1,10 @@
-import { Box, Container, Group } from "@mantine/core";
+import { Box, Button, Container, Group } from "@mantine/core";
+import { Link, useMatchRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { SignOutButton } from "./sign-out-button.tsx";
 import { Wordmark } from "./wordmark.tsx";
 
-/** The frame of the app proper: a header with the wordmark and sign-out. */
+/** The frame of the app proper: a header with the wordmark, screens and sign-out. */
 export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <>
@@ -12,8 +13,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
         style={{ borderBottom: "1px solid var(--mantine-color-dark-5)" }}
       >
         <Container size="md" h={64}>
-          <Group h="100%" justify="space-between">
-            <Wordmark />
+          <Group h="100%" justify="space-between" wrap="nowrap">
+            <Group gap="lg" wrap="nowrap">
+              <Wordmark />
+              <Group component="nav" aria-label="Telas" gap={4} wrap="nowrap">
+                <ScreenLink to="/">Mês</ScreenLink>
+                <ScreenLink to="/recorrencias">Recorrências</ScreenLink>
+              </Group>
+            </Group>
             <SignOutButton variant="subtle" color="gray" size="sm" />
           </Group>
         </Container>
@@ -22,5 +29,28 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {children}
       </Container>
     </>
+  );
+}
+
+// DESIGN.md category-tab: the active one on surface-card, the rest muted.
+function ScreenLink({
+  to,
+  children,
+}: {
+  to: "/" | "/recorrencias";
+  children: ReactNode;
+}) {
+  const active = Boolean(useMatchRoute()({ to }));
+  return (
+    <Button
+      component={Link}
+      to={to}
+      variant={active ? "filled" : "subtle"}
+      color={active ? "dark.6" : "gray"}
+      size="sm"
+      aria-current={active ? "page" : undefined}
+    >
+      {children}
+    </Button>
   );
 }

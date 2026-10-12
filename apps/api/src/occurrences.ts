@@ -13,6 +13,7 @@ import {
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { Router, type Response } from "express";
 import { invalidInput } from "./invalid-input.ts";
+import { UUID } from "./uuid.ts";
 
 const { occurrences, recurrences } = schema;
 
@@ -150,8 +151,6 @@ export function occurrencesRouter({
 
   return router;
 }
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * The user's occurrence `id`, locked for the change. A virtual id is
