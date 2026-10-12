@@ -8,6 +8,7 @@ import {
 import { and, asc, eq, gte, isNull, or } from "drizzle-orm";
 import { Router } from "express";
 import { invalidInput } from "./invalid-input.ts";
+import { Refusal } from "./refusal.ts";
 import { UUID } from "./uuid.ts";
 
 /** `/recurrences`: the user's recurrences (PRD §6.1). */
@@ -19,7 +20,7 @@ export function recurrencesRouter({
   now: () => Date;
 }) {
   const router = Router();
-  const { recurrences } = schema;
+  const { occurrences, recurrences } = schema;
 
   router.get("/", async (req, res) => {
     const query = RecurrenceListQuerySchema.safeParse(req.query);
@@ -107,6 +108,46 @@ export function recurrencesRouter({
       )
       .returning();
     res.json(updated);
+  });
+
+  // Only a recurrence without history is deleted, for good; one with
+  // persisted occurrences is ended instead (PRD §5.4).
+  router.delete("/:id", async (req, res) => {
+    const { userId } = res.locals;
+    const { id } = req.params;
+    if (!UUID.test(id)) {
+      res.status(404).json({ code: "RECURRENCE_NOT_FOUND" });
+      return;
+    }
+    const mine = and(eq(recurrences.userId, userId), eq(recurrences.id, id));
+    try {
+      await db.transaction(async (tx) => {
+        // The lock holds back an occurrence being materialized meanwhile,
+        // since its foreign key needs a share lock on the recurrence.
+        const [recurrence] = await tx
+          .select({ id: recurrences.id })
+          .from(recurrences)
+          .where(mine)
+          .for("update");
+        if (!recurrence) throw new Refusal(404, "RECURRENCE_NOT_FOUND");
+        const [persisted] = await tx
+          .select({ id: occurrences.id })
+          .from(occurrences)
+          .where(
+            and(
+              eq(occurrences.userId, userId),
+              eq(occurrences.recurrenceId, id)
+            )
+          )
+          .limit(1);
+        if (persisted) throw new Refusal(409, "RECURRENCE_HAS_OCCURRENCES");
+        await tx.delete(recurrences).where(mine);
+      });
+      res.status(204).end();
+    } catch (error) {
+      if (!(error instanceof Refusal)) throw error;
+      res.status(error.status).json({ code: error.code });
+    }
   });
 
   /** The user's recurrence `id`, if they have one. */

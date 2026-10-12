@@ -36,6 +36,10 @@ const messages = new Map<string, string>([
   ["INVALID_INPUT", "Confira os campos e tente novamente."],
   ["START_PERIOD_IN_PAST", "O início não pode ser antes do mês atual."],
   ["RECURRENCE_NOT_FOUND", "Esta recorrência não existe mais."],
+  [
+    "RECURRENCE_HAS_OCCURRENCES",
+    "Esta recorrência já tem contas registradas e não pode ser excluída. Encerre-a para que deixe de aparecer nos próximos meses.",
+  ],
   ["END_PERIOD_BEFORE_START", "O término não pode ser antes do início."],
   ["AMOUNT_REQUIRED_TO_SETTLE", "Informe o valor para liquidar."],
   ["OCCURRENCE_NOT_FOUND", "Esta conta não existe mais."],

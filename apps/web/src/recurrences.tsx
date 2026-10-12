@@ -22,6 +22,7 @@ import {
 import { AppLayout } from "./app-layout.tsx";
 import { EditRecurrenceButton } from "./edit-recurrence.tsx";
 import { formatAmount, formatPeriodInline } from "./format.ts";
+import { RecurrenceActions } from "./recurrence-actions.tsx";
 import { recurrencesQuery } from "./recurrence-query.ts";
 
 type Status = RecurrenceListQuery["status"];
@@ -134,6 +135,10 @@ function Row({
           {defaultAmount === null ? "A definir" : formatAmount(defaultAmount)}
         </Text>
         {ended && <Badge variant="default">Encerrada</Badge>}
+        <RecurrenceActions
+          description={description}
+          recurrenceId={recurrence.id}
+        />
       </Group>
     </Group>
   );

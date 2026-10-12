@@ -538,3 +538,158 @@ describe("PATCH /api/v1/recurrences/:id", () => {
     expect(await unchanged.json()).toMatchObject({ description: "Aluguel" });
   });
 });
+
+describe("DELETE /api/v1/recurrences/:id", () => {
+  function remove(cookie: string, id: string) {
+    return request(api, `/api/v1/recurrences/${id}`, {
+      cookie,
+      method: "DELETE",
+    });
+  }
+
+  async function itemsOf(cookie: string, month: string) {
+    const response = await request(api, `/api/v1/periods/${month}`, {
+      cookie,
+    });
+    return (await response.json()).items;
+  }
+
+  it("deletes a recurrence without persisted occurrences, and its projection with it", async () => {
+    const { cookie, userId } = await approvedUser();
+    const recurrence = await insertRecurrence(api.db, {
+      userId,
+      startPeriod: "2026-09-01",
+    });
+
+    const response = await remove(cookie, recurrence.id);
+
+    expect(response.status).toBe(204);
+    const gone = await request(api, `/api/v1/recurrences/${recurrence.id}`, {
+      cookie,
+    });
+    expect(gone.status).toBe(404);
+    expect(await itemsOf(cookie, "2026-10")).toEqual([]);
+  });
+
+  it("refuses with 409 RECURRENCE_HAS_OCCURRENCES once an occurrence is persisted, deleting nothing", async () => {
+    const { cookie, userId } = await approvedUser();
+    const recurrence = await insertRecurrence(api.db, {
+      userId,
+      startPeriod: "2026-09-01",
+    });
+    const september = await insertOccurrence(api.db, {
+      userId,
+      recurrenceId: recurrence.id,
+      description: "Aluguel",
+      status: "SKIPPED",
+      period: "2026-09-01",
+      dueDate: "2026-09-10",
+    });
+
+    const response = await remove(cookie, recurrence.id);
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({
+      code: "RECURRENCE_HAS_OCCURRENCES",
+    });
+    const kept = await request(api, `/api/v1/recurrences/${recurrence.id}`, {
+      cookie,
+    });
+    expect(kept.status).toBe(200);
+    expect(await itemsOf(cookie, "2026-09")).toEqual([
+      expect.objectContaining({ id: september.id, status: "SKIPPED" }),
+    ]);
+    expect(await itemsOf(cookie, "2026-10")).toEqual([
+      expect.objectContaining({ isVirtual: true }),
+    ]);
+  });
+
+  it.each([
+    ["an unknown id", "5d2c8a4b-1e3f-4b6a-8c9d-2a7e6f1b3c40"],
+    ["an id that is not one", "aluguel"],
+  ])("answers 404 RECURRENCE_NOT_FOUND for %s", async (_, id) => {
+    const { cookie } = await approvedUser();
+
+    const response = await remove(cookie, id);
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ code: "RECURRENCE_NOT_FOUND" });
+  });
+
+  it("answers 404 RECURRENCE_NOT_FOUND for another user's recurrence, keeping it", async () => {
+    const owner = await approvedUser();
+    const recurrence = await insertRecurrence(api.db, {
+      userId: owner.userId,
+    });
+    const { cookie } = await approvedUser();
+
+    const response = await remove(cookie, recurrence.id);
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ code: "RECURRENCE_NOT_FOUND" });
+    const kept = await request(api, `/api/v1/recurrences/${recurrence.id}`, {
+      cookie: owner.cookie,
+    });
+    expect(kept.status).toBe(200);
+  });
+});
+
+describe("ending a recurrence with persisted occurrences", () => {
+  it("stops projecting it after the end period but keeps every persisted occurrence, even later ones", async () => {
+    const { cookie, userId } = await approvedUser();
+    const recurrence = await insertRecurrence(api.db, {
+      userId,
+      startPeriod: "2026-09-01",
+    });
+    const september = await insertOccurrence(api.db, {
+      userId,
+      recurrenceId: recurrence.id,
+      description: "Aluguel",
+      status: "SETTLED",
+      settledAt: "2026-09-10",
+      period: "2026-09-01",
+      dueDate: "2026-09-10",
+    });
+    const december = await insertOccurrence(api.db, {
+      userId,
+      recurrenceId: recurrence.id,
+      description: "Aluguel",
+      status: "SKIPPED",
+      period: "2026-12-01",
+      dueDate: "2026-12-10",
+    });
+    const refused = await request(api, `/api/v1/recurrences/${recurrence.id}`, {
+      cookie,
+      method: "DELETE",
+    });
+    expect(refused.status).toBe(409);
+
+    const response = await request(
+      api,
+      `/api/v1/recurrences/${recurrence.id}`,
+      { cookie, method: "PATCH", body: { endPeriod: "2026-10-01" } }
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ endPeriod: "2026-10-01" });
+    async function itemsOf(month: string) {
+      const period = await request(api, `/api/v1/periods/${month}`, {
+        cookie,
+      });
+      return (await period.json()).items;
+    }
+    expect(await itemsOf("2026-09")).toEqual([
+      expect.objectContaining({ id: september.id, status: "SETTLED" }),
+    ]);
+    expect(await itemsOf("2026-10")).toEqual([
+      expect.objectContaining({
+        id: `virtual_${recurrence.id}_2026-10-01`,
+      }),
+    ]);
+    expect(await itemsOf("2026-11")).toEqual([]);
+    expect(await itemsOf("2026-12")).toEqual([
+      expect.objectContaining({ id: december.id, status: "SKIPPED" }),
+    ]);
+    expect(await itemsOf("2027-01")).toEqual([]);
+  });
+});

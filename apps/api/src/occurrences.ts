@@ -13,6 +13,7 @@ import {
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { Router, type Response } from "express";
 import { invalidInput } from "./invalid-input.ts";
+import { Refusal } from "./refusal.ts";
 import { UUID } from "./uuid.ts";
 
 const { occurrences, recurrences } = schema;
@@ -25,17 +26,6 @@ type PersistedOccurrence = typeof occurrences.$inferSelect;
 type OccurrenceChanges = {
   [Field in keyof PersistedOccurrence]?: PersistedOccurrence[Field] | undefined;
 };
-
-/** A request the occurrence's state turns down; thrown to roll back. */
-class Refusal extends Error {
-  readonly status: number;
-  readonly code: string;
-  constructor(status: number, code: string) {
-    super(code);
-    this.status = status;
-    this.code = code;
-  }
-}
 
 /** `/occurrences`: the user's occurrences (PRD §6.3). */
 export function occurrencesRouter({

@@ -66,6 +66,15 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
         edit
       ),
 
+    /**
+     * Deletes recurrence `id` for good. One with persisted occurrences is
+     * refused with RECURRENCE_HAS_OCCURRENCES, to be ended instead.
+     */
+    deleteRecurrence: (id: string) =>
+      send<void>(`/recurrences/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      }),
+
     createOneOff: (oneOff: NewOneOff) =>
       sendJson<Occurrence>("POST", "/occurrences", oneOff),
 

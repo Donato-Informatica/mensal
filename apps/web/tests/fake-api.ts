@@ -158,6 +158,21 @@ export function fakeApi() {
     return json(200, recurrence);
   }
 
+  /** DELETE /api/v1/recurrences/:id, behind the approval gate. */
+  function deleteRecurrence(id: string): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const recurrence = signedIn.recurrences.find(
+      (candidate) => candidate.id === id
+    );
+    if (!recurrence) return json(404, { code: "RECURRENCE_NOT_FOUND" });
+    if (signedIn.occurrences.some(({ recurrenceId }) => recurrenceId === id)) {
+      return json(409, { code: "RECURRENCE_HAS_OCCURRENCES" });
+    }
+    signedIn.recurrences.splice(signedIn.recurrences.indexOf(recurrence), 1);
+    return new Response(null, { status: 204 });
+  }
+
   /** POST /api/v1/occurrences, behind the approval gate. */
   function postOccurrence(body: unknown): Response {
     if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
@@ -322,6 +337,9 @@ export function fakeApi() {
       );
       if (request.method === "GET" && recurrenceMatch) {
         return getRecurrence(decodeURIComponent(recurrenceMatch[1]!));
+      }
+      if (request.method === "DELETE" && recurrenceMatch) {
+        return deleteRecurrence(decodeURIComponent(recurrenceMatch[1]!));
       }
       const periodMatch = /^\/api\/v1\/periods\/([^/]+)$/.exec(pathname);
       if (request.method === "GET" && periodMatch) {

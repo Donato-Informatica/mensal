@@ -23,6 +23,19 @@ export function recurrenceQuery(api: ApiClient, id: string) {
   });
 }
 
+/**
+ * Marks the cached recurrence lists stale and refetches those on screen,
+ * leaving each recurrence's own entry alone: for one just deleted, whose
+ * entry would only refetch into a 404.
+ */
+export function invalidateRecurrenceLists(
+  queryClient: QueryClient
+): Promise<void> {
+  return queryClient.invalidateQueries({
+    queryKey: [...recurrencesKey, "list"],
+  });
+}
+
 /** Marks every cached recurrence stale and refetches those on screen. */
 export function invalidateRecurrences(queryClient: QueryClient): Promise<void> {
   return queryClient.invalidateQueries({ queryKey: recurrencesKey });

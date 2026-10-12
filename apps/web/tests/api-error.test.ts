@@ -17,6 +17,10 @@ describe("errorMessage", () => {
     ["INVALID_PERIOD", "Mês inválido."],
     ["INVALID_INPUT", "Confira os campos e tente novamente."],
     ["START_PERIOD_IN_PAST", "O início não pode ser antes do mês atual."],
+    [
+      "RECURRENCE_HAS_OCCURRENCES",
+      "Esta recorrência já tem contas registradas e não pode ser excluída. Encerre-a para que deixe de aparecer nos próximos meses.",
+    ],
     ["AMOUNT_REQUIRED_TO_SETTLE", "Informe o valor para liquidar."],
     ["OCCURRENCE_NOT_FOUND", "Esta conta não existe mais."],
     ["DUE_DATE_OUTSIDE_PERIOD", "O vencimento deve cair no mês da conta."],
