@@ -335,7 +335,7 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 ### 8.3 Data Layer (Drizzle + Postgres)
 
 - Drizzle is the only data layer. Better-Auth uses `drizzleAdapter` on the **same `db` instance** as the app, with `usePlural: true` (`users`, `sessions`, `accounts`, `verifications`).
-- The Better-Auth schema is generated with `npx auth generate --adapter drizzle` into `packages/database/src/schema/auth.ts`, next to the app schema.
+- The Better-Auth schema is generated from the API's auth config with `npm run -w @mensal/api auth:generate` (the `auth generate` CLI, without `--adapter` so the configured `usePlural` is honoured) into `packages/database/lib/schema/auth.ts`, next to the app schema.
 - drizzle-kit (`generate` + `migrate`) is the only migration system; `auth migrate` is never used.
 - Postgres 17, pinned to the same version in `docker-compose.yml` and production.
 

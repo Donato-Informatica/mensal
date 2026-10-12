@@ -19,7 +19,7 @@ Packages are consumed as TypeScript source (no build step). Import them by packa
 
 ## Rules
 
-`npm run lint:boundaries` (dependency-cruiser, configured in [`.dependency-cruiser.cjs`](../.dependency-cruiser.cjs)) enforces them, and it runs in `npm run check` and on every commit. It only cruises the folders it is given: when `apps/` is created, add it to the script (`depcruise packages apps`) so rule 1 covers app code.
+`npm run lint:boundaries` (dependency-cruiser, configured in [`.dependency-cruiser.cjs`](../.dependency-cruiser.cjs)) enforces them, and it runs in `npm run check` and on every commit. It cruises `packages/` and `apps/`, so rule 1 covers app code too.
 
 1. **Entry-point boundary**: code outside a package (apps or other packages) imports only its entry points, never anything in its subfolders.
 2. **Intra-package freedom**: a package's own files import each other freely.

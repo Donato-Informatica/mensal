@@ -5,3 +5,6 @@
 skills-lock.json
 
 package-lock.json
+
+# Written by drizzle-kit
+packages/database/migrations/
