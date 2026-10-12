@@ -14,7 +14,9 @@ import { useHotkeys } from "@mantine/hooks";
 import {
   monthOf,
   shiftPeriod,
+  today,
   type PeriodItem,
+  type PeriodPayload,
   type PeriodSummary,
   type StatusChange,
 } from "@mensal/shared";
@@ -29,6 +31,7 @@ import { errorMessage } from "./api-error.ts";
 import { AppLayout } from "./app-layout.tsx";
 import { formatAmount, formatDayAndMonth, formatPeriod } from "./format.ts";
 import { NewRecurrenceButton } from "./new-recurrence.tsx";
+import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
 import { periodQuery } from "./period-query.ts";
 import {
   SettleCheckbox,
@@ -62,7 +65,7 @@ export function Month({ period }: { period: string }) {
           </Alert>
         )}
         <Occurrences
-          items={data.items}
+          payload={data}
           onStatusChange={(id, change) => statusChange.mutate({ id, change })}
         />
       </Stack>
@@ -204,13 +207,14 @@ function Figure({ label, cents }: { label: string; cents: number }) {
 }
 
 function Occurrences({
-  items,
+  payload,
   onStatusChange,
 }: {
-  items: PeriodItem[];
+  payload: PeriodPayload;
   onStatusChange: (id: string, change: StatusChange) => void;
 }) {
-  if (items.length === 0) {
+  const groups = groupOccurrences(payload, today());
+  if (groups.length === 0) {
     return (
       <Text c="dimmed" ta="center" py="xl">
         Nenhuma conta neste mês.
@@ -218,38 +222,79 @@ function Occurrences({
     );
   }
   return (
-    <Paper bg="dark.6" withBorder radius="lg">
-      <Stack
-        component="ul"
-        aria-label="Contas do mês"
-        gap={0}
-        m={0}
-        p={0}
-        style={{ listStyle: "none" }}
+    <Stack component="section" aria-label="Contas do mês" gap="xl">
+      {groups.map((group) => (
+        <OccurrenceList
+          key={group.title}
+          group={group}
+          period={payload.period}
+          onStatusChange={onStatusChange}
+        />
+      ))}
+    </Stack>
+  );
+}
+
+function OccurrenceList({
+  group: { title, items },
+  period,
+  onStatusChange,
+}: {
+  group: OccurrenceGroup;
+  period: string;
+  onStatusChange: (id: string, change: StatusChange) => void;
+}) {
+  const id = useId();
+  return (
+    <Stack component="section" aria-labelledby={id} gap="sm">
+      <Title
+        order={2}
+        id={id}
+        fz="xs"
+        c={title === "Atrasadas" ? "red.5" : "dimmed"}
+        tt="uppercase"
+        fw={600}
+        lts="1.5px"
       >
-        {items.map((item, index) => (
-          <Row
-            key={item.id}
-            item={item}
-            first={index === 0}
-            onStatusChange={(change) => onStatusChange(item.id, change)}
-          />
-        ))}
-      </Stack>
-    </Paper>
+        {title}
+      </Title>
+      <Paper bg="dark.6" withBorder radius="lg">
+        <Stack
+          component="ul"
+          aria-label={title}
+          gap={0}
+          m={0}
+          p={0}
+          style={{ listStyle: "none" }}
+        >
+          {items.map((item, index) => (
+            <Row
+              key={item.id}
+              item={item}
+              period={period}
+              first={index === 0}
+              onStatusChange={(change) => onStatusChange(item.id, change)}
+            />
+          ))}
+        </Stack>
+      </Paper>
+    </Stack>
   );
 }
 
 function Row({
   item,
+  period,
   first,
   onStatusChange,
 }: {
   item: PeriodItem;
+  /** The period on screen; an item of an earlier one is labeled with its own. */
+  period: string;
   first: boolean;
   onStatusChange: (change: StatusChange) => void;
 }) {
-  const status = statusLabel(item);
+  const status = statusLabel(item, period);
   return (
     <Group
       component="li"
@@ -301,10 +346,12 @@ function Row({
 const quietBadge = { variant: "default" } as const;
 const overdueBadge = { variant: "light", color: "red.5" } as const;
 
-function statusLabel(item: PeriodItem) {
+// Overdue needs no badge of its own: its group says it.
+function statusLabel(item: PeriodItem, period: string) {
   if (item.status === "SETTLED")
     return { label: "Liquidada", badge: quietBadge };
   if (item.status === "SKIPPED") return { label: "Pulada", badge: quietBadge };
-  if (item.overdue) return { label: "Atrasada", badge: overdueBadge };
+  if (item.period !== period)
+    return { label: formatPeriod(item.period), badge: overdueBadge };
   return undefined;
 }

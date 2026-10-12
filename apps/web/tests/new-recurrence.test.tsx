@@ -24,9 +24,11 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-/** The text of each row of the month's list, in order. */
+/** The text of each row of the month, group after group, in order. */
 async function rows(): Promise<string[]> {
-  const list = await screen.findByRole("list", { name: "Contas do mês" });
+  const list = await screen.findByRole("region", {
+    name: "Contas do mês",
+  });
   return within(list)
     .getAllByRole("listitem")
     .map((row) => row.textContent ?? "");

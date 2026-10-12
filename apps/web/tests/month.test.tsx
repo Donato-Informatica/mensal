@@ -22,9 +22,11 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-/** The text of each row of the month's list, in order. */
+/** The text of each row of the month, group after group, in order. */
 async function rows(): Promise<string[]> {
-  const list = await screen.findByRole("list", { name: "Contas do mês" });
+  const list = await screen.findByRole("region", {
+    name: "Contas do mês",
+  });
   return within(list)
     .getAllByRole("listitem")
     .map((row) => row.textContent ?? "");
@@ -44,7 +46,7 @@ describe("the month", () => {
       description: "Aluguel",
       defaultAmount: 220000,
       dueDay: 10,
-      startPeriod: "2026-09-01",
+      startPeriod: "2026-10-01",
     });
     api.addOccurrence(email, {
       recurrenceId: rent.id,
@@ -59,7 +61,7 @@ describe("the month", () => {
       description: "Cartão de crédito",
       defaultAmount: null,
       dueDay: 25,
-      startPeriod: "2026-09-01",
+      startPeriod: "2026-10-01",
     });
     api.addOccurrence(email, {
       direction: "INFLOW",
@@ -83,10 +85,10 @@ describe("the month", () => {
       await screen.findByRole("heading", { name: "Outubro 2026" })
     ).toBeInTheDocument();
     expect(await rows()).toEqual([
-      expect.stringMatching(/Salário.*05\/10.*R\$\s6\.500,00.*Liquidada/),
-      expect.stringMatching(/Aluguel.*10\/10.*R\$\s2\.200,00.*Liquidada/),
       expect.stringMatching(/Cartão de crédito.*25\/10.*A definir/),
       expect.stringMatching(/Presente.*Sem vencimento.*R\$\s150,50/),
+      expect.stringMatching(/Salário.*05\/10.*R\$\s6\.500,00.*Liquidada/),
+      expect.stringMatching(/Aluguel.*10\/10.*R\$\s2\.200,00.*Liquidada/),
     ]);
     expect(summaryOf("Entradas")).toEqual({
       expected: "R$ 6.500,00",

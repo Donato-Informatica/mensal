@@ -26,7 +26,9 @@ afterEach(() => {
 
 /** The month's row for the occurrence described as `description`. */
 async function row(description: string): Promise<HTMLElement> {
-  const list = await screen.findByRole("list", { name: "Contas do mês" });
+  const list = await screen.findByRole("region", {
+    name: "Contas do mês",
+  });
   const found = within(list)
     .getAllByRole("listitem")
     .find((item) => within(item).queryByText(description));
@@ -164,7 +166,12 @@ describe("settling an occurrence", () => {
     api.stall();
     await user.click(checkbox);
 
-    expect(checkbox).toBeChecked();
+    // Settled, the row moves to another group, so it is found again.
+    expect(
+      within(await row("Aluguel")).getByRole("checkbox", {
+        name: "Liquidar Aluguel",
+      })
+    ).toBeChecked();
     expect(await row("Aluguel")).toHaveTextContent("Liquidada");
     expect(outflowsSettled()).toHaveTextContent("R$ 2.200,00");
     expect(api.occurrencesOf(email)).toEqual([]);

@@ -248,7 +248,8 @@ export function fakeApi() {
         description: "Aluguel",
         defaultAmount: 220000,
         dueDay: 10,
-        startPeriod: "2026-01-01",
+        // The current period: the earliest the app lets a recurrence start.
+        startPeriod: "2026-10-01",
         endPeriod: null,
         notes: null,
         createdAt: "2026-01-01T12:00:00.000Z",
