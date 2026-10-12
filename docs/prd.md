@@ -12,8 +12,8 @@
 
 Most personal-finance tools overdo it: complex spreadsheets, deep categorization and dozens of charts that create daily data-entry friction. Individuals usually want to answer only two questions at the start of each month:
 
-1. *Which bills are due this month, and how much of my salary will be left?*
-2. *Has this specific bill been paid yet, or is it still pending?*
+1. _Which bills are due this month, and how much of my salary will be left?_
+2. _Has this specific bill been paid yet, or is it still pending?_
 
 ### 1.2 Value Proposition
 
@@ -31,16 +31,16 @@ A **minimalist, opinionated** SaaS focused strictly on forecasting and settling 
 
 ## 2. Key Design Decisions
 
-| Problem | Risk | Decision |
-| :--- | :--- | :--- |
-| **One-off expenses** | Not every expense recurs (car repair, a doctor's visit). Forcing a recurrence creates "throwaway recurrences". | `recurrenceId` on `Occurrence` is nullable. When null, it is a **one-off occurrence**. |
-| **Invalid due days (February / 30-day months)** | A recurrence due on the 31st breaks in February or April. | *Clamping*: the effective day is `min(dueDay, daysInMonth(period))`. |
-| **Destructive cascade delete** | Deleting a recurrence and its past occurrences destroys settled history. | A recurrence with persisted occurrences cannot be deleted, only **ended**. |
-| **Redundant statuses** | `SKIPPED` and `CANCELLED` had the same effect. | Only `PENDING`, `SETTLED`, `SKIPPED`. Cancelling a one-off is deleting it; cancelling a recurrence is ending it. Overdue is derived, never stored. |
-| **Settlement date vs period** | Only knowing the period hides when, or how late, a bill was actually paid. | Optional `settledAt` date. Totals are always grouped by period, never by `settledAt`. |
-| **Time zones** | Storing periods as UTC timestamps can shift `2026-05-01` into the previous month for `-03:00` clients. | Periods are stored as `DATE` (no time), always the 1st (`YYYY-MM-01`). "Today" is always computed in `America/Sao_Paulo`. |
-| **Generating future months** | Pre-creating occurrences needs a scheduled job and goes stale whenever a recurrence is edited. | **Virtual occurrences** are projected at read time and materialized on first touch. See [ADR 0001](./adr/0001-virtual-occurrences.md). |
-| **Forgotten past bills** | An unpaid bill from last month is invisible unless the user navigates back. | When viewing the current period, overdue occurrences from previous periods are listed too, outside the summary. |
+| Problem                                         | Risk                                                                                                           | Decision                                                                                                                                           |
+| :---------------------------------------------- | :------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **One-off expenses**                            | Not every expense recurs (car repair, a doctor's visit). Forcing a recurrence creates "throwaway recurrences". | `recurrenceId` on `Occurrence` is nullable. When null, it is a **one-off occurrence**.                                                             |
+| **Invalid due days (February / 30-day months)** | A recurrence due on the 31st breaks in February or April.                                                      | _Clamping_: the effective day is `min(dueDay, daysInMonth(period))`.                                                                               |
+| **Destructive cascade delete**                  | Deleting a recurrence and its past occurrences destroys settled history.                                       | A recurrence with persisted occurrences cannot be deleted, only **ended**.                                                                         |
+| **Redundant statuses**                          | `SKIPPED` and `CANCELLED` had the same effect.                                                                 | Only `PENDING`, `SETTLED`, `SKIPPED`. Cancelling a one-off is deleting it; cancelling a recurrence is ending it. Overdue is derived, never stored. |
+| **Settlement date vs period**                   | Only knowing the period hides when, or how late, a bill was actually paid.                                     | Optional `settledAt` date. Totals are always grouped by period, never by `settledAt`.                                                              |
+| **Time zones**                                  | Storing periods as UTC timestamps can shift `2026-05-01` into the previous month for `-03:00` clients.         | Periods are stored as `DATE` (no time), always the 1st (`YYYY-MM-01`). "Today" is always computed in `America/Sao_Paulo`.                          |
+| **Generating future months**                    | Pre-creating occurrences needs a scheduled job and goes stale whenever a recurrence is edited.                 | **Virtual occurrences** are projected at read time and materialized on first touch. See [ADR 0001](./adr/0001-virtual-occurrences.md).             |
+| **Forgotten past bills**                        | An unpaid bill from last month is invisible unless the user navigates back.                                    | When viewing the current period, overdue occurrences from previous periods are listed too, outside the summary.                                    |
 
 ---
 

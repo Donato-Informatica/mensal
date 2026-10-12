@@ -1,0 +1,7 @@
+# Vendored agent skills (managed by skills-lock.json)
+.agents/
+.agent/
+.claude/
+skills-lock.json
+
+package-lock.json

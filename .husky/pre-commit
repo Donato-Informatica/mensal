@@ -1,0 +1,5 @@
+npx lint-staged
+npm run lint
+npm run lint:boundaries
+npm run typecheck
+npm run test
