@@ -1,4 +1,5 @@
 import { clampDueDate } from "./due-date.ts";
+import { shiftPeriod } from "./period.ts";
 import { periodOf } from "./today.ts";
 import type {
   Direction,
@@ -214,12 +215,6 @@ function nextPeriod(period: string): string {
 
 function previousPeriod(period: string): string {
   return shiftPeriod(period, -1);
-}
-
-function shiftPeriod(period: string, months: number): string {
-  const [year, month] = period.split("-").map(Number) as [number, number];
-  const shifted = new Date(Date.UTC(year, month - 1 + months, 1));
-  return shifted.toISOString().slice(0, 10);
 }
 
 function min(a: string, b: string): string {

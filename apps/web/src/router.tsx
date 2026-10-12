@@ -6,10 +6,13 @@ import {
   Outlet,
   redirect,
 } from "@tanstack/react-router";
+import { currentPeriod, periodOfMonth } from "@mensal/shared";
 import { redirectFor, type Access } from "./access.ts";
+import type { ApiClient } from "./api-client.ts";
 import type { AuthClient } from "./auth-client.ts";
 import { AwaitingApproval } from "./awaiting-approval.tsx";
-import { Home } from "./home.tsx";
+import { Month } from "./month.tsx";
+import { periodQuery } from "./period-query.ts";
 import { sessionQuery } from "./session.ts";
 import { SignIn } from "./sign-in.tsx";
 import { SignUp } from "./sign-up.tsx";
@@ -17,6 +20,7 @@ import { ErrorScreen, NotFoundScreen } from "./status-screens.tsx";
 
 interface RouterContext {
   authClient: AuthClient;
+  api: ApiClient;
   queryClient: QueryClient;
 }
 
@@ -43,6 +47,29 @@ const anonymous = guardedArea("anonymous");
 const awaitingApproval = guardedArea("awaiting-approval");
 const approved = guardedArea("approved");
 
+/** The monthly screen, on `?mes=YYYY-MM` or the current period without it. */
+const month = createRoute({
+  getParentRoute: () => approved,
+  path: "/",
+  validateSearch: (search): { mes?: string | undefined } => ({
+    mes:
+      typeof search.mes === "string" && periodOfMonth(search.mes)
+        ? search.mes
+        : undefined,
+  }),
+  loaderDeps: ({ search }) => ({
+    period:
+      (search.mes === undefined ? undefined : periodOfMonth(search.mes)) ??
+      currentPeriod(),
+  }),
+  loader: ({ context: { api, queryClient }, deps: { period } }) =>
+    queryClient.ensureQueryData(periodQuery(api, period)),
+  component: function MonthRoute() {
+    const { period } = month.useLoaderDeps();
+    return <Month period={period} />;
+  },
+});
+
 const routeTree = root.addChildren([
   anonymous.addChildren([
     createRoute({
@@ -63,13 +90,7 @@ const routeTree = root.addChildren([
       component: AwaitingApproval,
     }),
   ]),
-  approved.addChildren([
-    createRoute({
-      getParentRoute: () => approved,
-      path: "/",
-      component: Home,
-    }),
-  ]),
+  approved.addChildren([month]),
 ]);
 
 export function createAppRouter(context: RouterContext) {

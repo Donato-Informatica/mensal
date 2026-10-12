@@ -1,11 +1,10 @@
-import { Box, Container, Group, Text, Title } from "@mantine/core";
-import { useSession } from "./session.ts";
+import { Box, Container, Group } from "@mantine/core";
+import type { ReactNode } from "react";
 import { SignOutButton } from "./sign-out-button.tsx";
 import { Wordmark } from "./wordmark.tsx";
 
-export function Home() {
-  const session = useSession();
-
+/** The frame of the app proper: a header with the wordmark and sign-out. */
+export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <Box
@@ -20,10 +19,7 @@ export function Home() {
         </Container>
       </Box>
       <Container component="main" size="md" py="xl">
-        <Title order={1}>Olá, {session?.user.name}</Title>
-        <Text c="dimmed" mt="xs">
-          Suas contas do mês aparecerão aqui.
-        </Text>
+        {children}
       </Container>
     </>
   );

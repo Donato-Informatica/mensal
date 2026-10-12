@@ -13,7 +13,9 @@ export interface TestApi {
 }
 
 /** The real app on a random port, backed by the test database. */
-export async function startApi(): Promise<TestApi> {
+export async function startApi({
+  now,
+}: { now?: () => Date } = {}): Promise<TestApi> {
   const db = createDatabase(testDatabaseUrl);
   const server = createServer();
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -24,7 +26,7 @@ export async function startApi(): Promise<TestApi> {
     baseURL: url,
     secret: "integration-tests-secret-0123456789abcdef",
   });
-  server.on("request", createApp({ auth }));
+  server.on("request", createApp({ auth, db, ...(now && { now }) }));
   return {
     url,
     db,

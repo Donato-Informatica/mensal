@@ -35,8 +35,35 @@ const dark: MantineColorsTuple = [
   "#000000",
 ];
 
+// DESIGN.md's accents, at shade 5: accent-emerald and accent-rose.
+const green: MantineColorsTuple = [
+  "#f0fdf4",
+  "#dcfce7",
+  "#bbf7d0",
+  "#86efac",
+  "#4ade80",
+  "#22c55e", // accent-emerald
+  "#16a34a",
+  "#15803d",
+  "#166534",
+  "#14532d",
+];
+
+const red: MantineColorsTuple = [
+  "#fef2f2",
+  "#fee2e2",
+  "#fecaca",
+  "#fca5a5",
+  "#f87171",
+  "#ef4444", // accent-rose
+  "#dc2626",
+  "#b91c1c",
+  "#991b1b",
+  "#7f1d1d",
+];
+
 export const theme = createTheme({
-  colors: { yellow, dark },
+  colors: { yellow, dark, green, red },
   primaryColor: "yellow",
   primaryShade: 4,
   autoContrast: true,

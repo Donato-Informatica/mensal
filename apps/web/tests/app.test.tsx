@@ -1,18 +1,21 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
-import { App } from "../src/app.tsx";
-import { createAuthClient } from "../src/auth-client.ts";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
+import { openApp as openAppWith } from "./open-app.tsx";
 
 let api: FakeApi;
 beforeEach(() => {
   api = fakeApi();
+  // Today is 2026-10-12 in São Paulo.
+  vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-10-12T15:00:00Z") });
+});
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 function openApp(path: string) {
-  window.history.replaceState(null, "", path);
-  render(<App authClient={createAuthClient(api.fetch)} />);
+  openAppWith(api, path);
 }
 
 async function signIn(email: string, password: string) {
@@ -34,7 +37,7 @@ describe("signed out", () => {
 });
 
 describe("signing in", () => {
-  it("takes an approved user to the home", async () => {
+  it("takes an approved user to the current month", async () => {
     api.addAccount({
       name: "Ana",
       email: "ana@example.com",
@@ -46,7 +49,7 @@ describe("signing in", () => {
     await signIn("ana@example.com", "correct-horse");
 
     expect(
-      await screen.findByRole("heading", { name: "Olá, Ana" })
+      await screen.findByRole("heading", { name: "Outubro 2026" })
     ).toBeInTheDocument();
     expect(window.location.pathname).toBe("/");
   });
@@ -131,11 +134,11 @@ describe("approved", () => {
     api.signIn("ana@example.com");
   });
 
-  it("sends a signed-in user away from sign-in to the home", async () => {
+  it("sends a signed-in user away from sign-in to the current month", async () => {
     openApp("/entrar");
 
     expect(
-      await screen.findByRole("heading", { name: "Olá, Ana" })
+      await screen.findByRole("heading", { name: "Outubro 2026" })
     ).toBeInTheDocument();
     expect(window.location.pathname).toBe("/");
   });

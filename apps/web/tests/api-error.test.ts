@@ -14,6 +14,7 @@ describe("errorMessage", () => {
     ["PASSWORD_TOO_LONG", "A senha deve ter no máximo 128 caracteres."],
     ["UNAUTHENTICATED", "Sua sessão expirou. Entre novamente."],
     ["USER_NOT_APPROVED", "Sua conta ainda aguarda aprovação."],
+    ["INVALID_PERIOD", "Mês inválido."],
   ])("translates the API code %s", (code, message) => {
     expect(errorMessage(new ApiError(code))).toBe(message);
   });

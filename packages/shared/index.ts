@@ -11,6 +11,7 @@ export {
   type Recurrence,
   type VirtualOccurrence,
 } from "./lib/schemas.ts";
+export { monthOf, periodOfMonth, shiftPeriod } from "./lib/period.ts";
 export {
   resolvePeriod,
   type PeriodItem,

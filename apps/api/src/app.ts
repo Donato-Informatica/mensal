@@ -1,9 +1,18 @@
+import type { Database } from "@mensal/database";
 import { toNodeHandler } from "better-auth/node";
 import express from "express";
 import type { Auth } from "./auth.ts";
+import { periodsRouter } from "./periods.ts";
 import { requireApprovedUser } from "./require-approved-user.ts";
 
-export function createApp({ auth }: { auth: Auth }) {
+export interface AppOptions {
+  auth: Auth;
+  db: Database;
+  /** The clock "today" is read from. */
+  now?: () => Date;
+}
+
+export function createApp({ auth, db, now = () => new Date() }: AppOptions) {
   const app = express();
 
   // Better-Auth reads the raw body, so it goes before any body parser.
@@ -15,6 +24,7 @@ export function createApp({ auth }: { auth: Auth }) {
   v1.get("/me", (_req, res) => {
     res.json({ userId: res.locals.userId });
   });
+  v1.use("/periods", periodsRouter({ db, now }));
   app.use("/api/v1", v1);
 
   return app;

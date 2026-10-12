@@ -16,6 +16,6 @@ const auth = createAuth({
 });
 const port = Number(process.env.PORT ?? 3000);
 
-createApp({ auth }).listen(port, () => {
+createApp({ auth, db }).listen(port, () => {
   console.log(`API listening on http://localhost:${port}`);
 });

@@ -32,6 +32,7 @@ const messages = new Map<string, string>([
   // /api/v1
   ["UNAUTHENTICATED", "Sua sessão expirou. Entre novamente."],
   ["USER_NOT_APPROVED", "Sua conta ainda aguarda aprovação."],
+  ["INVALID_PERIOD", "Mês inválido."],
 ]);
 
 /** The Portuguese message to show for a failure: its API code's, or a generic one. */
