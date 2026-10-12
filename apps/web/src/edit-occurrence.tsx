@@ -10,7 +10,7 @@ import {
   TextInput,
   UnstyledButton,
 } from "@mantine/core";
-import { DatePickerInput, type DateFormatter } from "@mantine/dates";
+import { DatePickerInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import {
   clampDueDate,
@@ -21,8 +21,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { errorMessage } from "./api-error.ts";
-import { formatDate } from "./format.ts";
 import { invalidatePeriods } from "./period-query.ts";
+import { datePickerProps } from "./pickers.ts";
 
 /**
  * `children`, as the button that opens the dialog editing `item` (PRD §5.8).
@@ -182,14 +182,3 @@ function EditOccurrenceForm({
     </form>
   );
 }
-
-const formatDatePickerValue: DateFormatter = ({ date }) =>
-  typeof date === "string" ? formatDate(date) : "";
-
-/** Dates read as "28/10/2026", in the picker's days too. */
-const datePickerProps = {
-  valueFormatter: formatDatePickerValue,
-  getDayProps: (date: string) => ({ "aria-label": formatDate(date) }),
-  nextLabel: "Próximo mês",
-  previousLabel: "Mês anterior",
-};

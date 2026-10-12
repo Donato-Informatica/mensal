@@ -24,6 +24,10 @@ describe("errorMessage", () => {
       "OCCURRENCE_NOT_SETTLED",
       "Só uma conta liquidada tem data de liquidação.",
     ],
+    [
+      "ONLY_ONE_OFF_DELETABLE",
+      "Só uma conta avulsa pode ser excluída. Pule esta no mês.",
+    ],
   ])("translates the API code %s", (code, message) => {
     expect(errorMessage(new ApiError(code))).toBe(message);
   });

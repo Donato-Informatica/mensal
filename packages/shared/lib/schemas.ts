@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { periodOf } from "./today.ts";
 
 /** A calendar date, 'YYYY-MM-DD'. */
 const DateSchema = z.iso.date();
@@ -10,6 +11,16 @@ const PeriodSchema = z.iso
 
 /** An amount in BRL cents, greater than zero. */
 const AmountSchema = z.int().positive();
+
+/** A description the user types: not blank, at most 120 characters. */
+const DescriptionInputSchema = z.string().trim().min(1).max(120);
+
+/** Notes the user types; blank notes are no notes. */
+const NotesInputSchema = z
+  .string()
+  .trim()
+  .nullable()
+  .transform((notes) => notes || null);
 
 export const DirectionSchema = z.enum(["INFLOW", "OUTFLOW"]);
 export type Direction = z.infer<typeof DirectionSchema>;
@@ -36,17 +47,12 @@ export type Recurrence = z.infer<typeof RecurrenceSchema>;
 export const NewRecurrenceSchema = z
   .object({
     direction: DirectionSchema,
-    description: z.string().trim().min(1).max(120),
+    description: DescriptionInputSchema,
     defaultAmount: AmountSchema.nullable(),
     dueDay: z.int().min(1).max(31).nullable(),
     startPeriod: PeriodSchema,
     endPeriod: PeriodSchema.nullable(),
-    // Blank notes are no notes.
-    notes: z
-      .string()
-      .trim()
-      .nullable()
-      .transform((notes) => notes || null),
+    notes: NotesInputSchema,
   })
   .refine(
     ({ startPeriod, endPeriod }) =>
@@ -110,16 +116,33 @@ export type StatusChange = z.output<typeof StatusChangeSchema>;
  * `period` and `recurrenceId`, is rejected.
  */
 export const OccurrenceEditSchema = z.strictObject({
-  description: z.string().trim().min(1).max(120).optional(),
+  description: DescriptionInputSchema.optional(),
   amount: AmountSchema.nullable().optional(),
   dueDate: DateSchema.nullable().optional(),
   settledAt: DateSchema.optional(),
-  // Blank notes are no notes.
-  notes: z
-    .string()
-    .trim()
-    .nullable()
-    .transform((notes) => notes || null)
-    .optional(),
+  notes: NotesInputSchema.optional(),
 });
 export type OccurrenceEdit = z.output<typeof OccurrenceEditSchema>;
+
+/**
+ * The body of `POST /occurrences`: a one-off occurrence the user records
+ * (PRD §5.9). It starts pending; its due date, if any, falls within its period.
+ */
+export const NewOneOffSchema = z
+  .strictObject({
+    direction: DirectionSchema,
+    description: DescriptionInputSchema,
+    amount: AmountSchema.nullable(),
+    period: PeriodSchema,
+    dueDate: DateSchema.nullable(),
+    notes: NotesInputSchema,
+  })
+  .refine(
+    ({ period, dueDate }) =>
+      dueDate === null ||
+      periodOf(dueDate) === period ||
+      // An invalid period is reported alone, not as the due date's fault too.
+      !PeriodSchema.safeParse(period).success,
+    { path: ["dueDate"], message: "The due date is outside the period" }
+  );
+export type NewOneOff = z.output<typeof NewOneOffSchema>;

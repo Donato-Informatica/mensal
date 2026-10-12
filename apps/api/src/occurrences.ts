@@ -4,12 +4,13 @@ import {
   clampDueDate,
   editRefusal,
   isInEffect,
+  NewOneOffSchema,
   OccurrenceEditSchema,
   parseVirtualId,
   StatusChangeSchema,
   today,
 } from "@mensal/shared";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { Router, type Response } from "express";
 import { invalidInput } from "./invalid-input.ts";
 
@@ -77,6 +78,20 @@ export function occurrencesRouter({
     }
   }
 
+  // A one-off occurrence (PRD §5.9).
+  router.post("/", async (req, res) => {
+    const input = NewOneOffSchema.safeParse(req.body);
+    if (!input.success) {
+      res.status(400).json(invalidInput(input.error));
+      return;
+    }
+    const [occurrence] = await db
+      .insert(occurrences)
+      .values({ ...input.data, userId: res.locals.userId, status: "PENDING" })
+      .returning();
+    res.status(201).json(occurrence);
+  });
+
   // Any transition between the statuses is allowed (PRD §5.7).
   router.patch("/:id/status", async (req, res) => {
     const input = StatusChangeSchema.safeParse(req.body);
@@ -105,6 +120,32 @@ export function occurrencesRouter({
       if (refusal) throw new Refusal(400, refusal);
       return input.data;
     });
+  });
+
+  // Only a one-off occurrence is deleted, for good; one of a recurrence is
+  // skipped instead (PRD §5.9).
+  router.delete("/:id", async (req, res) => {
+    const { userId } = res.locals;
+    const { id } = req.params;
+    const deleted = UUID.test(id)
+      ? await db
+          .delete(occurrences)
+          .where(
+            and(
+              eq(occurrences.userId, userId),
+              eq(occurrences.id, id),
+              isNull(occurrences.recurrenceId)
+            )
+          )
+          .returning({ id: occurrences.id })
+      : [];
+    if (deleted.length > 0) {
+      res.status(204).end();
+    } else if (await occurrenceExists(db, userId, id)) {
+      res.status(409).json({ code: "ONLY_ONE_OFF_DELETABLE" });
+    } else {
+      res.status(404).json({ code: "OCCURRENCE_NOT_FOUND" });
+    }
   });
 
   return router;
@@ -136,6 +177,42 @@ async function occurrenceToChange(tx: Transaction, userId: string, id: string) {
     .for("update");
   if (!occurrence) throw new Refusal(404, "OCCURRENCE_NOT_FOUND");
   return occurrence;
+}
+
+/** Whether the user has an occurrence `id`, persisted or virtual. */
+async function occurrenceExists(db: Database, userId: string, id: string) {
+  const virtual = parseVirtualId(id);
+  if (!virtual) {
+    if (!UUID.test(id)) return false;
+    const [persisted] = await db
+      .select({ id: occurrences.id })
+      .from(occurrences)
+      .where(and(eq(occurrences.userId, userId), eq(occurrences.id, id)));
+    return persisted !== undefined;
+  }
+  const [recurrence] = await db
+    .select()
+    .from(recurrences)
+    .where(
+      and(
+        eq(recurrences.id, virtual.recurrenceId),
+        eq(recurrences.userId, userId)
+      )
+    );
+  if (!recurrence) return false;
+  if (isInEffect(recurrence, virtual.period)) return true;
+  // Ending a recurrence keeps the occurrences it already had (PRD §5.4).
+  const [persisted] = await db
+    .select({ id: occurrences.id })
+    .from(occurrences)
+    .where(
+      and(
+        eq(occurrences.userId, userId),
+        eq(occurrences.recurrenceId, virtual.recurrenceId),
+        eq(occurrences.period, virtual.period)
+      )
+    );
+  return persisted !== undefined;
 }
 
 /**

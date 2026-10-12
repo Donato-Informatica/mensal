@@ -10,7 +10,7 @@ import {
   Textarea,
   TextInput,
 } from "@mantine/core";
-import { MonthPickerInput, type DateFormatter } from "@mantine/dates";
+import { MonthPickerInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import {
   currentPeriod,
@@ -21,8 +21,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useState } from "react";
 import { errorMessage } from "./api-error.ts";
-import { formatPeriod } from "./format.ts";
 import { invalidatePeriods } from "./period-query.ts";
+import { monthPickerProps } from "./pickers.ts";
 
 /** "Nova recorrência": opens the dialog that creates a recurrence (PRD §7.7). */
 export function NewRecurrenceButton({ period }: { period: string }) {
@@ -184,16 +184,3 @@ function NewRecurrenceForm({
     </form>
   );
 }
-
-const formatMonthPickerValue: DateFormatter = ({ date }) =>
-  typeof date === "string" ? formatPeriod(date) : "";
-
-/** Months read as the period navigator writes them, e.g. "Outubro 2026". */
-const monthPickerProps = {
-  valueFormatter: formatMonthPickerValue,
-  getMonthControlProps: (date: string) => ({
-    "aria-label": formatPeriod(date),
-  }),
-  nextLabel: "Próximo ano",
-  previousLabel: "Ano anterior",
-};

@@ -4,6 +4,7 @@ import {
   currentPeriod,
   editRefusal,
   isInEffect,
+  NewOneOffSchema,
   NewRecurrenceSchema,
   OccurrenceEditSchema,
   parseVirtualId,
@@ -100,6 +101,27 @@ export function fakeApi() {
     return json(201, recurrence);
   }
 
+  /** POST /api/v1/occurrences, behind the approval gate. */
+  function postOccurrence(body: unknown): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const input = NewOneOffSchema.safeParse(body);
+    if (!input.success) return json(400, { code: "INVALID_INPUT" });
+    const now = new Date().toISOString();
+    const occurrence: Occurrence = {
+      id: uuid(),
+      userId: signedIn.id,
+      recurrenceId: null,
+      status: "PENDING",
+      settledAt: null,
+      ...input.data,
+      createdAt: now,
+      updatedAt: now,
+    };
+    signedIn.occurrences.push(occurrence);
+    return json(201, occurrence);
+  }
+
   /** PATCH /api/v1/occurrences/:id/status, behind the approval gate. */
   function patchStatus(id: string, body: unknown): Response {
     if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
@@ -142,6 +164,21 @@ export function fakeApi() {
       signedIn.occurrences.push(occurrence);
     }
     return json(200, occurrence);
+  }
+
+  /** DELETE /api/v1/occurrences/:id, behind the approval gate. */
+  function deleteOccurrence(id: string): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const occurrence =
+      signedIn.occurrences.find((persisted) => persisted.id === id) ??
+      materialized(signedIn, id);
+    if (!occurrence) return json(404, { code: "OCCURRENCE_NOT_FOUND" });
+    if (occurrence.recurrenceId !== null) {
+      return json(409, { code: "ONLY_ONE_OFF_DELETABLE" });
+    }
+    signedIn.occurrences.splice(signedIn.occurrences.indexOf(occurrence), 1);
+    return new Response(null, { status: 204 });
   }
 
   /** The occurrence a virtual id names: already persisted, or a new snapshot. */
@@ -229,6 +266,9 @@ export function fakeApi() {
       if (request.method === "POST" && pathname === "/api/v1/recurrences") {
         return postRecurrence(body);
       }
+      if (request.method === "POST" && pathname === "/api/v1/occurrences") {
+        return postOccurrence(body);
+      }
       const statusMatch = /^\/api\/v1\/occurrences\/([^/]+)\/status$/.exec(
         pathname
       );
@@ -240,6 +280,9 @@ export function fakeApi() {
       );
       if (request.method === "PATCH" && occurrenceMatch) {
         return patchOccurrence(decodeURIComponent(occurrenceMatch[1]!), body);
+      }
+      if (request.method === "DELETE" && occurrenceMatch) {
+        return deleteOccurrence(decodeURIComponent(occurrenceMatch[1]!));
       }
       const handler = handlers[`${request.method} ${pathname}`];
       if (!handler) return json(404, { message: "Not found" });

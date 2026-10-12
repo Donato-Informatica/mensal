@@ -137,8 +137,9 @@ describe("creating a recurrence", () => {
     await user.type(within(dialog).getByLabelText("Descrição"), "Geladeira");
     await user.type(within(dialog).getByLabelText("Valor"), "450");
     await user.click(within(dialog).getByLabelText("Término"));
+    // By its label: a role query over a calendar is slow in jsdom.
     await user.click(
-      await screen.findByRole("button", { name: "Dezembro 2026" })
+      await screen.findByLabelText("Dezembro 2026", { selector: "button" })
     );
     expect(within(dialog).getByLabelText("Término")).toHaveTextContent(
       "Dezembro 2026"

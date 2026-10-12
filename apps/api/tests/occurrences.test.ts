@@ -736,3 +736,285 @@ describe("PATCH /api/v1/occurrences/:id", () => {
     ]);
   });
 });
+
+const repair = {
+  direction: "OUTFLOW",
+  description: "Conserto do carro",
+  amount: 85000,
+  period: "2026-10-01",
+  dueDate: "2026-10-20",
+  notes: "Oficina do Zé",
+};
+
+function createOneOff(cookie: string, body: unknown) {
+  return request(api, "/api/v1/occurrences", { cookie, body });
+}
+
+describe("POST /api/v1/occurrences", () => {
+  it("creates a pending one-off occurrence in its period", async () => {
+    const { cookie, userId } = await approvedUser();
+
+    const response = await createOneOff(cookie, repair);
+
+    expect(response.status).toBe(201);
+    const created = await response.json();
+    expect(created).toEqual({
+      ...repair,
+      id: expect.any(String),
+      userId,
+      recurrenceId: null,
+      status: "PENDING",
+      settledAt: null,
+      createdAt: expect.any(String),
+      updatedAt: expect.any(String),
+    });
+    expect(await itemsOf(cookie, "2026-10")).toEqual([
+      expect.objectContaining({ ...repair, id: created.id, isVirtual: false }),
+    ]);
+  });
+
+  it.each(["2026-09-30", "2026-11-01"])(
+    "rejects a due date of %s, outside the period, naming it",
+    async (dueDate) => {
+      const { cookie } = await approvedUser();
+
+      const response = await createOneOff(cookie, { ...repair, dueDate });
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        code: "INVALID_INPUT",
+        fields: ["dueDate"],
+      });
+      expect(await itemsOf(cookie, "2026-10")).toEqual([]);
+    }
+  );
+
+  it("creates one in an earlier period, to be defined and without a due date", async () => {
+    const { cookie } = await approvedUser();
+
+    const response = await createOneOff(cookie, {
+      direction: "INFLOW",
+      description: "Restituição do IR",
+      amount: null,
+      period: "2026-06-01",
+      dueDate: null,
+      notes: "   ",
+    });
+
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      direction: "INFLOW",
+      amount: null,
+      period: "2026-06-01",
+      dueDate: null,
+      notes: null,
+    });
+    expect(await itemsOf(cookie, "2026-06")).toEqual([
+      expect.objectContaining({ description: "Restituição do IR" }),
+    ]);
+  });
+
+  it.each([
+    ["a blank description", { description: "  " }, "description"],
+    [
+      "a description over 120 characters",
+      { description: "x".repeat(121) },
+      "description",
+    ],
+    ["a zero amount", { amount: 0 }, "amount"],
+    ["an amount in fractions of a cent", { amount: 10.5 }, "amount"],
+    ["an unknown direction", { direction: "SIDEWAYS" }, "direction"],
+    ["a period that is not the 1st", { period: "2026-10-15" }, "period"],
+    ["no due date at all", { dueDate: undefined }, "dueDate"],
+    ["a status", { status: "SETTLED" }, "status"],
+    [
+      "a recurrence",
+      { recurrenceId: "5d2c8a4b-1e3f-4b6a-8c9d-2a7e6f1b3c40" },
+      "recurrenceId",
+    ],
+  ])(
+    "rejects %s with 400 INVALID_INPUT, naming the field",
+    async (_, override, field) => {
+      const { cookie } = await approvedUser();
+
+      const response = await createOneOff(cookie, { ...repair, ...override });
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        code: "INVALID_INPUT",
+        fields: [field],
+      });
+      expect(await itemsOf(cookie, "2026-10")).toEqual([]);
+    }
+  );
+
+  it("creates it for the signed-in user alone", async () => {
+    const owner = await approvedUser();
+    const other = await approvedUser();
+
+    const response = await createOneOff(owner.cookie, {
+      ...repair,
+      userId: other.userId,
+    });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      code: "INVALID_INPUT",
+      fields: ["userId"],
+    });
+
+    await createOneOff(owner.cookie, repair);
+    expect(await itemsOf(owner.cookie, "2026-10")).toHaveLength(1);
+    expect(await itemsOf(other.cookie, "2026-10")).toEqual([]);
+  });
+});
+
+function remove(cookie: string, id: string) {
+  return request(api, `/api/v1/occurrences/${id}`, {
+    cookie,
+    method: "DELETE",
+  });
+}
+
+describe("DELETE /api/v1/occurrences/:id", () => {
+  it("deletes a one-off occurrence for good", async () => {
+    const { cookie, userId } = await approvedUser();
+    const oneOff = await insertOccurrence(api.db, {
+      userId,
+      status: "SETTLED",
+      settledAt: "2026-10-05",
+    });
+    const other = await insertOccurrence(api.db, {
+      userId,
+      description: "Presente",
+    });
+
+    const response = await remove(cookie, oneOff.id);
+
+    expect(response.status).toBe(204);
+    expect(await itemsOf(cookie, "2026-10")).toEqual([
+      expect.objectContaining({ id: other.id }),
+    ]);
+    expect((await remove(cookie, oneOff.id)).status).toBe(404);
+  });
+
+  it("refuses a persisted occurrence of a recurrence, which is skipped instead", async () => {
+    const { cookie, userId } = await approvedUser();
+    const rent = await insertRecurrence(api.db, { userId });
+    const october = await insertOccurrence(api.db, {
+      userId,
+      recurrenceId: rent.id,
+      description: "Aluguel",
+    });
+
+    const response = await remove(cookie, october.id);
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ code: "ONLY_ONE_OFF_DELETABLE" });
+    expect(await itemsOf(cookie, "2026-10")).toEqual([
+      expect.objectContaining({ id: october.id }),
+    ]);
+  });
+
+  it("refuses a virtual occurrence, materializing nothing", async () => {
+    const { cookie, userId } = await approvedUser();
+    const rent = await insertRecurrence(api.db, { userId });
+    const id = `virtual_${rent.id}_2026-10-01`;
+
+    const response = await remove(cookie, id);
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ code: "ONLY_ONE_OFF_DELETABLE" });
+    expect(await itemsOf(cookie, "2026-10")).toEqual([
+      expect.objectContaining({ id, isVirtual: true }),
+    ]);
+  });
+
+  it.each([
+    ["an unknown id", "0b6f6c1e-7a51-4d1a-9a8e-3f1f4c2d9b10"],
+    ["an id that is not one", "not-an-id"],
+  ])("answers 404 OCCURRENCE_NOT_FOUND for %s", async (_, id) => {
+    const { cookie } = await approvedUser();
+
+    const response = await remove(cookie, id);
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ code: "OCCURRENCE_NOT_FOUND" });
+  });
+
+  it("answers 404 for a virtual id outside its recurrence's periods", async () => {
+    const { cookie, userId } = await approvedUser();
+    const rent = await insertRecurrence(api.db, {
+      userId,
+      startPeriod: "2026-10-01",
+    });
+
+    const response = await remove(cookie, `virtual_${rent.id}_2026-09-01`);
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ code: "OCCURRENCE_NOT_FOUND" });
+  });
+
+  it("refuses the virtual id of an occurrence its ended recurrence kept", async () => {
+    const { cookie, userId } = await approvedUser();
+    const rent = await insertRecurrence(api.db, {
+      userId,
+      endPeriod: "2026-09-01",
+    });
+    await insertOccurrence(api.db, {
+      userId,
+      recurrenceId: rent.id,
+      description: "Aluguel",
+    });
+
+    const response = await remove(cookie, `virtual_${rent.id}_2026-10-01`);
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ code: "ONLY_ONE_OFF_DELETABLE" });
+  });
+
+  describe("another user's occurrences", () => {
+    it("cannot delete their one-off occurrence", async () => {
+      const owner = await approvedUser();
+      const intruder = await approvedUser();
+      const oneOff = await insertOccurrence(api.db, { userId: owner.userId });
+
+      const response = await remove(intruder.cookie, oneOff.id);
+
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ code: "OCCURRENCE_NOT_FOUND" });
+      expect(await itemsOf(owner.cookie, "2026-10")).toEqual([
+        expect.objectContaining({ id: oneOff.id }),
+      ]);
+    });
+
+    // A 409 would tell the intruder the occurrence exists.
+    it("learns nothing of their recurrence's persisted occurrence", async () => {
+      const owner = await approvedUser();
+      const intruder = await approvedUser();
+      const rent = await insertRecurrence(api.db, { userId: owner.userId });
+      const october = await insertOccurrence(api.db, {
+        userId: owner.userId,
+        recurrenceId: rent.id,
+      });
+
+      const response = await remove(intruder.cookie, october.id);
+
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ code: "OCCURRENCE_NOT_FOUND" });
+    });
+
+    it("learns nothing of their recurrence's virtual occurrence", async () => {
+      const owner = await approvedUser();
+      const intruder = await approvedUser();
+      const rent = await insertRecurrence(api.db, { userId: owner.userId });
+
+      const response = await remove(
+        intruder.cookie,
+        `virtual_${rent.id}_2026-10-01`
+      );
+
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ code: "OCCURRENCE_NOT_FOUND" });
+    });
+  });
+});

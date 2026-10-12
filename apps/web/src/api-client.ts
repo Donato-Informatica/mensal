@@ -1,5 +1,6 @@
 import {
   monthOf,
+  type NewOneOff,
   type NewRecurrence,
   type Occurrence,
   type OccurrenceEdit,
@@ -24,6 +25,7 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
           : undefined;
       throw new ApiError(code);
     }
+    if (response.status === 204) return undefined as T;
     return (await response.json()) as T;
   }
 
@@ -47,6 +49,9 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
     createRecurrence: (recurrence: NewRecurrence) =>
       sendJson<Recurrence>("POST", "/recurrences", recurrence),
 
+    createOneOff: (oneOff: NewOneOff) =>
+      sendJson<Occurrence>("POST", "/occurrences", oneOff),
+
     /** Changes the status of occurrence `id`, persisted or virtual. */
     changeStatus: (id: string, change: StatusChange) =>
       sendJson<Occurrence>(
@@ -62,6 +67,12 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
         `/occurrences/${encodeURIComponent(id)}`,
         edit
       ),
+
+    /** Deletes one-off occurrence `id` for good. */
+    deleteOneOff: (id: string) =>
+      send<void>(`/occurrences/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      }),
   };
 }
 

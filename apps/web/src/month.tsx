@@ -29,8 +29,10 @@ import {
 import { useId } from "react";
 import { errorMessage } from "./api-error.ts";
 import { AppLayout } from "./app-layout.tsx";
+import { DeleteOneOffButton } from "./delete-one-off.tsx";
 import { EditOccurrenceButton } from "./edit-occurrence.tsx";
 import { formatAmount, formatDayAndMonth, formatPeriod } from "./format.ts";
+import { NewOneOffButton } from "./new-one-off.tsx";
 import { NewRecurrenceButton } from "./new-recurrence.tsx";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
 import { periodQuery } from "./period-query.ts";
@@ -51,7 +53,8 @@ export function Month({ period }: { period: string }) {
       <Stack gap="xl">
         <PeriodNavigator period={period} />
         <Summary summary={data.summary} />
-        <Group justify="flex-end">
+        <Group justify="flex-end" gap="sm">
+          <NewOneOffButton period={period} />
           <NewRecurrenceButton period={period} />
         </Group>
         {statusChange.error && (
@@ -340,6 +343,7 @@ function Row({
         </Text>
         {status && <Badge {...status.badge}>{status.label}</Badge>}
         <SkipButton item={item} onChange={onStatusChange} />
+        {item.recurrenceId === null && <DeleteOneOffButton item={item} />}
       </Group>
     </Group>
   );

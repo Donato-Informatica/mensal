@@ -39,6 +39,10 @@ const messages = new Map<string, string>([
   ["OCCURRENCE_NOT_FOUND", "Esta conta não existe mais."],
   ["DUE_DATE_OUTSIDE_PERIOD", "O vencimento deve cair no mês da conta."],
   ["OCCURRENCE_NOT_SETTLED", "Só uma conta liquidada tem data de liquidação."],
+  [
+    "ONLY_ONE_OFF_DELETABLE",
+    "Só uma conta avulsa pode ser excluída. Pule esta no mês.",
+  ],
 ]);
 
 /** The Portuguese message to show for a failure: its API code's, or a generic one. */
