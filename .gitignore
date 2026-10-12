@@ -3,3 +3,4 @@ node_modules
 .agent/skills
 .env
 dist
+graphify-out
