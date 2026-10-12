@@ -29,6 +29,7 @@ import {
 import { useId } from "react";
 import { errorMessage } from "./api-error.ts";
 import { AppLayout } from "./app-layout.tsx";
+import { EditOccurrenceButton } from "./edit-occurrence.tsx";
 import { formatAmount, formatDayAndMonth, formatPeriod } from "./format.ts";
 import { NewRecurrenceButton } from "./new-recurrence.tsx";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
@@ -310,16 +311,18 @@ function Row({
     >
       <Group gap="md" wrap="nowrap" miw={0}>
         <SettleCheckbox item={item} onChange={onStatusChange} />
-        <Stack gap={0} miw={0}>
-          <Text c="white" fw={500} truncate>
-            {item.description}
-          </Text>
-          <Text fz="sm" c="dimmed">
-            {item.dueDate === null
-              ? "Sem vencimento"
-              : formatDayAndMonth(item.dueDate)}
-          </Text>
-        </Stack>
+        <EditOccurrenceButton item={item}>
+          <Stack gap={0} miw={0}>
+            <Text c="white" fw={500} truncate>
+              {item.description}
+            </Text>
+            <Text fz="sm" c="dimmed">
+              {item.dueDate === null
+                ? "Sem vencimento"
+                : formatDayAndMonth(item.dueDate)}
+            </Text>
+          </Stack>
+        </EditOccurrenceButton>
       </Group>
       <Group gap="sm" wrap="nowrap">
         <Text

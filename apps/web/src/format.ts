@@ -33,3 +33,15 @@ export function formatPeriod(period: string): string {
   const month = monthName.format(new Date(period));
   return `${month.charAt(0).toUpperCase()}${month.slice(1)} ${period.slice(0, 4)}`;
 }
+
+const fullDate = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+/** 'YYYY-MM-DD' in full, e.g. "10/10/2026". */
+export function formatDate(date: string): string {
+  return fullDate.format(new Date(date));
+}

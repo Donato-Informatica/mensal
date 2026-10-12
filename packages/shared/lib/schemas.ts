@@ -103,3 +103,23 @@ export const StatusChangeSchema = z
     { path: ["settledAt"], message: "Only a settled occurrence has a date" }
   );
 export type StatusChange = z.output<typeof StatusChangeSchema>;
+
+/**
+ * The body of `PATCH /occurrences/:id`: the editable fields (PRD §5.8), each
+ * left as it is when absent. Any other field, e.g. the immutable `direction`,
+ * `period` and `recurrenceId`, is rejected.
+ */
+export const OccurrenceEditSchema = z.strictObject({
+  description: z.string().trim().min(1).max(120).optional(),
+  amount: AmountSchema.nullable().optional(),
+  dueDate: DateSchema.nullable().optional(),
+  settledAt: DateSchema.optional(),
+  // Blank notes are no notes.
+  notes: z
+    .string()
+    .trim()
+    .nullable()
+    .transform((notes) => notes || null)
+    .optional(),
+});
+export type OccurrenceEdit = z.output<typeof OccurrenceEditSchema>;

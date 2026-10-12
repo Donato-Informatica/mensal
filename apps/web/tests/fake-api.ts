@@ -2,8 +2,10 @@ import {
   applyStatusChange,
   clampDueDate,
   currentPeriod,
+  editRefusal,
   isInEffect,
   NewRecurrenceSchema,
+  OccurrenceEditSchema,
   parseVirtualId,
   periodOfMonth,
   resolvePeriod,
@@ -121,6 +123,27 @@ export function fakeApi() {
     return json(200, occurrence);
   }
 
+  /** PATCH /api/v1/occurrences/:id, behind the approval gate. */
+  function patchOccurrence(id: string, body: unknown): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const input = OccurrenceEditSchema.safeParse(body);
+    if (!input.success) return json(400, { code: "INVALID_INPUT" });
+    const occurrence =
+      signedIn.occurrences.find((persisted) => persisted.id === id) ??
+      materialized(signedIn, id);
+    if (!occurrence) return json(404, { code: "OCCURRENCE_NOT_FOUND" });
+    const refusal = editRefusal(occurrence, input.data);
+    if (refusal) return json(400, { code: refusal });
+    Object.assign(occurrence, input.data, {
+      updatedAt: new Date().toISOString(),
+    });
+    if (!signedIn.occurrences.includes(occurrence)) {
+      signedIn.occurrences.push(occurrence);
+    }
+    return json(200, occurrence);
+  }
+
   /** The occurrence a virtual id names: already persisted, or a new snapshot. */
   function materialized(account: Account, id: string): Occurrence | undefined {
     const virtual = parseVirtualId(id);
@@ -211,6 +234,12 @@ export function fakeApi() {
       );
       if (request.method === "PATCH" && statusMatch) {
         return patchStatus(decodeURIComponent(statusMatch[1]!), body);
+      }
+      const occurrenceMatch = /^\/api\/v1\/occurrences\/([^/]+)$/.exec(
+        pathname
+      );
+      if (request.method === "PATCH" && occurrenceMatch) {
+        return patchOccurrence(decodeURIComponent(occurrenceMatch[1]!), body);
       }
       const handler = handlers[`${request.method} ${pathname}`];
       if (!handler) return json(404, { message: "Not found" });

@@ -2,6 +2,7 @@ import {
   monthOf,
   type NewRecurrence,
   type Occurrence,
+  type OccurrenceEdit,
   type PeriodPayload,
   type Recurrence,
   type StatusChange,
@@ -52,6 +53,14 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
         "PATCH",
         `/occurrences/${encodeURIComponent(id)}/status`,
         change
+      ),
+
+    /** Edits occurrence `id`, persisted or virtual. */
+    editOccurrence: (id: string, edit: OccurrenceEdit) =>
+      sendJson<Occurrence>(
+        "PATCH",
+        `/occurrences/${encodeURIComponent(id)}`,
+        edit
       ),
   };
 }

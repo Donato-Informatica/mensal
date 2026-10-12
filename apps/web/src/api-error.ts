@@ -37,6 +37,8 @@ const messages = new Map<string, string>([
   ["START_PERIOD_IN_PAST", "O início não pode ser antes do mês atual."],
   ["AMOUNT_REQUIRED_TO_SETTLE", "Informe o valor para liquidar."],
   ["OCCURRENCE_NOT_FOUND", "Esta conta não existe mais."],
+  ["DUE_DATE_OUTSIDE_PERIOD", "O vencimento deve cair no mês da conta."],
+  ["OCCURRENCE_NOT_SETTLED", "Só uma conta liquidada tem data de liquidação."],
 ]);
 
 /** The Portuguese message to show for a failure: its API code's, or a generic one. */

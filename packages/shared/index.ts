@@ -2,6 +2,7 @@ export { clampDueDate } from "./lib/due-date.ts";
 export {
   DirectionSchema,
   NewRecurrenceSchema,
+  OccurrenceEditSchema,
   OccurrenceSchema,
   OccurrenceStatusSchema,
   RecurrenceSchema,
@@ -10,11 +11,13 @@ export {
   type Direction,
   type NewRecurrence,
   type Occurrence,
+  type OccurrenceEdit,
   type OccurrenceStatus,
   type Recurrence,
   type StatusChange,
   type VirtualOccurrence,
 } from "./lib/schemas.ts";
+export { editRefusal } from "./lib/occurrence-edit.ts";
 export { monthOf, periodOfMonth, shiftPeriod } from "./lib/period.ts";
 export { isInEffect } from "./lib/recurrence.ts";
 export {

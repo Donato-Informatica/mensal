@@ -389,3 +389,350 @@ describe("PATCH /api/v1/occurrences/:id/status", () => {
     expect(await itemsOf(cookie, "2026-12")).toEqual([]);
   });
 });
+
+function edit(cookie: string, id: string, body: unknown) {
+  return request(api, `/api/v1/occurrences/${id}`, {
+    cookie,
+    method: "PATCH",
+    body,
+  });
+}
+
+describe("PATCH /api/v1/occurrences/:id", () => {
+  it("edits the description, amount, due date and notes of a persisted occurrence", async () => {
+    const { cookie, userId } = await approvedUser();
+    const repair = await insertOccurrence(api.db, { userId, amount: 85000 });
+
+    const response = await edit(cookie, repair.id, {
+      description: "Conserto do freio",
+      amount: 91050,
+      dueDate: "2026-10-28",
+      notes: "Oficina do Zé",
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      id: repair.id,
+      description: "Conserto do freio",
+      amount: 91050,
+      dueDate: "2026-10-28",
+      notes: "Oficina do Zé",
+      status: "PENDING",
+    });
+    expect(await itemsOf(cookie, "2026-10")).toEqual([
+      expect.objectContaining({
+        id: repair.id,
+        description: "Conserto do freio",
+        amount: 91050,
+        dueDate: "2026-10-28",
+        notes: "Oficina do Zé",
+      }),
+    ]);
+  });
+
+  it("materializes a virtual occurrence, leaving its recurrence untouched", async () => {
+    const { cookie, userId } = await approvedUser();
+    const power = await insertRecurrence(api.db, {
+      userId,
+      description: "Energia",
+      defaultAmount: 18000,
+      dueDay: 25,
+      startPeriod: "2026-10-01",
+    });
+
+    const response = await edit(cookie, `virtual_${power.id}_2026-11-01`, {
+      amount: 23045,
+      notes: "Bandeira vermelha",
+    });
+
+    expect(response.status).toBe(200);
+    const materialized = await response.json();
+    expect(materialized).toMatchObject({
+      recurrenceId: power.id,
+      direction: "OUTFLOW",
+      description: "Energia",
+      status: "PENDING",
+      amount: 23045,
+      period: "2026-11-01",
+      dueDate: "2026-11-25",
+      notes: "Bandeira vermelha",
+    });
+    expect(await itemsOf(cookie, "2026-11")).toEqual([
+      expect.objectContaining({
+        id: materialized.id,
+        isVirtual: false,
+        amount: 23045,
+      }),
+    ]);
+    // The recurrence still projects as it was, in this period and the others.
+    const [recurrence] = await api.db
+      .select()
+      .from(schema.recurrences)
+      .where(eq(schema.recurrences.id, power.id));
+    expect(recurrence).toEqual(power);
+    expect(await itemsOf(cookie, "2026-12")).toEqual([
+      expect.objectContaining({
+        isVirtual: true,
+        description: "Energia",
+        amount: 18000,
+        notes: null,
+      }),
+    ]);
+  });
+
+  it("materializes the same virtual occurrence once across edits and status changes", async () => {
+    const { cookie, userId } = await approvedUser();
+    const rent = await insertRecurrence(api.db, { userId });
+    const id = `virtual_${rent.id}_2026-10-01`;
+
+    const [first, second] = await Promise.all([
+      edit(cookie, id, { notes: "Primeira" }),
+      changeStatus(cookie, id, { status: "SETTLED" }),
+    ]);
+    const third = await edit(cookie, id, { amount: 230000 });
+
+    const ids = await Promise.all(
+      [first, second, third].map(async (response) => {
+        expect(response.status).toBe(200);
+        return (await response.json()).id;
+      })
+    );
+    expect(new Set(ids).size).toBe(1);
+    expect(await itemsOf(cookie, "2026-10")).toEqual([
+      expect.objectContaining({
+        id: ids[0],
+        status: "SETTLED",
+        amount: 230000,
+        notes: "Primeira",
+      }),
+    ]);
+  });
+
+  describe("the due date", () => {
+    it.each(["2026-09-30", "2026-11-01"])(
+      "refuses %s, outside the period",
+      async (dueDate) => {
+        const { cookie, userId } = await approvedUser();
+        const repair = await insertOccurrence(api.db, { userId });
+
+        const response = await edit(cookie, repair.id, { dueDate });
+
+        expect(response.status).toBe(400);
+        expect(await response.json()).toEqual({
+          code: "DUE_DATE_OUTSIDE_PERIOD",
+        });
+        expect(await itemsOf(cookie, "2026-10")).toEqual([
+          expect.objectContaining({ id: repair.id, dueDate: "2026-10-20" }),
+        ]);
+      }
+    );
+
+    it("refuses one outside the period of a virtual occurrence, materializing nothing", async () => {
+      const { cookie, userId } = await approvedUser();
+      const rent = await insertRecurrence(api.db, { userId });
+      const id = `virtual_${rent.id}_2026-10-01`;
+
+      const response = await edit(cookie, id, { dueDate: "2026-11-10" });
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        code: "DUE_DATE_OUTSIDE_PERIOD",
+      });
+      expect(await itemsOf(cookie, "2026-10")).toEqual([
+        expect.objectContaining({ id, isVirtual: true }),
+      ]);
+    });
+
+    it("can be removed", async () => {
+      const { cookie, userId } = await approvedUser();
+      const repair = await insertOccurrence(api.db, { userId });
+
+      const response = await edit(cookie, repair.id, { dueDate: null });
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({ dueDate: null });
+    });
+  });
+
+  describe("the settlement date", () => {
+    it("is edited on a settled occurrence", async () => {
+      const { cookie, userId } = await approvedUser();
+      const repair = await insertOccurrence(api.db, {
+        userId,
+        status: "SETTLED",
+        settledAt: "2026-10-05",
+      });
+
+      const response = await edit(cookie, repair.id, {
+        settledAt: "2026-10-03",
+      });
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({
+        status: "SETTLED",
+        settledAt: "2026-10-03",
+      });
+    });
+
+    it.each(["PENDING", "SKIPPED"] as const)(
+      "is refused on a %s occurrence",
+      async (status) => {
+        const { cookie, userId } = await approvedUser();
+        const repair = await insertOccurrence(api.db, { userId, status });
+
+        const response = await edit(cookie, repair.id, {
+          settledAt: "2026-10-03",
+        });
+
+        expect(response.status).toBe(400);
+        expect(await response.json()).toEqual({
+          code: "OCCURRENCE_NOT_SETTLED",
+        });
+        expect(await itemsOf(cookie, "2026-10")).toEqual([
+          expect.objectContaining({ status, settledAt: null }),
+        ]);
+      }
+    );
+
+    it("is refused on a virtual occurrence, materializing nothing", async () => {
+      const { cookie, userId } = await approvedUser();
+      const rent = await insertRecurrence(api.db, { userId });
+      const id = `virtual_${rent.id}_2026-10-01`;
+
+      const response = await edit(cookie, id, { settledAt: "2026-10-03" });
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        code: "OCCURRENCE_NOT_SETTLED",
+      });
+      expect(await itemsOf(cookie, "2026-10")).toEqual([
+        expect.objectContaining({ id, isVirtual: true }),
+      ]);
+    });
+  });
+
+  describe("the amount", () => {
+    it("can become to be defined on a pending occurrence", async () => {
+      const { cookie, userId } = await approvedUser();
+      const repair = await insertOccurrence(api.db, { userId });
+
+      const response = await edit(cookie, repair.id, { amount: null });
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toMatchObject({ amount: null });
+    });
+
+    it("is required on a settled occurrence", async () => {
+      const { cookie, userId } = await approvedUser();
+      const repair = await insertOccurrence(api.db, {
+        userId,
+        status: "SETTLED",
+        settledAt: "2026-10-05",
+      });
+
+      const response = await edit(cookie, repair.id, { amount: null });
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        code: "AMOUNT_REQUIRED_TO_SETTLE",
+      });
+      expect(await itemsOf(cookie, "2026-10")).toEqual([
+        expect.objectContaining({ amount: 85000 }),
+      ]);
+    });
+  });
+
+  it.each([
+    ["the direction", { direction: "INFLOW" }, "direction"],
+    ["the period", { period: "2026-11-01" }, "period"],
+    [
+      "the recurrence",
+      { recurrenceId: "5d2c8a4b-1e3f-4b6a-8c9d-2a7e6f1b3c40" },
+      "recurrenceId",
+    ],
+    ["the status", { status: "SETTLED" }, "status"],
+    ["a blank description", { description: "  " }, "description"],
+    ["a zero amount", { amount: 0 }, "amount"],
+    ["a removed settlement date", { settledAt: null }, "settledAt"],
+  ])(
+    "rejects changing %s with 400 INVALID_INPUT, naming the field",
+    async (_, body, field) => {
+      const { cookie, userId } = await approvedUser();
+      const repair = await insertOccurrence(api.db, {
+        userId,
+        status: "SETTLED",
+        settledAt: "2026-10-05",
+      });
+
+      const response = await edit(cookie, repair.id, body);
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        code: "INVALID_INPUT",
+        fields: [field],
+      });
+      expect(await itemsOf(cookie, "2026-10")).toEqual([
+        expect.objectContaining({
+          id: repair.id,
+          direction: "OUTFLOW",
+          period: "2026-10-01",
+          recurrenceId: null,
+          status: "SETTLED",
+          amount: 85000,
+          settledAt: "2026-10-05",
+        }),
+      ]);
+    }
+  );
+
+  describe("another user's occurrences", () => {
+    it("cannot edit their persisted occurrence", async () => {
+      const owner = await approvedUser();
+      const intruder = await approvedUser();
+      const repair = await insertOccurrence(api.db, { userId: owner.userId });
+
+      const response = await edit(intruder.cookie, repair.id, {
+        description: "Invadido",
+      });
+
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ code: "OCCURRENCE_NOT_FOUND" });
+      expect(await itemsOf(owner.cookie, "2026-10")).toEqual([
+        expect.objectContaining({ description: "Conserto do carro" }),
+      ]);
+    });
+
+    it("cannot materialize their recurrence's virtual occurrence", async () => {
+      const owner = await approvedUser();
+      const intruder = await approvedUser();
+      const rent = await insertRecurrence(api.db, { userId: owner.userId });
+      const id = `virtual_${rent.id}_2026-10-01`;
+
+      const response = await edit(intruder.cookie, id, { notes: "Invadido" });
+
+      expect(response.status).toBe(404);
+      expect(await itemsOf(owner.cookie, "2026-10")).toEqual([
+        expect.objectContaining({ id, isVirtual: true, notes: null }),
+      ]);
+    });
+  });
+
+  it("materializes a virtual occurrence on an edit that changes nothing", async () => {
+    const { cookie, userId } = await approvedUser();
+    const rent = await insertRecurrence(api.db, { userId });
+    const id = `virtual_${rent.id}_2026-10-01`;
+
+    const response = await edit(cookie, id, {});
+
+    expect(response.status).toBe(200);
+    const materialized = await response.json();
+    expect(materialized).toMatchObject({
+      recurrenceId: rent.id,
+      description: "Aluguel",
+      amount: 220000,
+    });
+    expect(await itemsOf(cookie, "2026-10")).toEqual([
+      expect.objectContaining({ id: materialized.id, isVirtual: false }),
+    ]);
+  });
+});
