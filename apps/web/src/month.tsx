@@ -1,5 +1,6 @@
 import {
   ActionIcon,
+  Alert,
   Badge,
   Box,
   Group,
@@ -15,6 +16,7 @@ import {
   shiftPeriod,
   type PeriodItem,
   type PeriodSummary,
+  type StatusChange,
 } from "@mensal/shared";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
@@ -23,15 +25,22 @@ import {
   useRouteContext,
 } from "@tanstack/react-router";
 import { useId } from "react";
+import { errorMessage } from "./api-error.ts";
 import { AppLayout } from "./app-layout.tsx";
 import { formatAmount, formatDayAndMonth, formatPeriod } from "./format.ts";
 import { NewRecurrenceButton } from "./new-recurrence.tsx";
 import { periodQuery } from "./period-query.ts";
+import {
+  SettleCheckbox,
+  SkipButton,
+  useStatusChange,
+} from "./status-controls.tsx";
 
 /** The monthly screen: one period's summary and occurrences. */
 export function Month({ period }: { period: string }) {
   const { api } = useRouteContext({ from: rootRouteId });
   const { data } = useSuspenseQuery(periodQuery(api, period));
+  const statusChange = useStatusChange();
 
   return (
     <AppLayout>
@@ -41,7 +50,21 @@ export function Month({ period }: { period: string }) {
         <Group justify="flex-end">
           <NewRecurrenceButton period={period} />
         </Group>
-        <Occurrences items={data.items} />
+        {statusChange.error && (
+          <Alert
+            color="red"
+            variant="light"
+            withCloseButton
+            closeButtonLabel="Fechar"
+            onClose={statusChange.reset}
+          >
+            {errorMessage(statusChange.error)}
+          </Alert>
+        )}
+        <Occurrences
+          items={data.items}
+          onStatusChange={(id, change) => statusChange.mutate({ id, change })}
+        />
       </Stack>
     </AppLayout>
   );
@@ -180,7 +203,13 @@ function Figure({ label, cents }: { label: string; cents: number }) {
   );
 }
 
-function Occurrences({ items }: { items: PeriodItem[] }) {
+function Occurrences({
+  items,
+  onStatusChange,
+}: {
+  items: PeriodItem[];
+  onStatusChange: (id: string, change: StatusChange) => void;
+}) {
   if (items.length === 0) {
     return (
       <Text c="dimmed" ta="center" py="xl">
@@ -199,14 +228,27 @@ function Occurrences({ items }: { items: PeriodItem[] }) {
         style={{ listStyle: "none" }}
       >
         {items.map((item, index) => (
-          <Row key={item.id} item={item} first={index === 0} />
+          <Row
+            key={item.id}
+            item={item}
+            first={index === 0}
+            onStatusChange={(change) => onStatusChange(item.id, change)}
+          />
         ))}
       </Stack>
     </Paper>
   );
 }
 
-function Row({ item, first }: { item: PeriodItem; first: boolean }) {
+function Row({
+  item,
+  first,
+  onStatusChange,
+}: {
+  item: PeriodItem;
+  first: boolean;
+  onStatusChange: (change: StatusChange) => void;
+}) {
   const status = statusLabel(item);
   return (
     <Group
@@ -221,16 +263,19 @@ function Row({ item, first }: { item: PeriodItem; first: boolean }) {
           : { borderTop: "1px solid var(--mantine-color-dark-5)" }
       }
     >
-      <Stack gap={0} miw={0}>
-        <Text c="white" fw={500} truncate>
-          {item.description}
-        </Text>
-        <Text fz="sm" c="dimmed">
-          {item.dueDate === null
-            ? "Sem vencimento"
-            : formatDayAndMonth(item.dueDate)}
-        </Text>
-      </Stack>
+      <Group gap="md" wrap="nowrap" miw={0}>
+        <SettleCheckbox item={item} onChange={onStatusChange} />
+        <Stack gap={0} miw={0}>
+          <Text c="white" fw={500} truncate>
+            {item.description}
+          </Text>
+          <Text fz="sm" c="dimmed">
+            {item.dueDate === null
+              ? "Sem vencimento"
+              : formatDayAndMonth(item.dueDate)}
+          </Text>
+        </Stack>
+      </Group>
       <Group gap="sm" wrap="nowrap">
         <Text
           fw={600}
@@ -246,6 +291,7 @@ function Row({ item, first }: { item: PeriodItem; first: boolean }) {
           {item.amount === null ? "A definir" : formatAmount(item.amount)}
         </Text>
         {status && <Badge {...status.badge}>{status.label}</Badge>}
+        <SkipButton item={item} onChange={onStatusChange} />
       </Group>
     </Group>
   );

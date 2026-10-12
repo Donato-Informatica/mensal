@@ -35,6 +35,8 @@ const messages = new Map<string, string>([
   ["INVALID_PERIOD", "Mês inválido."],
   ["INVALID_INPUT", "Confira os campos e tente novamente."],
   ["START_PERIOD_IN_PAST", "O início não pode ser antes do mês atual."],
+  ["AMOUNT_REQUIRED_TO_SETTLE", "Informe o valor para liquidar."],
+  ["OCCURRENCE_NOT_FOUND", "Esta conta não existe mais."],
 ]);
 
 /** The Portuguese message to show for a failure: its API code's, or a generic one. */

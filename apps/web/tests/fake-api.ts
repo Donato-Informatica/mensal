@@ -1,8 +1,13 @@
 import {
+  applyStatusChange,
+  clampDueDate,
   currentPeriod,
+  isInEffect,
   NewRecurrenceSchema,
+  parseVirtualId,
   periodOfMonth,
   resolvePeriod,
+  StatusChangeSchema,
   today,
   type Occurrence,
   type Recurrence,
@@ -28,6 +33,7 @@ export function fakeApi() {
   const accounts = new Map<string, Account>();
   let signedIn: Account | undefined;
   let down = false;
+  let stalled: PromiseWithResolvers<void> | undefined;
 
   function json(status: number, body: unknown) {
     return new Response(JSON.stringify(body), {
@@ -92,6 +98,62 @@ export function fakeApi() {
     return json(201, recurrence);
   }
 
+  /** PATCH /api/v1/occurrences/:id/status, behind the approval gate. */
+  function patchStatus(id: string, body: unknown): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const input = StatusChangeSchema.safeParse(body);
+    if (!input.success) return json(400, { code: "INVALID_INPUT" });
+    const occurrence =
+      signedIn.occurrences.find((persisted) => persisted.id === id) ??
+      materialized(signedIn, id);
+    if (!occurrence) return json(404, { code: "OCCURRENCE_NOT_FOUND" });
+    const changed = applyStatusChange(occurrence, input.data, today());
+    if (changed.status === "SETTLED" && changed.amount === null) {
+      return json(400, { code: "AMOUNT_REQUIRED_TO_SETTLE" });
+    }
+    Object.assign(occurrence, changed, {
+      updatedAt: new Date().toISOString(),
+    });
+    if (!signedIn.occurrences.includes(occurrence)) {
+      signedIn.occurrences.push(occurrence);
+    }
+    return json(200, occurrence);
+  }
+
+  /** The occurrence a virtual id names: already persisted, or a new snapshot. */
+  function materialized(account: Account, id: string): Occurrence | undefined {
+    const virtual = parseVirtualId(id);
+    if (!virtual) return undefined;
+    const { recurrenceId, period } = virtual;
+    const persisted = account.occurrences.find(
+      (occurrence) =>
+        occurrence.recurrenceId === recurrenceId && occurrence.period === period
+    );
+    if (persisted) return persisted;
+    const recurrence = account.recurrences.find(
+      (candidate) =>
+        candidate.id === recurrenceId && isInEffect(candidate, period)
+    );
+    if (!recurrence) return undefined;
+    const now = new Date().toISOString();
+    return {
+      id: uuid(),
+      userId: account.id,
+      recurrenceId,
+      direction: recurrence.direction,
+      description: recurrence.description,
+      status: "PENDING",
+      amount: recurrence.defaultAmount,
+      period,
+      dueDate: clampDueDate(period, recurrence.dueDay),
+      settledAt: null,
+      notes: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
+
   const handlers: Record<string, (body: Record<string, string>) => Response> = {
     "GET /api/auth/get-session": () =>
       json(200, signedIn ? sessionOf(signedIn) : null),
@@ -131,6 +193,7 @@ export function fakeApi() {
       input: RequestInfo | URL,
       init?: RequestInit
     ): Promise<Response> => {
+      if (stalled) await stalled.promise;
       if (down) return json(500, { message: "Internal Server Error" });
       const request = new Request(input, init);
       const { pathname } = new URL(request.url);
@@ -142,6 +205,12 @@ export function fakeApi() {
       const body = text ? JSON.parse(text) : {};
       if (request.method === "POST" && pathname === "/api/v1/recurrences") {
         return postRecurrence(body);
+      }
+      const statusMatch = /^\/api\/v1\/occurrences\/([^/]+)\/status$/.exec(
+        pathname
+      );
+      if (request.method === "PATCH" && statusMatch) {
+        return patchStatus(decodeURIComponent(statusMatch[1]!), body);
       }
       const handler = handlers[`${request.method} ${pathname}`];
       if (!handler) return json(404, { message: "Not found" });
@@ -195,6 +264,11 @@ export function fakeApi() {
       return accounts.get(email)!.recurrences;
     },
 
+    /** The account's persisted occurrences, as the database holds them. */
+    occurrencesOf(email: string): readonly Occurrence[] {
+      return accounts.get(email)!.occurrences;
+    },
+
     /** Seeds an occurrence for the account, as through Adminer. */
     addOccurrence(email: string, overrides: Partial<Occurrence> = {}) {
       const account = accounts.get(email)!;
@@ -225,6 +299,16 @@ export function fakeApi() {
 
     recover() {
       down = false;
+    },
+
+    /** Holds every request unanswered until `resume` is called. */
+    stall() {
+      stalled = Promise.withResolvers();
+    },
+
+    resume() {
+      stalled?.resolve();
+      stalled = undefined;
     },
   };
   return api;

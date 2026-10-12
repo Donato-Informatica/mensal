@@ -17,6 +17,8 @@ describe("errorMessage", () => {
     ["INVALID_PERIOD", "Mês inválido."],
     ["INVALID_INPUT", "Confira os campos e tente novamente."],
     ["START_PERIOD_IN_PAST", "O início não pode ser antes do mês atual."],
+    ["AMOUNT_REQUIRED_TO_SETTLE", "Informe o valor para liquidar."],
+    ["OCCURRENCE_NOT_FOUND", "Esta conta não existe mais."],
   ])("translates the API code %s", (code, message) => {
     expect(errorMessage(new ApiError(code))).toBe(message);
   });

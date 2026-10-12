@@ -2,6 +2,7 @@ import type { Database } from "@mensal/database";
 import { toNodeHandler } from "better-auth/node";
 import express from "express";
 import type { Auth } from "./auth.ts";
+import { occurrencesRouter } from "./occurrences.ts";
 import { periodsRouter } from "./periods.ts";
 import { recurrencesRouter } from "./recurrences.ts";
 import { requireApprovedUser } from "./require-approved-user.ts";
@@ -25,6 +26,7 @@ export function createApp({ auth, db, now = () => new Date() }: AppOptions) {
   v1.get("/me", (_req, res) => {
     res.json({ userId: res.locals.userId });
   });
+  v1.use("/occurrences", occurrencesRouter({ db, now }));
   v1.use("/periods", periodsRouter({ db, now }));
   v1.use("/recurrences", recurrencesRouter({ db, now }));
   app.use("/api/v1", v1);

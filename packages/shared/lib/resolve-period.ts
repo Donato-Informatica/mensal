@@ -1,11 +1,14 @@
 import { clampDueDate } from "./due-date.ts";
 import { shiftPeriod } from "./period.ts";
+import { applyStatusChange } from "./status-change.ts";
 import { periodOf } from "./today.ts";
+import { virtualId } from "./virtual-id.ts";
 import type {
   Direction,
   Occurrence,
   OccurrenceStatus,
   Recurrence,
+  StatusChange,
 } from "./schemas.ts";
 
 /** One occurrence of a period payload, persisted or virtual. */
@@ -196,10 +199,6 @@ function projectVirtual(
   };
 }
 
-function virtualId(recurrenceId: string, period: string): string {
-  return `virtual_${recurrenceId}_${period}`;
-}
-
 /** Every period from `first` to `last`, inclusive; empty when `first` is after `last`. */
 function periodsBetween(first: string, last: string): string[] {
   const periods: string[] = [];
@@ -259,4 +258,33 @@ function summarize(items: readonly PeriodItem[]): PeriodSummary {
     }
   }
   return summary;
+}
+
+/**
+ * `payload` as it reads once the occurrence `id` changes status, its overdue
+ * flag and the summary derived again: what the client shows before the API
+ * confirms the change (PRD §7.5). `today` is 'YYYY-MM-DD' in America/Sao_Paulo.
+ */
+export function withStatusChange(
+  payload: PeriodPayload,
+  id: string,
+  change: StatusChange,
+  today: string
+): PeriodPayload {
+  const changed = (item: PeriodItem): PeriodItem =>
+    item.id !== id
+      ? item
+      : withOverdue(
+          { ...item, ...applyStatusChange(item, change, today) },
+          today
+        );
+  const items = payload.items.map(changed);
+  return {
+    period: payload.period,
+    summary: summarize(items),
+    items,
+    overdueFromPreviousPeriods: payload.overdueFromPreviousPeriods
+      .map(changed)
+      .filter((item) => item.overdue),
+  };
 }

@@ -86,3 +86,20 @@ export const VirtualOccurrenceSchema = z.object({
   notes: z.null(),
 });
 export type VirtualOccurrence = z.infer<typeof VirtualOccurrenceSchema>;
+
+/**
+ * The body of `PATCH /occurrences/:id/status` (PRD §5.7). An amount may come
+ * along, e.g. to settle an occurrence whose amount is to be defined; a
+ * settlement date only with SETTLED, which otherwise settles it today.
+ */
+export const StatusChangeSchema = z
+  .object({
+    status: OccurrenceStatusSchema,
+    amount: AmountSchema.optional(),
+    settledAt: DateSchema.optional(),
+  })
+  .refine(
+    ({ status, settledAt }) => settledAt === undefined || status === "SETTLED",
+    { path: ["settledAt"], message: "Only a settled occurrence has a date" }
+  );
+export type StatusChange = z.output<typeof StatusChangeSchema>;

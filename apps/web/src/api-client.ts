@@ -1,8 +1,10 @@
 import {
   monthOf,
   type NewRecurrence,
+  type Occurrence,
   type PeriodPayload,
   type Recurrence,
+  type StatusChange,
 } from "@mensal/shared";
 import { ApiError } from "./api-error.ts";
 
@@ -24,9 +26,13 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
     return (await response.json()) as T;
   }
 
-  function post<T>(path: string, body: unknown): Promise<T> {
+  function sendJson<T>(
+    method: "POST" | "PATCH",
+    path: string,
+    body: unknown
+  ): Promise<T> {
     return send<T>(path, {
-      method: "POST",
+      method,
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
@@ -38,7 +44,15 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
       send<PeriodPayload>(`/periods/${monthOf(period)}`),
 
     createRecurrence: (recurrence: NewRecurrence) =>
-      post<Recurrence>("/recurrences", recurrence),
+      sendJson<Recurrence>("POST", "/recurrences", recurrence),
+
+    /** Changes the status of occurrence `id`, persisted or virtual. */
+    changeStatus: (id: string, change: StatusChange) =>
+      sendJson<Occurrence>(
+        "PATCH",
+        `/occurrences/${encodeURIComponent(id)}/status`,
+        change
+      ),
   };
 }
 

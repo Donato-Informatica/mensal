@@ -1,6 +1,7 @@
 import { schema, type Database } from "@mensal/database";
 import { currentPeriod, NewRecurrenceSchema } from "@mensal/shared";
 import { Router } from "express";
+import { invalidInput } from "./invalid-input.ts";
 
 /** `/recurrences`: the user's recurrences (PRD §6.1). */
 export function recurrencesRouter({
@@ -31,18 +32,4 @@ export function recurrencesRouter({
   });
 
   return router;
-}
-
-/** `400 INVALID_INPUT`, naming each field the body got wrong. */
-function invalidInput({
-  issues,
-}: {
-  issues: readonly { path: readonly PropertyKey[] }[];
-}) {
-  const fields = new Set(
-    issues.flatMap(({ path: [field] }) =>
-      field === undefined ? [] : [String(field)]
-    )
-  );
-  return { code: "INVALID_INPUT", fields: [...fields] };
 }

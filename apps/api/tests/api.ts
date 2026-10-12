@@ -44,13 +44,17 @@ export async function startApi({
 export function request(
   api: TestApi,
   path: string,
-  { cookie, body }: { cookie?: string; body?: unknown } = {}
+  {
+    cookie,
+    body,
+    method = body === undefined ? "GET" : "POST",
+  }: { cookie?: string; body?: unknown; method?: string } = {}
 ): Promise<Response> {
   const headers = new Headers({ origin: api.url });
   if (cookie) headers.set("cookie", cookie);
   if (body !== undefined) headers.set("content-type", "application/json");
   return fetch(api.url + path, {
-    method: body === undefined ? "GET" : "POST",
+    method,
     headers,
     ...(body !== undefined && { body: JSON.stringify(body) }),
   });
