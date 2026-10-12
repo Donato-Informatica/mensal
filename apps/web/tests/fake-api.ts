@@ -38,6 +38,10 @@ interface Account {
 export function fakeApi() {
   const accounts = new Map<string, Account>();
   let signedIn: Account | undefined;
+  /** Reset tokens not yet used, by token, to the email they reset. */
+  const resetTokens = new Map<string, string>();
+  /** The reset screen each logged link leads to, by email. */
+  const resetLinks = new Map<string, string>();
   let down = false;
   let stalled: PromiseWithResolvers<void> | undefined;
 
@@ -314,6 +318,35 @@ export function fakeApi() {
       });
       return json(200, sessionOf(signedIn));
     },
+    "POST /api/auth/request-password-reset": ({ email, redirectTo }) => {
+      if (accounts.has(email ?? "")) {
+        const token = uuid();
+        resetTokens.set(token, email!);
+        const screen = new URL(redirectTo ?? "/", "http://localhost");
+        screen.searchParams.set("token", token);
+        resetLinks.set(email!, screen.pathname + screen.search);
+      }
+      return json(200, {
+        status: true,
+        message:
+          "If this email exists in our system, check your email for the reset link",
+      });
+    },
+    "POST /api/auth/reset-password": ({ token, newPassword }) => {
+      const email = resetTokens.get(token ?? "");
+      if (!email) {
+        return json(400, { code: "INVALID_TOKEN", message: "Invalid token" });
+      }
+      if ((newPassword ?? "").length < 8) {
+        return json(400, {
+          code: "PASSWORD_TOO_SHORT",
+          message: "Password too short",
+        });
+      }
+      resetTokens.delete(token!);
+      accounts.get(email)!.password = newPassword!;
+      return json(200, { status: true });
+    },
     "POST /api/auth/sign-out": () => {
       signedIn = undefined;
       return json(200, { success: true });
@@ -395,6 +428,14 @@ export function fakeApi() {
 
     signIn(email: string) {
       signedIn = accounts.get(email);
+    },
+
+    /**
+     * Where the reset link last logged for this email leads once opened (the
+     * reset screen with its token), or undefined when none was logged.
+     */
+    resetLinkFor(email: string): string | undefined {
+      return resetLinks.get(email);
     },
 
     /** Seeds a recurrence for the account, as through Adminer. */

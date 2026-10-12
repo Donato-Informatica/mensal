@@ -49,6 +49,9 @@ export function SignIn() {
             autoComplete="current-password"
             required
           />
+          <Anchor component={Link} to="/esqueci-a-senha" fz="sm" mt={-8}>
+            Esqueci a senha
+          </Anchor>
           <Button type="submit" loading={signIn.isPending} fullWidth mt="xs">
             Entrar
           </Button>

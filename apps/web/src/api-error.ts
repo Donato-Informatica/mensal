@@ -29,6 +29,7 @@ const messages = new Map<string, string>([
   ["INVALID_EMAIL", "E-mail inválido."],
   ["PASSWORD_TOO_SHORT", "A senha deve ter pelo menos 8 caracteres."],
   ["PASSWORD_TOO_LONG", "A senha deve ter no máximo 128 caracteres."],
+  ["INVALID_TOKEN", "Este link é inválido ou expirou. Peça um novo."],
   // /api/v1
   ["UNAUTHENTICATED", "Sua sessão expirou. Entre novamente."],
   ["USER_NOT_APPROVED", "Sua conta ainda aguarda aprovação."],

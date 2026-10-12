@@ -11,10 +11,12 @@ import { redirectFor, type Access } from "./access.ts";
 import type { ApiClient } from "./api-client.ts";
 import type { AuthClient } from "./auth-client.ts";
 import { AwaitingApproval } from "./awaiting-approval.tsx";
+import { ForgotPassword } from "./forgot-password.tsx";
 import { Month } from "./month.tsx";
 import { periodQuery } from "./period-query.ts";
 import { recurrencesQuery } from "./recurrence-query.ts";
 import { Recurrences } from "./recurrences.tsx";
+import { ResetPassword } from "./reset-password.tsx";
 import { sessionQuery } from "./session.ts";
 import { SignIn } from "./sign-in.tsx";
 import { SignUp } from "./sign-up.tsx";
@@ -90,6 +92,22 @@ const recurrences = createRoute({
   },
 });
 
+/**
+ * Where an opened reset link lands: with `?token=`, or without one (Better-Auth
+ * sends `?error=INVALID_TOKEN`) when the link is invalid or expired.
+ */
+const resetPassword = createRoute({
+  getParentRoute: () => anonymous,
+  path: "/redefinir-senha",
+  validateSearch: (search): { token?: string | undefined } => ({
+    token: typeof search.token === "string" ? search.token : undefined,
+  }),
+  component: function ResetPasswordRoute() {
+    const { token } = resetPassword.useSearch();
+    return <ResetPassword token={token} />;
+  },
+});
+
 const routeTree = root.addChildren([
   anonymous.addChildren([
     createRoute({
@@ -102,6 +120,12 @@ const routeTree = root.addChildren([
       path: "/cadastro",
       component: SignUp,
     }),
+    createRoute({
+      getParentRoute: () => anonymous,
+      path: "/esqueci-a-senha",
+      component: ForgotPassword,
+    }),
+    resetPassword,
   ]),
   awaitingApproval.addChildren([
     createRoute({
