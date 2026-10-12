@@ -1,4 +1,6 @@
 import {
+  currentPeriod,
+  NewRecurrenceSchema,
   periodOfMonth,
   resolvePeriod,
   today,
@@ -58,6 +60,38 @@ export function fakeApi() {
     );
   }
 
+  /** POST /api/v1/recurrences, behind the approval gate. */
+  function postRecurrence(body: unknown): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const input = NewRecurrenceSchema.safeParse(body);
+    if (!input.success) {
+      return json(400, {
+        code: "INVALID_INPUT",
+        fields: [
+          ...new Set(
+            input.error.issues.flatMap(({ path: [field] }) =>
+              field === undefined ? [] : [String(field)]
+            )
+          ),
+        ],
+      });
+    }
+    if (input.data.startPeriod < currentPeriod()) {
+      return json(400, { code: "START_PERIOD_IN_PAST" });
+    }
+    const now = new Date().toISOString();
+    const recurrence: Recurrence = {
+      id: uuid(),
+      userId: signedIn.id,
+      ...input.data,
+      createdAt: now,
+      updatedAt: now,
+    };
+    signedIn.recurrences.push(recurrence);
+    return json(201, recurrence);
+  }
+
   const handlers: Record<string, (body: Record<string, string>) => Response> = {
     "GET /api/auth/get-session": () =>
       json(200, signedIn ? sessionOf(signedIn) : null),
@@ -104,10 +138,14 @@ export function fakeApi() {
       if (request.method === "GET" && periodMatch) {
         return getPeriod(decodeURIComponent(periodMatch[1]!));
       }
+      const text = await request.text();
+      const body = text ? JSON.parse(text) : {};
+      if (request.method === "POST" && pathname === "/api/v1/recurrences") {
+        return postRecurrence(body);
+      }
       const handler = handlers[`${request.method} ${pathname}`];
       if (!handler) return json(404, { message: "Not found" });
-      const text = await request.text();
-      return handler(text ? JSON.parse(text) : {});
+      return handler(body);
     },
 
     addAccount({
@@ -150,6 +188,11 @@ export function fakeApi() {
       };
       account.recurrences.push(recurrence);
       return recurrence;
+    },
+
+    /** The account's recurrences, as the database holds them. */
+    recurrencesOf(email: string): readonly Recurrence[] {
+      return accounts.get(email)!.recurrences;
     },
 
     /** Seeds an occurrence for the account, as through Adminer. */

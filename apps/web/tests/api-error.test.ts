@@ -15,6 +15,8 @@ describe("errorMessage", () => {
     ["UNAUTHENTICATED", "Sua sessão expirou. Entre novamente."],
     ["USER_NOT_APPROVED", "Sua conta ainda aguarda aprovação."],
     ["INVALID_PERIOD", "Mês inválido."],
+    ["INVALID_INPUT", "Confira os campos e tente novamente."],
+    ["START_PERIOD_IN_PAST", "O início não pode ser antes do mês atual."],
   ])("translates the API code %s", (code, message) => {
     expect(errorMessage(new ApiError(code))).toBe(message);
   });

@@ -3,6 +3,7 @@ import { toNodeHandler } from "better-auth/node";
 import express from "express";
 import type { Auth } from "./auth.ts";
 import { periodsRouter } from "./periods.ts";
+import { recurrencesRouter } from "./recurrences.ts";
 import { requireApprovedUser } from "./require-approved-user.ts";
 
 export interface AppOptions {
@@ -25,6 +26,7 @@ export function createApp({ auth, db, now = () => new Date() }: AppOptions) {
     res.json({ userId: res.locals.userId });
   });
   v1.use("/periods", periodsRouter({ db, now }));
+  v1.use("/recurrences", recurrencesRouter({ db, now }));
   app.use("/api/v1", v1);
 
   return app;

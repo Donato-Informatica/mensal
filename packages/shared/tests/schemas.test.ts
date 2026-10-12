@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  NewRecurrenceSchema,
   OccurrenceSchema,
   RecurrenceSchema,
   VirtualOccurrenceSchema,
@@ -60,6 +61,79 @@ describe("RecurrenceSchema", () => {
         description: "x".repeat(121),
       }).success
     ).toBe(false);
+  });
+});
+
+describe("NewRecurrenceSchema", () => {
+  const newRecurrence = {
+    direction: "OUTFLOW",
+    description: "Aluguel",
+    defaultAmount: 220000,
+    dueDay: 10,
+    startPeriod: "2026-10-01",
+    endPeriod: "2027-09-01",
+    notes: "Contrato de 12 meses",
+  };
+
+  it("accepts a recurrence to create", () => {
+    expect(NewRecurrenceSchema.parse(newRecurrence)).toEqual(newRecurrence);
+  });
+
+  it("accepts a variable amount, no due day, no end and no notes", () => {
+    const open = {
+      ...newRecurrence,
+      defaultAmount: null,
+      dueDay: null,
+      endPeriod: null,
+      notes: null,
+    };
+    expect(NewRecurrenceSchema.parse(open)).toEqual(open);
+  });
+
+  it("accepts an end period equal to the start period", () => {
+    expect(
+      NewRecurrenceSchema.safeParse({
+        ...newRecurrence,
+        endPeriod: "2026-10-01",
+      }).success
+    ).toBe(true);
+  });
+
+  it("rejects an end period before the start period, on endPeriod", () => {
+    const result = NewRecurrenceSchema.safeParse({
+      ...newRecurrence,
+      endPeriod: "2026-09-01",
+    });
+    expect(result.error?.issues.map((issue) => issue.path)).toEqual([
+      ["endPeriod"],
+    ]);
+  });
+
+  it.each([
+    ["an empty description", { description: "   " }],
+    [
+      "a description longer than 120 characters",
+      { description: "x".repeat(121) },
+    ],
+    ["a zero amount", { defaultAmount: 0 }],
+    ["a due day of 0", { dueDay: 0 }],
+    ["a due day of 32", { dueDay: 32 }],
+    ["a start period that is not the 1st", { startPeriod: "2026-10-05" }],
+    ["an unknown direction", { direction: "SIDEWAYS" }],
+  ])("rejects %s", (_, override) => {
+    expect(
+      NewRecurrenceSchema.safeParse({ ...newRecurrence, ...override }).success
+    ).toBe(false);
+  });
+
+  it("trims the description and keeps blank notes as none", () => {
+    expect(
+      NewRecurrenceSchema.parse({
+        ...newRecurrence,
+        description: "  Aluguel  ",
+        notes: "  ",
+      })
+    ).toMatchObject({ description: "Aluguel", notes: null });
   });
 });
 

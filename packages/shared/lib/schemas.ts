@@ -32,6 +32,29 @@ export const RecurrenceSchema = z.object({
 });
 export type Recurrence = z.infer<typeof RecurrenceSchema>;
 
+/** The body of `POST /recurrences`: a recurrence the user creates (PRD §3.1). */
+export const NewRecurrenceSchema = z
+  .object({
+    direction: DirectionSchema,
+    description: z.string().trim().min(1).max(120),
+    defaultAmount: AmountSchema.nullable(),
+    dueDay: z.int().min(1).max(31).nullable(),
+    startPeriod: PeriodSchema,
+    endPeriod: PeriodSchema.nullable(),
+    // Blank notes are no notes.
+    notes: z
+      .string()
+      .trim()
+      .nullable()
+      .transform((notes) => notes || null),
+  })
+  .refine(
+    ({ startPeriod, endPeriod }) =>
+      endPeriod === null || endPeriod >= startPeriod,
+    { path: ["endPeriod"], message: "The end period is before the start" }
+  );
+export type NewRecurrence = z.output<typeof NewRecurrenceSchema>;
+
 export const OccurrenceSchema = z.object({
   id: z.uuid(),
   userId: z.string(),

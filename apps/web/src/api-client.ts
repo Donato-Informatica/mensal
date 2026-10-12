@@ -1,11 +1,17 @@
-import { monthOf, type PeriodPayload } from "@mensal/shared";
+import {
+  monthOf,
+  type NewRecurrence,
+  type PeriodPayload,
+  type Recurrence,
+} from "@mensal/shared";
 import { ApiError } from "./api-error.ts";
 
 /** The app's own API (`/api/v1`), on the page's origin. */
 export function createApiClient(fetchImpl: typeof fetch = fetch) {
-  async function get<T>(path: string): Promise<T> {
+  async function send<T>(path: string, init?: RequestInit): Promise<T> {
     const response = await fetchImpl(
-      new URL(`/api/v1${path}`, window.location.origin)
+      new URL(`/api/v1${path}`, window.location.origin),
+      init
     );
     if (!response.ok) {
       const body: unknown = await response.json().catch(() => undefined);
@@ -18,10 +24,21 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
     return (await response.json()) as T;
   }
 
+  function post<T>(path: string, body: unknown): Promise<T> {
+    return send<T>(path, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
   return {
     /** The payload of `period` ('YYYY-MM-01'). */
     period: (period: string) =>
-      get<PeriodPayload>(`/periods/${monthOf(period)}`),
+      send<PeriodPayload>(`/periods/${monthOf(period)}`),
+
+    createRecurrence: (recurrence: NewRecurrence) =>
+      post<Recurrence>("/recurrences", recurrence),
   };
 }
 

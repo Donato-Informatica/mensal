@@ -1,5 +1,8 @@
 import "@mantine/core/styles.css";
+import "@mantine/dates/styles.css";
+import "dayjs/locale/pt-br";
 import { MantineProvider } from "@mantine/core";
+import { DatesProvider } from "@mantine/dates";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { useState } from "react";
@@ -21,9 +24,11 @@ export function App({
   );
   return (
     <MantineProvider theme={theme} forceColorScheme="dark">
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
+      <DatesProvider settings={{ locale: "pt-br" }}>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </DatesProvider>
     </MantineProvider>
   );
 }

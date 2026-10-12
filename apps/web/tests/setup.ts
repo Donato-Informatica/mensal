@@ -25,6 +25,10 @@ vi.stubGlobal(
     disconnect() {}
   }
 );
+// Textarea autosize re-measures once fonts load.
+Object.defineProperty(document, "fonts", {
+  value: { addEventListener: () => {}, removeEventListener: () => {} },
+});
 // The router restores scroll on every navigation.
 vi.stubGlobal("scrollTo", () => {});
 

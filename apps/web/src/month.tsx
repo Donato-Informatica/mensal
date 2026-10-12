@@ -25,6 +25,7 @@ import {
 import { useId } from "react";
 import { AppLayout } from "./app-layout.tsx";
 import { formatAmount, formatDayAndMonth, formatPeriod } from "./format.ts";
+import { NewRecurrenceButton } from "./new-recurrence.tsx";
 import { periodQuery } from "./period-query.ts";
 
 /** The monthly screen: one period's summary and occurrences. */
@@ -37,6 +38,9 @@ export function Month({ period }: { period: string }) {
       <Stack gap="xl">
         <PeriodNavigator period={period} />
         <Summary summary={data.summary} />
+        <Group justify="flex-end">
+          <NewRecurrenceButton period={period} />
+        </Group>
         <Occurrences items={data.items} />
       </Stack>
     </AppLayout>
@@ -51,9 +55,20 @@ function PeriodNavigator({ period }: { period: string }) {
       to: "/",
       search: { mes: monthOf(shiftPeriod(period, months)) },
     });
+  // Inside a dialog, the arrows belong to the dialog (e.g. a month picker).
+  const moveUnlessInDialog = (months: number) => (event: KeyboardEvent) => {
+    if (
+      event.target instanceof Element &&
+      event.target.closest('[role="dialog"]')
+    ) {
+      return;
+    }
+    event.preventDefault();
+    move(months);
+  };
   useHotkeys([
-    ["ArrowLeft", () => move(-1)],
-    ["ArrowRight", () => move(1)],
+    ["ArrowLeft", moveUnlessInDialog(-1), { preventDefault: false }],
+    ["ArrowRight", moveUnlessInDialog(1), { preventDefault: false }],
   ]);
 
   // Fixed at the top while the list scrolls (PRD §7.1).
