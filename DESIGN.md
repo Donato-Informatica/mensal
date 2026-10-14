@@ -1,614 +1,332 @@
 ---
-version: alpha
-name: ClickHouse
-website: "https://clickhouse.com"
-description: A high-performance database interface anchored on near-pure black canvas with electric yellow as the brand voltage. White typography in confident sans, yellow CTAs, and yellow-text stat numbers carry the brand voice across every page. Code blocks and product UI fragments embed directly in dark cards. The yellow + black pairing (and yellow used scarcely as accent) is the system's signature — brand identity without atmospheric decoration.
-
-seo:
-  title: "ClickHouse Design System for React — #faff69 yellow, Inter 700, 25 components"
-  metaDescription: "ClickHouse's design system as a DESIGN.md file. Electric yellow #faff69, Inter + JetBrains Mono, 22 colors, 25 components. For React, Next.js, and AI tools."
-  tags:
-    - "Backend, Database & DevOps"
-    - "Developer Tools & IDEs"
-  highlights:
-    - "Single brand voltage — electric yellow #faff69 carries every primary CTA, stat number, and full-bleed CTA band, never as secondary"
-    - "Near-pure black canvas — #0a0a0a is the page floor; the system has no light-mode marketing surface anywhere"
-    - "Inter at weight 700 with -2.5px tracking — display headlines run 72px tight; no serif counter-voice in the entire scale"
-    - "JetBrains Mono code windows on #1a1a1a — SQL syntax embedded directly in marketing pages, not painted illustrations"
-    - "Yellow stat-callouts at 56px / 700 — '779+', '47k+', '2.8k+' are the system's signature credibility moments"
-  lastUpdated: "2026-05-12"
-  author:
-    name: "Dov Azencot"
-    url: "https://x.com/dovazencot"
-  opening: |
-    ClickHouse's design system runs on one electric idea: yellow plus black. Near-pure black canvas (#0a0a0a) underneath, electric yellow (#faff69) on top — used scarcely on individual buttons and stat numbers, then poured generously into full-bleed CTA bands. No second brand color. No gradient softening. The voltage IS the identity.
-
-    This page packages the full spec into a single DESIGN.md file. Inside: 22 colors, 16 type styles built on Inter and JetBrains Mono, 6 corner radii, 8 spacing tokens, and 25 components — buttons, stat callouts, code-window cards, pricing tiers (with a yellow-fill featured variant), and the signature yellow CTA band that closes every page.
-
-    Feed the file to Claude, Cursor, or GitHub Copilot and the React components come back in ClickHouse's voice — Inter 700 headlines at -2.5px tracking, SQL code blocks rendered in JetBrains Mono on dark surface cards, yellow reserved for the moments that matter. Or read it as a reference for how a developer-tooling brand earns recognition with one color instead of ten.
-  related:
-    - href: "https://github.com/google-labs-code/design.md"
-      title: "The DESIGN.md specification"
-      description: "Google Labs' open spec for machine-readable design system files — the format this page is built on."
-    - href: "/design"
-      title: "Browse all design systems"
-      description: "The full directory of DESIGN.md files on shadcn.io, with live mockups for each."
-    - href: "/blocks"
-      title: "React blocks for shadcn/ui"
-      description: "Production-ready hero, pricing, CTA, and dashboard sections built with the same Tailwind + shadcn primitives."
-  questions:
-    - id: "primary-color"
-      title: "What is ClickHouse's primary brand color?"
-      answer: "ClickHouse's brand color is an electric yellow at #faff69 — a lemon-leaning chartreuse, brighter and greener than a typical highlighter yellow. It's the single brand voltage across the entire system, used on every primary CTA button, every stat-callout number ('779+', '47k+', '2.8k+'), and full-bleed yellow CTA bands that close most pages. The press variant darkens to #e6eb52, and the disabled variant desaturates to #3a3a1f. There is no second brand color — ClickHouse is monochromatic plus this one yellow."
-    - id: "typography"
-      title: "What typography does ClickHouse use, and what are the substitutes?"
-      answer: "ClickHouse runs Inter for everything — display, body, navigation, buttons, captions — and JetBrains Mono for code blocks. Display sizes from 32px to 72px all sit at weight 700 with aggressive negative letter-spacing (-1px to -2.5px); without the tight tracking, Inter 700 reads too wide and loses the engineered feel. Body runs at weight 400, sub-titles and buttons at 600. If Inter is unavailable, Söhne is the closest commercial substitute and Geist is a modern open alternative. There is no serif counter-voice in the system."
-    - id: "dark-only"
-      title: "Does ClickHouse have a light mode?"
-      answer: "No. The entire public marketing surface lives on a near-pure black canvas (#0a0a0a) with white type. There is no light-mode equivalent documented in this spec. Depth comes from the subtle contrast between canvas and surface-card (#1a1a1a, only a hair lighter than black) rather than from drop shadows — the system uses zero shadows. The yellow-on-black contrast does most of the elevation work, with the yellow CTAs and stat numbers pulling the eye against the dim panels."
-    - id: "code-mockups"
-      title: "Why do code windows show up everywhere in the marketing?"
-      answer: "ClickHouse is a database, and the spec is explicit: show the SQL query, don't paint marketing illustrations of queries. Code-window cards render in JetBrains Mono at 14px / 400 inside surface-card (#1a1a1a) panels with 12px rounded corners and 24px padding. SQL syntax is highlighted in muted blues, yellows, and grays. These cards usually sit on the right side of a 7/5 hero grid opposite the h1, and they replace abstract illustrations on developer-focused pages — the code itself is the marketing voltage."
-    - id: "use-in-project"
-      title: "Can I use this DESIGN.md to build my own React data tooling site?"
-      answer: "Yes. The file is structured for AI tools like Claude, Cursor, or Copilot to read directly — feed it in and the agent reproduces ClickHouse's restraint (single yellow accent, dark-only canvas, Inter 700 with negative tracking, JetBrains Mono code windows) rather than a generic SaaS theme. Every value is a quoted token you can paste straight into Tailwind config or CSS variables. The 25 components cover buttons, navigation, pricing tiers (including the yellow-fill featured variant), code windows, stat callouts, and the full-bleed yellow CTA band — enough to scaffold a full marketing site."
-    - id: "known-gaps"
-      title: "What's missing from this DESIGN.md spec?"
-      answer: "Documented in the Known Gaps section: the exact #faff69 hex was sampled from screenshots and may differ slightly from ClickHouse's official brand color; Inter weight axis values beyond 400/500/600/700 aren't formalized; animation timings (code typewriter effects, stat counter ticks) are out of scope; form validation states past text-input-focused weren't extracted; and the actual ClickHouse Cloud product UI (query console, monitoring dashboards, table browser) shares tokens with the marketing site but adds many product-specific components that aren't captured here. The customer logo strip's exact opacity treatment is also approximate."
-
+name: Mensal
+description: A monthly cash-flow ledger read in the dark — near-black canvas, quiet grey rows, and one electric-yellow highlighter on what needs you.
 colors:
   primary: "#faff69"
   primary-active: "#e6eb52"
   primary-disabled: "#3a3a1f"
   ink: "#ffffff"
   body: "#cccccc"
-  body-strong: "#e6e6e6"
   muted: "#888888"
   muted-soft: "#5a5a5a"
   hairline: "#2a2a2a"
   hairline-strong: "#3a3a3a"
   canvas: "#0a0a0a"
-  surface-soft: "#121212"
   surface-card: "#1a1a1a"
-  surface-elevated: "#242424"
-  surface-yellow-band: "#faff69"
   on-primary: "#0a0a0a"
-  on-dark: "#ffffff"
-  on-yellow: "#0a0a0a"
   accent-emerald: "#22c55e"
   accent-rose: "#ef4444"
-  accent-blue: "#3b82f6"
-  success: "#22c55e"
-  warning: "#f59e0b"
-  error: "#ef4444"
-
 typography:
-  display-xl:
-    fontFamily: "Inter, sans-serif"
-    fontSize: 72px
-    fontWeight: 700
-    lineHeight: 1.05
-    letterSpacing: -2.5px
-  display-lg:
-    fontFamily: "Inter, sans-serif"
-    fontSize: 56px
-    fontWeight: 700
-    lineHeight: 1.1
-    letterSpacing: -2px
-  display-md:
-    fontFamily: "Inter, sans-serif"
-    fontSize: 40px
-    fontWeight: 700
-    lineHeight: 1.15
-    letterSpacing: -1.5px
   display-sm:
-    fontFamily: "Inter, sans-serif"
+    fontFamily: "Inter Variable, Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif"
     fontSize: 32px
     fontWeight: 700
     lineHeight: 1.2
     letterSpacing: -1px
-  title-lg:
-    fontFamily: "Inter, sans-serif"
-    fontSize: 24px
+  figure:
+    fontFamily: "Inter Variable, Inter, sans-serif"
+    fontSize: 20px
     fontWeight: 700
-    lineHeight: 1.3
-    letterSpacing: -0.3px
-  title-md:
-    fontFamily: "Inter, sans-serif"
-    fontSize: 18px
-    fontWeight: 600
     lineHeight: 1.4
-    letterSpacing: 0
   title-sm:
-    fontFamily: "Inter, sans-serif"
+    fontFamily: "Inter Variable, Inter, sans-serif"
     fontSize: 16px
     fontWeight: 600
     lineHeight: 1.4
-    letterSpacing: 0
-  stat-display:
-    fontFamily: "Inter, sans-serif"
-    fontSize: 56px
-    fontWeight: 700
-    lineHeight: 1.0
-    letterSpacing: -1.5px
+  row-title:
+    fontFamily: "Inter Variable, Inter, sans-serif"
+    fontSize: 16px
+    fontWeight: 500
+    lineHeight: 1.55
+  amount:
+    fontFamily: "Inter Variable, Inter, sans-serif"
+    fontSize: 16px
+    fontWeight: 600
+    lineHeight: 1.55
   body-md:
-    fontFamily: "Inter, sans-serif"
+    fontFamily: "Inter Variable, Inter, sans-serif"
     fontSize: 16px
     fontWeight: 400
     lineHeight: 1.55
-    letterSpacing: 0
   body-sm:
-    fontFamily: "Inter, sans-serif"
+    fontFamily: "Inter Variable, Inter, sans-serif"
     fontSize: 14px
     fontWeight: 400
     lineHeight: 1.55
-    letterSpacing: 0
-  caption:
-    fontFamily: "Inter, sans-serif"
-    fontSize: 13px
-    fontWeight: 500
-    lineHeight: 1.4
-    letterSpacing: 0
   caption-uppercase:
-    fontFamily: "Inter, sans-serif"
+    fontFamily: "Inter Variable, Inter, sans-serif"
     fontSize: 12px
     fontWeight: 600
     lineHeight: 1.4
     letterSpacing: 1.5px
-  code:
-    fontFamily: "JetBrains Mono, ui-monospace, monospace"
-    fontSize: 14px
-    fontWeight: 400
-    lineHeight: 1.55
-    letterSpacing: 0
   button:
-    fontFamily: "Inter, sans-serif"
+    fontFamily: "Inter Variable, Inter, sans-serif"
     fontSize: 14px
     fontWeight: 600
     lineHeight: 1
-    letterSpacing: 0
-  nav-link:
-    fontFamily: "Inter, sans-serif"
-    fontSize: 14px
-    fontWeight: 500
+  wordmark:
+    fontFamily: "Inter Variable, Inter, sans-serif"
+    fontSize: 18px
+    fontWeight: 700
     lineHeight: 1.4
-    letterSpacing: 0
-
 rounded:
   xs: 4px
   sm: 6px
   md: 8px
   lg: 12px
   pill: 9999px
-  full: 9999px
-
 spacing:
-  xxs: 4px
-  xs: 8px
+  xs: 10px
   sm: 12px
   md: 16px
-  lg: 24px
+  lg: 20px
   xl: 32px
-  xxl: 48px
-  section: 96px
-
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
     typography: "{typography.button}"
     rounded: "{rounded.md}"
-    padding: 12px 20px
-    height: 40px
+    padding: 0 18px
+    height: 36px
   button-primary-active:
     backgroundColor: "{colors.primary-active}"
     textColor: "{colors.on-primary}"
-    rounded: "{rounded.md}"
   button-primary-disabled:
     backgroundColor: "{colors.primary-disabled}"
     textColor: "{colors.muted}"
-    rounded: "{rounded.md}"
-  button-secondary:
+  button-default:
     backgroundColor: "{colors.surface-card}"
-    textColor: "{colors.on-dark}"
+    textColor: "{colors.ink}"
     typography: "{typography.button}"
     rounded: "{rounded.md}"
-    padding: 12px 20px
-    height: 40px
-  button-text-link:
-    backgroundColor: transparent
-    textColor: "{colors.on-dark}"
+    padding: 0 18px
+    height: 36px
+  button-danger:
+    backgroundColor: "{colors.accent-rose}"
+    textColor: "{colors.ink}"
     typography: "{typography.button}"
-  button-icon-circular:
-    backgroundColor: "{colors.surface-card}"
-    textColor: "{colors.on-dark}"
-    rounded: "{rounded.full}"
-    size: 36px
-  text-link:
-    backgroundColor: transparent
-    textColor: "{colors.primary}"
-    typography: "{typography.body-md}"
-  top-nav:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.on-dark}"
-    typography: "{typography.nav-link}"
-    height: 64px
-  hero-band:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.on-dark}"
-    typography: "{typography.display-xl}"
-    padding: 96px
-  hero-stat-card:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.primary}"
-    typography: "{typography.stat-display}"
-  feature-card-yellow:
-    backgroundColor: "{colors.surface-yellow-band}"
-    textColor: "{colors.on-yellow}"
-    typography: "{typography.title-md}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-  feature-card-dark:
-    backgroundColor: "{colors.surface-card}"
-    textColor: "{colors.on-dark}"
-    typography: "{typography.title-md}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-  code-window-card:
-    backgroundColor: "{colors.surface-card}"
-    textColor: "{colors.on-dark}"
-    typography: "{typography.code}"
-    rounded: "{rounded.lg}"
-    padding: 24px
-  product-mockup-card:
-    backgroundColor: "{colors.surface-card}"
-    textColor: "{colors.on-dark}"
-    typography: "{typography.title-md}"
-    rounded: "{rounded.lg}"
-    padding: 24px
-  pricing-tier-card:
-    backgroundColor: "{colors.surface-card}"
-    textColor: "{colors.on-dark}"
-    typography: "{typography.title-lg}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-  pricing-tier-card-featured:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.title-lg}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-  stat-callout:
-    backgroundColor: transparent
-    textColor: "{colors.primary}"
-    typography: "{typography.stat-display}"
-  cta-band-yellow:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.display-md}"
-    rounded: "{rounded.lg}"
-    padding: 64px
-  text-input:
-    backgroundColor: "{colors.surface-card}"
-    textColor: "{colors.on-dark}"
-    typography: "{typography.body-md}"
     rounded: "{rounded.md}"
-    padding: 10px 14px
-    height: 40px
-  text-input-focused:
-    backgroundColor: "{colors.surface-card}"
-    textColor: "{colors.on-dark}"
-    rounded: "{rounded.md}"
+    height: 36px
   category-tab:
     backgroundColor: transparent
-    textColor: "{colors.muted}"
-    typography: "{typography.nav-link}"
+    textColor: "{colors.body}"
+    typography: "{typography.button}"
     rounded: "{rounded.md}"
-    padding: 8px 14px
+    height: 36px
   category-tab-active:
     backgroundColor: "{colors.surface-card}"
-    textColor: "{colors.on-dark}"
-    typography: "{typography.nav-link}"
-    rounded: "{rounded.md}"
-  badge-pill:
+    textColor: "{colors.ink}"
+  icon-button-round:
     backgroundColor: "{colors.surface-card}"
-    textColor: "{colors.on-dark}"
-    typography: "{typography.caption}"
+    textColor: "{colors.ink}"
     rounded: "{rounded.pill}"
-    padding: 4px 12px
-  badge-yellow:
+    size: 36px
+  ledger-panel:
+    backgroundColor: "{colors.surface-card}"
+    textColor: "{colors.body}"
+    rounded: "{rounded.lg}"
+  ledger-row:
+    backgroundColor: transparent
+    textColor: "{colors.ink}"
+    typography: "{typography.row-title}"
+    padding: 12px 20px
+  summary-block:
+    backgroundColor: "{colors.surface-card}"
+    textColor: "{colors.ink}"
+    typography: "{typography.figure}"
+    rounded: "{rounded.lg}"
+    padding: 20px
+  auth-card:
+    backgroundColor: "{colors.surface-card}"
+    textColor: "{colors.body}"
+    rounded: "{rounded.lg}"
+    padding: 32px
+    width: 400px
+  text-input:
+    backgroundColor: "{colors.surface-card}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.md}"
+    height: 36px
+  settle-checkbox:
+    backgroundColor: "{colors.surface-card}"
+    rounded: "{rounded.md}"
+    size: 20px
+  settle-checkbox-checked:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
-    typography: "{typography.caption-uppercase}"
-    rounded: "{rounded.pill}"
-    padding: 4px 12px
-  events-card:
+  badge-pill:
     backgroundColor: "{colors.surface-card}"
-    textColor: "{colors.on-dark}"
-    typography: "{typography.title-md}"
-    rounded: "{rounded.lg}"
-    padding: 24px
-  customer-logo-strip:
+    textColor: "{colors.body}"
+    rounded: "{rounded.pill}"
+  badge-overdue:
+    textColor: "{colors.accent-rose}"
+    rounded: "{rounded.pill}"
+  dialog:
     backgroundColor: "{colors.canvas}"
-    textColor: "{colors.muted}"
+    textColor: "{colors.body}"
     typography: "{typography.body-md}"
-    padding: 32px
-  footer:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.muted}"
-    typography: "{typography.body-sm}"
-    padding: 64px
+    rounded: "{rounded.md}"
 ---
+
+# Design System: Mensal
 
 ## Overview
 
-ClickHouse's marketing surface is the highest-contrast interface in the database / data-platform category. The base atmosphere is **near-pure black canvas** (`{colors.canvas}` — #0a0a0a) with **electric yellow** (`{colors.primary}` — #faff69) as the singular brand voltage. The yellow handles every primary CTA, every stat-callout number, every "GET STARTED" badge — used scarcely on individual elements but generously on full-bleed yellow CTA cards. White typography in confident weight-700 sans-serif anchors the editorial body.
+**Creative North Star: "The Night Ledger"**
 
-The yellow + black pairing is what makes ClickHouse instantly recognizable. Where Snowflake uses cool blue gradients and Databricks uses red + slate, ClickHouse leans hard into one electric yellow that does all the brand work. Code blocks, terminal output, and product UI fragments embed directly in dark `{colors.surface-card}` (#1a1a1a) cards across every page.
+Mensal is a bank statement read in a dark room. The page is a near-black sheet; each month is a column of quiet grey rows ruled by hairlines; and a single electric-yellow highlighter marks the one thing that needs the reader right now: the button that does the act, the box just ticked, the control under the keyboard. Everything else stays dim on purpose, so the eye lands on what is due and what is left without searching.
 
-Type voice runs **Inter** at confident weights — 700 for display headlines (with negative letter-spacing -1 to -2.5px), 600 for sub-titles and buttons, 400 for body. The system has no display-serif counter-voice; everything is one geometric humanist sans, scaled and weighted for hierarchy.
+Components are quiet, exact, one-touch. Surfaces sit a hair above the canvas, borders are 1px, and nothing floats. Controls behave like precise instruments: one click settles a row, one menu holds the rest. Density is that of a ledger, not a dashboard. Rows are compact enough to see a whole month at phone width, and nothing on screen is decoration.
+
+The palette and type were inherited from ClickHouse's marketing system: the black, the yellow, Inter set tight. Mensal keeps only what an app needs. It has no marketing bands, stat callouts, pricing tiers or code windows, and it never sets display type above 32px.
 
 **Key Characteristics:**
 
-- Near-pure black canvas (`{colors.canvas}` — #0a0a0a) with white type. The system has no light-mode marketing surface.
-- Electric yellow primary (`{colors.primary}` — #faff69). Used on primary CTAs, large stat-callout numbers ("2.8k+", "74k+"), and full-bleed yellow CTA bands.
-- Inter at weight 700 for display, weight 600 for sub-titles + buttons, weight 400 for body. No serif counterpoint.
-- Dark surface cards (`{colors.surface-card}` — #1a1a1a) for feature cards, code windows, and product mockups. Cards barely lighter than canvas — color-block contrast is subtle.
-- Code blocks render in JetBrains Mono inside `{colors.surface-card}`. SQL syntax-highlighted in muted blues / yellows / grays.
-- Stat numbers in yellow + sans-700 + huge size carry the credibility moment ("779+", "2.8k+", "47k+" community / contributor / star counts).
-- Border radius is hierarchical: `{rounded.md}` (8px) for buttons, `{rounded.lg}` (12px) for content cards. No pill except in tag badges.
-- Section rhythm `{spacing.section}` (96px) between major editorial bands.
+- Dark only. Canvas `{colors.canvas}` is the page; `{colors.surface-card}` lifts panels by tone alone.
+- One yellow, rationed: primary action, checked state, focus ring, wordmark.
+- Green means money coming in; red means late or destructive. Neither is decorative.
+- Inter throughout. Display at 700 with tight tracking; everything else 400–600.
+- Flat: hairline borders, no shadows on resting surfaces.
+- Rows, not cards. A month is a ruled list inside one panel per group.
 
 ## Colors
 
-### Brand & Accent
+Monochrome on black, with one highlighter and two signal colours that carry meaning.
 
-- **Primary (Electric Yellow)** (`{colors.primary}` — #faff69): The signature brand color. All primary CTA backgrounds, large stat-callout numbers, full-bleed yellow CTA cards. The yellow is the brand.
-- **Primary Active** (`{colors.primary-active}` — #e6eb52): Press / hover-darker variant.
-- **Primary Disabled** (`{colors.primary-disabled}` — #3a3a1f): Desaturated dark-yellow on dark canvas.
+### Primary
 
-### Surface
+- **Highlighter Yellow** (`{colors.primary}`): the primary button, the checked settle box, switches turned on, the focus ring and the wordmark. It is never body text or a large fill.
+- **Pressed Highlighter** (`{colors.primary-active}`): hover and pressed state of the primary button.
+- **Spent Highlighter** (`{colors.primary-disabled}`): a disabled primary button, such as the amount popover's "Liquidar" before a value is typed.
 
-- **Canvas** (`{colors.canvas}` — #0a0a0a): The default page floor. Near-pure black.
-- **Surface Soft** (`{colors.surface-soft}` — #121212): Section dividers, very-soft band tints.
-- **Surface Card** (`{colors.surface-card}` — #1a1a1a): Feature cards, code windows, product mockups, pricing tier cards.
-- **Surface Elevated** (`{colors.surface-elevated}` — #242424): Nested cards inside larger dark cards.
-- **Surface Yellow Band** (`{colors.surface-yellow-band}` — #faff69): The yellow CTA card / band fill — same hex as primary.
-- **Hairline** (`{colors.hairline}` — #2a2a2a): 1px borders on cards.
-- **Hairline Strong** (`{colors.hairline-strong}` — #3a3a3a): Heavier divider on input underlines and emphasis.
+### Signal
 
-### Text
+- **Inflow Emerald** (`{colors.accent-emerald}`): the amounts of inflows (Entradas) in ledger rows, and success alerts. Outflows stay white; emerald is the only thing that sets money in apart from money out.
+- **Overdue Rose** (`{colors.accent-rose}`): the "Atrasadas" group label, the badge naming an earlier period's overdue row, error alerts, and destructive actions (Excluir). Light variants (tinted surface, rose text) carry alerts and the overdue badge; solid rose is reserved for the confirming destructive button.
 
-- **Ink / On Dark** (`{colors.on-dark}` — #ffffff): All headline and primary text.
-- **Body** (`{colors.body}` — #cccccc): Default running-text color.
-- **Body Strong** (`{colors.body-strong}` — #e6e6e6): Emphasized paragraphs.
-- **Muted** (`{colors.muted}` — #888888): Footer links, captions, breadcrumbs.
-- **Muted Soft** (`{colors.muted-soft}` — #5a5a5a): Tertiary text — fine print.
-- **On Primary / On Yellow** (`{colors.on-primary}` / `{colors.on-yellow}` — #0a0a0a): Black text on yellow CTAs and yellow CTA bands. The high-contrast yellow + black combo is the brand action signal.
+### Neutral
 
-### Semantic / Accent
+- **Paper White** (`{colors.ink}`): headings, row descriptions, amounts and summary figures: the facts.
+- **Ledger Grey** (`{colors.body}`): running text, dialog copy and inactive header buttons.
+- **Pencil Grey** (`{colors.muted}`): "dimmed" text, such as due dates under a description, "A definir" and quiet group labels.
+- **Faint Grey** (`{colors.muted-soft}`): tertiary marks only.
+- **Night Canvas** (`{colors.canvas}`): the page, the sticky period navigator, dialogs, menus and popovers.
+- **Panel Black** (`{colors.surface-card}`): ledger panels, summary blocks, the auth card, inputs, default buttons, the active screen tab and round icon buttons.
+- **Ruling Line** (`{colors.hairline}`): dividers between ledger rows and under the app header.
+- **Panel Edge** (`{colors.hairline-strong}`): 1px borders of panels, inputs, default buttons, badges, menus and popovers.
 
-- **Accent Emerald** (`{colors.accent-emerald}` — #22c55e): Success states, "active" status indicators in product UI.
-- **Accent Rose** (`{colors.accent-rose}` — #ef4444): Error states, "down" indicators.
-- **Accent Blue** (`{colors.accent-blue}` — #3b82f6): Info states, code-syntax highlighting.
+**The Highlighter Rule.** Yellow marks the single thing that needs the reader. A view has at most one yellow button. If two things want yellow, one of them is wrong.
+
+**The Meaning-Only Rule.** Emerald means money in; rose means late or destructive. They never appear for emphasis, decoration or brand.
 
 ## Typography
 
-### Font Family
+**Display Font:** Inter Variable (self-hosted via `@fontsource-variable/inter`; with -apple-system, Segoe UI, Roboto, sans-serif)
+**Body Font:** the same Inter Variable
+**Label Font:** the same, uppercase and tracked
 
-The system runs **Inter** for everything — display, body, navigation, buttons, captions. **JetBrains Mono** handles code blocks. The fallback stack walks `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`.
-
-The single-family approach is deliberate: Inter at weight 700 + 600 + 400 covers the entire hierarchy without needing a serif or display counter-voice. The geometric humanist character of Inter at confident bold weight gives ClickHouse a precise, engineered feel that matches the database's performance-first positioning.
+**Character:** One humanist sans does the whole ledger. Hierarchy comes from size and weight steps (400 / 500 / 600 / 700) and from white against grey, never from a second family.
 
 ### Hierarchy
 
-| Token                            | Size | Weight | Line Height | Letter Spacing | Use                                            |
-| -------------------------------- | ---- | ------ | ----------- | -------------- | ---------------------------------------------- |
-| `{typography.display-xl}`        | 72px | 700    | 1.05        | -2.5px         | Homepage h1 ("The leading database for AI")    |
-| `{typography.display-lg}`        | 56px | 700    | 1.1         | -2px           | Section heads                                  |
-| `{typography.display-md}`        | 40px | 700    | 1.15        | -1.5px         | Sub-section heads, CTA-band heads              |
-| `{typography.display-sm}`        | 32px | 700    | 1.2         | -1px           | Card titles, pricing tier prices               |
-| `{typography.title-lg}`          | 24px | 700    | 1.3         | -0.3px         | Pricing plan names, larger feature titles      |
-| `{typography.title-md}`          | 18px | 600    | 1.4         | 0              | Card titles, intro paragraphs                  |
-| `{typography.title-sm}`          | 16px | 600    | 1.4         | 0              | Small card titles, list labels                 |
-| `{typography.stat-display}`      | 56px | 700    | 1.0         | -1.5px         | Stat callouts ("779+", "47k+") — ALWAYS yellow |
-| `{typography.body-md}`           | 16px | 400    | 1.55        | 0              | Default running-text                           |
-| `{typography.body-sm}`           | 14px | 400    | 1.55        | 0              | Footer body, fine-print                        |
-| `{typography.caption}`           | 13px | 500    | 1.4         | 0              | Badge labels, captions                         |
-| `{typography.caption-uppercase}` | 12px | 600    | 1.4         | 1.5px          | Section labels, "NEW" badges                   |
-| `{typography.code}`              | 14px | 400    | 1.55        | 0              | Code blocks — JetBrains Mono                   |
-| `{typography.button}`            | 14px | 600    | 1.0         | 0              | Standard button labels                         |
-| `{typography.nav-link}`          | 14px | 500    | 1.4         | 0              | Top-nav menu items                             |
+- **Display** (`{typography.display-sm}`): the screen title, such as "Outubro 2026" in the period navigator, and the auth card titles. It is the largest type in the product.
+- **Figure** (`{typography.figure}`): summary amounts under Previsto and Realizado, in white.
+- **Title** (`{typography.title-sm}`): summary block titles (Entradas, Saídas).
+- **Row title** (`{typography.row-title}`): an occurrence's or recurrence's description, in white, truncated on one line.
+- **Amount** (`{typography.amount}`): the row's amount, never wrapping; emerald for inflows, white for outflows, Pencil Grey for "A definir".
+- **Body** (`{typography.body-md}`): dialog copy and forms. The entity a dialog acts on is set in white at 600 inside the sentence, e.g. "**Aluguel** será liquidada por R$ 2.200,00."
+- **Small** (`{typography.body-sm}`): due dates, form hints and links on the auth screens, in Pencil Grey.
+- **Label** (`{typography.caption-uppercase}`): group headings (ATRASADAS, A VENCER NO MÊS) and the Previsto/Realizado labels. Uppercase, tracked 1.5px, Pencil Grey, or rose for Atrasadas.
 
-### Principles
+**The Tight Display Rule.** Display type is 700 with -1px tracking (set on every `Title` by the theme). Labels go the other way: 12px uppercase opened to +1.5px. Nothing sits in between.
 
-Display weights stay at 700 across all sizes. Negative letter-spacing (-1 to -2.5px) is essential — Inter at weight 700 without negative tracking reads as too wide / Apple-marketing. The tightened tracking gives ClickHouse the precise, engineered feel.
-
-Body and labels stay at weights 400 / 500 / 600. The hierarchy is built on size + weight, not on family contrast.
-
-### Note on Font Substitutes
-
-Inter is open-source and the documented choice. **Söhne** is a close commercial alternative if licensed. **Geist** is another modern alternative.
+**The Thirty-Two Ceiling Rule.** Nothing is set larger than 32px. A ledger screen has no hero.
 
 ## Layout
 
-### Spacing System
-
-- **Base unit:** 4px.
-- **Tokens:** `{spacing.xxs}` 4px · `{spacing.xs}` 8px · `{spacing.sm}` 12px · `{spacing.md}` 16px · `{spacing.lg}` 24px · `{spacing.xl}` 32px · `{spacing.xxl}` 48px · `{spacing.section}` 96px.
-- **Section padding:** `{spacing.section}` (96px) between major bands.
-- **Card internal padding:** `{spacing.xl}` (32px) for feature cards, pricing tiers; `{spacing.lg}` (24px) for code-window cards and event cards.
-
-### Grid & Container
-
-- **Max content width:** ~1280px centered.
-- **Editorial body:** Single 12-column grid; hero often uses 7/5 split (h1 left, code mockup right).
-- **Feature card grids:** 3-up at desktop, 2-up at tablet, 1-up at mobile.
-- **Pricing grid:** 3-4 up at desktop, 1-up at mobile.
-
-### Whitespace Philosophy
-
-ClickHouse uses dense, slightly-compressed whitespace appropriate for a developer-tooling brand — generous enough to read editorially, tight enough to feel "engineering-grade" rather than "marketing-soft." Section rhythm at 96px is standard; card internal padding stays at 32px for feature cards.
+- **Frame:** a 64px header (wordmark, screen tabs, Configurações, Sair) ruled off by a `{colors.hairline}` line, then one centred column, Mantine's `md` container (960px max), with 32px of vertical padding.
+- **Rhythm:** sections of a screen are 32px apart (`xl`). A group label sits 12px (`sm`) above its panel. Rows are padded 12px × 20px. Summary blocks pad 20px and the auth card 32px.
+- **Scale:** Mantine's default spacing, 10 / 12 / 16 / 20 / 32px (`xs` to `xl`). Radii and colours are themed; spacing is not.
+- **Period navigator:** sticky at the top of the month screen on the canvas colour, a three-column grid of [empty | ‹ title › | actions]. The centre group is 400px wide at most.
+- **Summary:** two blocks, one column on phones and two from 576px (`xs`) up.
+- **Auth screens:** a single 400px card, centred in the viewport, with the wordmark above it.
+- **Responsive:** phones are the main device for settling (PRODUCT.md), so every screen must hold at 360–375px with touch targets of at least 36px. The header and the navigator row do not yet fit at that width (see Do's and Don'ts).
 
 ## Elevation & Depth
 
-| Level         | Treatment                                      | Use                                       |
-| ------------- | ---------------------------------------------- | ----------------------------------------- |
-| Flat          | No shadow, no border                           | Body sections, top nav, hero              |
-| Soft hairline | 1px `{colors.hairline}` border                 | Code-window cards, content cards          |
-| Surface card  | `{colors.surface-card}` background — no shadow | Feature cards, pricing tiers, event cards |
-| Yellow band   | `{colors.primary}` background — no shadow      | Full-bleed yellow CTA cards / bands       |
+Flat. Depth is tonal: `{colors.surface-card}` panels sit on the `{colors.canvas}` page, edged by a 1px `{colors.hairline-strong}` border. No resting surface casts a shadow. The only layering is interruption: dialogs, menus and popovers open over the page, and dialogs dim it with Mantine's overlay. Their default Mantine shadow is tolerated, not part of the language.
 
-The system uses no drop shadows. Depth comes from the contrast between black canvas and `{colors.surface-card}` (a barely-lighter-than-canvas tone) — the contrast is subtle, more like an "engineering-grade dim panel" than an "elevated card."
-
-### Decorative Depth
-
-- Code-window cards carry their own internal product chrome — line numbers, syntax highlighting, status bars at the bottom — adding visual density without external shadows.
-- The yellow-on-black contrast does most of the elevation work for CTAs.
+**The Flat Ledger Rule.** If a surface needs to stand out, give it Panel Black and a Panel Edge border. Never a shadow, a glow or a gradient.
 
 ## Shapes
 
-### Border Radius Scale
+Gently squared. Buttons, inputs, checkboxes and dialogs use 8px corners (`{rounded.md}`). Panels, summary blocks and the auth card use 12px (`{rounded.lg}`). Fully round is kept for the 36px month-step buttons (‹ ›) and for badges. Borders are always 1px. Rows inside a panel are separated by a 1px rule, never boxed.
 
-| Token            | Value        | Use                                             |
-| ---------------- | ------------ | ----------------------------------------------- |
-| `{rounded.xs}`   | 4px          | Reserved for badge accents                      |
-| `{rounded.sm}`   | 6px          | Small inline buttons                            |
-| `{rounded.md}`   | 8px          | Standard CTA buttons, text inputs               |
-| `{rounded.lg}`   | 12px         | Content cards, code-window cards, pricing tiers |
-| `{rounded.pill}` | 9999px       | Badge pills                                     |
-| `{rounded.full}` | 9999px / 50% | Avatars, icon buttons                           |
+**The Rows-Not-Cards Rule.** A group of occurrences is one panel with ruled rows. Never a card per row, and never a panel nested inside a panel.
 
 ## Components
 
-### Top Navigation
-
-**`top-nav`** — Black nav bar pinned to top. 64px tall, `{colors.canvas}` background. Carries the ClickHouse logo + wordmark at left, primary horizontal menu (Product, Use Cases, Pricing, Resources, Customers) center-left, right-side cluster with "Sign in" + "Get Started" `{component.button-primary}` (yellow). Menu items in `{typography.nav-link}` (Inter 14px / 500).
-
 ### Buttons
 
-**`button-primary`** — The signature yellow CTA. Background `{colors.primary}` (#faff69), text `{colors.on-primary}` (black), type `{typography.button}` (Inter 14px / 600), padding 12px × 20px, height 40px, rounded `{rounded.md}` (8px). The yellow + black combination is iconic.
+- **Shape:** gently squared (8px), 36px tall, 14px / 600 labels.
+- **Primary:** Highlighter Yellow with black text. The act a view exists for: "Liquidar", "Pular", "Criar", "Entrar".
+- **Default:** Panel Black with a Panel Edge border and white text, for secondary acts such as "Cancelar" and "Nova avulsa".
+- **Danger:** solid Overdue Rose, only for confirming a deletion. In a destructive dialog, focus starts on "Cancelar".
+- **Subtle:** no fill and near-white text, for header actions (Configurações, Sair).
+- **Focus:** Mantine's 2px yellow focus ring on every control, offset from the edge. It is never removed.
 
-**`button-secondary`** — Dark surface card button. Background `{colors.surface-card}`, text `{colors.on-dark}`, same shape as primary.
+### Screen tabs (category-tab)
 
-**`button-text-link`** — Inline text button, no background. Used for "Sign in" and inline link CTAs.
+Header navigation between "Mês" and "Recorrências". The active tab is filled Panel Black with white text and `aria-current="page"`; the inactive tab is subtle and grey.
 
-**`text-link`** — Inline body links in `{colors.primary}` (yellow on dark). Underlined.
+### Ledger panel and rows
 
-**`button-icon-circular`** — 36 × 36 circular icon button on dark.
+- **Panel:** Panel Black, a 1px Panel Edge border, 12px corners, rendered as a `ul`.
+- **Row:** settle checkbox, then description (white, 500, truncated) over its due date ("10/10" or "Sem vencimento", Pencil Grey, 14px), then amount, optional badge and a "Mais ações" (⋯) menu on the right. Rows after the first carry a 1px Ruling Line on top.
+- **Settle checkbox:** 20px, 8px corners. Checked is Highlighter Yellow with a black tick. One click settles. When the amount is still "A definir", a popover asks only for the amount.
 
-### Cards & Containers
+### Summary blocks
 
-**`hero-band`** — Black-canvas hero with 7-5 grid: h1 + sub-headline + button row on the left, code-window or product mockup on the right. Vertical padding `{spacing.section}` (96px).
+Two panels, Entradas and Saídas, each with a 16px / 600 title and two figures (Previsto, Realizado). Each figure is an uppercase tracked label over a 20px / 700 white amount. They can be hidden per device in Configurações.
 
-**`hero-stat-card`** — Yellow stat-display numbers ("779+", "47k+") inline on the canvas. No card surface — just yellow text in `{typography.stat-display}` (56px / 700).
+### Badges (badge-pill)
 
-**`feature-card-yellow`** — Full-bleed yellow card ("Built for every modern data challenge"). Background `{colors.primary}`, text `{colors.on-yellow}` (black), rounded `{rounded.lg}` (12px), padding `{spacing.xl}` (32px). The yellow card IS the visual emphasis.
+Mantine's small uppercase pills. The default badge is Panel Black with a Panel Edge border and grey text: LIQUIDADA, PULADA, ENCERRADA. The overdue badge uses the light rose variant and names the earlier period the row belongs to. Overdue rows in the current period get no badge, since their group already says so.
 
-**`feature-card-dark`** — Standard dark feature card. Background `{colors.surface-card}`, text `{colors.on-dark}`, rounded `{rounded.lg}`, padding `{spacing.xl}` (32px).
+### Inputs
 
-**`code-window-card`** — Dark card showing a SQL code block. Background `{colors.surface-card}`, code in JetBrains Mono with syntax highlighting, rounded `{rounded.lg}`, padding `{spacing.lg}` (24px). Often the hero's right-side artifact on developer-focused pages.
+Panel Black fill, Panel Edge border, 8px corners, 36px tall, labels above the field. Fields carry no required asterisks, because every field asked for is required. Money uses a `R$ ` prefix with `,` decimals and `.` thousands. Focus moves the border to yellow.
 
-**`product-mockup-card`** — Card showing actual ClickHouse product UI (query editor, dashboard, monitoring panel). Same shape as `{component.feature-card-dark}` but with embedded product chrome inside.
+### Dialogs, menus and popovers
 
-**`pricing-tier-card`** — Standard tier card. Background `{colors.surface-card}`, rounded `{rounded.lg}`, padding `{spacing.xl}` (32px).
+- **Dialog:** centred, on the canvas colour. The title names the act ("Liquidar conta", "Excluir conta"). The body is one sentence with the entity in white 600. Buttons sit right-aligned: Cancelar (default) then the act (primary, or danger). Errors appear as a light rose alert at the top of the dialog body.
+- **Menu:** opened from the row's ⋯ action icon. Items are plain text and destructive items are rose.
+- **Popover:** anchored to the control that opened it, with an arrow and focus trapped inside. It asks for one thing only.
 
-**`pricing-tier-card-featured`** — The featured tier flips to `{colors.primary}` (yellow). The yellow surface IS the featured signal.
+### Wordmark
 
-**`stat-callout`** — Inline yellow stat numbers ("779+", "2.8k+", "47k+"). Transparent background, text `{colors.primary}`, type `{typography.stat-display}`. Used as a flat layout block, not a card with surface.
-
-**`events-card`** — Used on /company/events. Dark card with event title, date in `{typography.caption-uppercase}`, location, and a "Register" CTA. Rounded `{rounded.lg}`, padding `{spacing.lg}`.
-
-**`customer-logo-strip`** — Horizontal monochrome customer-logo strip. Background `{colors.canvas}`, logos in `{colors.muted}`, vertical padding `{spacing.xl}` (32px).
-
-### Inputs & Forms
-
-**`text-input`** — Dark text input. Background `{colors.surface-card}`, text `{colors.on-dark}`, rounded `{rounded.md}` (8px), padding 10px × 14px, height 40px.
-
-**`text-input-focused`** — Border thickens to `{colors.primary}` (yellow) for emphasis.
-
-### Tags / Badges
-
-**`badge-pill`** — Small dark pill label. Background `{colors.surface-card}`, text `{colors.on-dark}`, type `{typography.caption}`, rounded `{rounded.pill}`.
-
-**`badge-yellow`** — Yellow pill for "NEW", "GET STARTED" emphasis. Background `{colors.primary}`, text `{colors.on-primary}`, type `{typography.caption-uppercase}`, rounded `{rounded.pill}`.
-
-### Tab / Filter
-
-**`category-tab`** + **`category-tab-active`** — Dark tab navigation. Inactive: transparent + muted text. Active: surface-card background + on-dark text. Padding 8px × 14px, rounded `{rounded.md}`.
-
-### CTA / Footer
-
-**`cta-band-yellow`** — A pre-footer "Deploy your way" CTA band. Full yellow fill, black type, rounded `{rounded.lg}`, padding 64px. Carries an h2 in `{typography.display-md}` and a CTA — usually a black-button on the yellow surface.
-
-**`footer`** — Black footer that closes every page. Background `{colors.canvas}`, text `{colors.muted}`. 4-column link list at desktop covering Product / Use Cases / Resources / Company. Vertical padding 64px. The ClickHouse wordmark sits at the top in `{colors.on-dark}`.
+"Mensal" in 18px / 700 Highlighter Yellow. Apart from text links on the auth screens (Mantine anchors take the primary colour), it is the only yellow text in the product.
 
 ## Do's and Don'ts
 
-### Do
+### Do:
 
-- Anchor every page on the black canvas. The yellow + black pairing is the brand voltage.
-- Reserve `{colors.primary}` (yellow) for primary CTAs, stat-callout numbers, and full-bleed yellow CTA bands. The yellow's scarcity at the element level + abundance at the band level is what makes it powerful.
-- Use Inter at weight 700 for every display headline, with -1 to -2.5px letter-spacing.
-- Show actual SQL code blocks inside `{component.code-window-card}` — ClickHouse is a database; show the query, don't paint marketing illustrations of queries.
-- Use `{component.stat-callout}` numbers to establish credibility (community size, contributors, performance benchmarks). The yellow stat numbers are signature.
-- Anchor every band with `{spacing.section}` (96px) vertical rhythm.
+- **Do** keep at most one yellow button per view, and give it the act the view exists for.
+- **Do** colour inflow amounts emerald and outflow amounts white. Show "A definir" in Pencil Grey when there is no amount.
+- **Do** reserve rose for overdue, errors and destructive actions, using its light variant except on the confirming delete button.
+- **Do** put a group's rows in one 12px-cornered panel ruled by 1px lines.
+- **Do** name the entity in dialog copy in white at 600 weight, inside a plain sentence.
+- **Do** take colours from the theme (`yellow`, `dark`, `green`, `red` in `apps/web/src/theme.ts`) rather than inline hex.
+- **Do** design and check every screen at 375px first. Settling happens on phones.
 
-### Don't
+### Don't:
 
-- Don't introduce a second brand color. ClickHouse is monochromatic + yellow.
-- Don't bold display weight beyond 700 or use weight 500 for headlines. The hierarchy depends on size, not on weight gradation.
-- Don't use yellow for body text or large surface fills outside of intentional yellow cards.
-- Don't use rounded buttons / pills outside of small badges. The standard button radius is 8px (md).
-- Don't repeat the same surface mode in two consecutive bands. Black canvas → dark feature card → yellow CTA card → black canvas → code-window card.
-- Don't replace SQL code mockups with abstract illustrations. The code IS the marketing voltage.
-- Don't add hover state styling beyond what the system already encodes.
-
-## Responsive Behavior
-
-### Breakpoints
-
-| Name    | Width       | Key Changes                                                                                     |
-| ------- | ----------- | ----------------------------------------------------------------------------------------------- |
-| Mobile  | < 768px     | Hamburger nav; hero h1 72→36px; code-window-card stacks below; feature grids 1-up; pricing 1-up |
-| Tablet  | 768–1024px  | Top nav tightens; feature cards 2-up; pricing 2-up                                              |
-| Desktop | 1024–1440px | Full top-nav; 3-up feature cards; 3-4 up pricing tiers                                          |
-| Wide    | > 1440px    | Same as desktop with more breathing room; max content 1280px                                    |
-
-### Touch Targets
-
-- `{component.button-primary}` at minimum 40 × 40px.
-- `{component.button-icon-circular}` at exactly 36 × 36 — slightly under WCAG 44, visually centered.
-- `{component.text-input}` height is 40px.
-
-### Collapsing Strategy
-
-- Top nav collapses to hamburger at < 768px.
-- Hero 7-5 grid → single-column on mobile.
-- Feature card grids reduce columns rather than scaling.
-- Code-window cards retain font-size; horizontal scroll inside the card on mobile.
-- Pricing tier cards collapse 4 → 2 → 1; featured tier yellow stays distinct.
-
-### Image Behavior
-
-- Code blocks inside dark mockups stay at fixed font-size; horizontal scroll on mobile rather than wrapping.
-- Customer logos in monochrome strip retain native widths; row wraps on mobile.
-
-## Iteration Guide
-
-1. Focus on ONE component at a time. Reference its YAML key (`{component.code-window-card}`, `{component.pricing-tier-card-featured}`).
-2. Variants of an existing component (`-active`, `-disabled`, `-focused`) live as separate entries.
-3. Use `{token.refs}` everywhere — never inline hex.
-4. Never document hover. Default and Active/Pressed states only.
-5. Display headlines stay Inter 700 with negative letter-spacing. Body stays Inter 400.
-6. The yellow + black pairing is the brand contract. Don't soften with secondary accents.
-7. When in doubt about emphasis: bigger Inter 700 before adding color.
-
-## Known Gaps
-
-- The exact yellow hex (#faff69) was sampled from the screenshot; ClickHouse may publish an official brand color slightly differently.
-- Inter weight axis values beyond 400 / 500 / 600 / 700 are not formalized — only the static weights observed are documented.
-- Animation and transition timings (code typewriter effects, stat counter animations) are not in scope.
-- Form validation states beyond `{component.text-input-focused}` are not extracted.
-- The actual ClickHouse Cloud product surface (query console, monitoring dashboards, table browser) shares some tokens with the marketing site but adds many product-specific components that are out of scope.
-- The customer logo strip's exact opacity / treatment varies — the muted gray is approximate.
+- **Don't** add a light theme. The app forces the dark scheme.
+- **Don't** introduce a second accent colour, gradients, glows or shadows on resting surfaces.
+- **Don't** set type above 32px, or add hero, stat-callout or banner treatments carried over from the ClickHouse marketing system.
+- **Don't** use yellow for body text, large fills or decoration.
+- **Don't** use emerald or rose for emphasis that does not mean money in, late or destructive.
+- **Don't** wrap individual rows in cards or nest panels inside panels.
+- **Don't** let the header or the period navigator push the page wider than the viewport. Today both overflow below about 560px wide; fix this rather than copy it.

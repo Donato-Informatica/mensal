@@ -344,12 +344,11 @@ describe("confirming a status change", () => {
     await waitFor(() => expect(dialog).not.toBeInTheDocument());
 
     await act("Academia", "Retomar");
-    dialog = await screen.findByRole("dialog", {
-      name: "Voltar para pendente",
-    });
-    await user.click(
-      within(dialog).getByRole("button", { name: "Voltar para pendente" })
+    dialog = await screen.findByRole("dialog", { name: "Retomar conta" });
+    expect(dialog).toHaveTextContent(
+      "Academia deixará de ser pulada e voltará a ficar pendente."
     );
+    await user.click(within(dialog).getByRole("button", { name: "Retomar" }));
     expect(await row("Academia")).not.toHaveTextContent("Pulada");
     await waitFor(() =>
       expect(api.occurrencesOf(email)).toEqual([

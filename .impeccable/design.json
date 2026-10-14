@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-14T03:30:00.000Z",
+  "title": "Design System: Mensal",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Highlighter Yellow",
+        "canonical": "#faff69",
+        "tonalRamp": [
+          "#3a3a1f",
+          "#6e7020",
+          "#9a9d2c",
+          "#c4c83a",
+          "#e6eb52",
+          "#faff69",
+          "#fcff9e",
+          "#feffe5"
+        ]
+      },
+      "primary-active": {
+        "role": "primary",
+        "displayName": "Pressed Highlighter",
+        "canonical": "#e6eb52"
+      },
+      "primary-disabled": {
+        "role": "primary",
+        "displayName": "Spent Highlighter",
+        "canonical": "#3a3a1f"
+      },
+      "accent-emerald": {
+        "role": "secondary",
+        "displayName": "Inflow Emerald",
+        "canonical": "#22c55e",
+        "tonalRamp": [
+          "#14532d",
+          "#166534",
+          "#15803d",
+          "#16a34a",
+          "#22c55e",
+          "#4ade80",
+          "#86efac",
+          "#dcfce7"
+        ]
+      },
+      "accent-rose": {
+        "role": "tertiary",
+        "displayName": "Overdue Rose",
+        "canonical": "#ef4444",
+        "tonalRamp": [
+          "#7f1d1d",
+          "#991b1b",
+          "#b91c1c",
+          "#dc2626",
+          "#ef4444",
+          "#f87171",
+          "#fca5a5",
+          "#fee2e2"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "canonical": "#ffffff"
+      },
+      "body": {
+        "role": "neutral",
+        "displayName": "Ledger Grey",
+        "canonical": "#cccccc"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Pencil Grey",
+        "canonical": "#888888"
+      },
+      "muted-soft": {
+        "role": "neutral",
+        "displayName": "Faint Grey",
+        "canonical": "#5a5a5a"
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Ruling Line",
+        "canonical": "#2a2a2a"
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Panel Edge",
+        "canonical": "#3a3a3a"
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Night Canvas",
+        "canonical": "#0a0a0a",
+        "tonalRamp": [
+          "#000000",
+          "#0a0a0a",
+          "#1a1a1a",
+          "#2a2a2a",
+          "#3a3a3a",
+          "#5a5a5a",
+          "#888888",
+          "#cccccc"
+        ]
+      },
+      "surface-card": {
+        "role": "neutral",
+        "displayName": "Panel Black",
+        "canonical": "#1a1a1a"
+      },
+      "on-primary": {
+        "role": "neutral",
+        "displayName": "Ink on Highlighter",
+        "canonical": "#0a0a0a"
+      }
+    },
+    "typographyMeta": {
+      "display-sm": {
+        "displayName": "Display",
+        "purpose": "Screen titles (the period navigator's month, auth card titles). The ceiling of the scale."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Summary amounts under Previsto and Realizado."
+      },
+      "title-sm": {
+        "displayName": "Title",
+        "purpose": "Summary block titles (Entradas, Saídas)."
+      },
+      "row-title": {
+        "displayName": "Row title",
+        "purpose": "A ledger row's description, white, truncated."
+      },
+      "amount": {
+        "displayName": "Amount",
+        "purpose": "A ledger row's amount: emerald for inflows, white for outflows."
+      },
+      "body-md": {
+        "displayName": "Body",
+        "purpose": "Dialog copy and forms."
+      },
+      "body-sm": {
+        "displayName": "Small",
+        "purpose": "Due dates, hints, auth-screen links."
+      },
+      "caption-uppercase": {
+        "displayName": "Label",
+        "purpose": "Group headings and figure labels, uppercase, +1.5px."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Every button and screen tab label."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "\"Mensal\" in the header and above auth cards."
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [
+      { "name": "xs", "value": "576px" },
+      { "name": "sm", "value": "768px" },
+      { "name": "md", "value": "992px" },
+      { "name": "container-md", "value": "960px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one act a view exists for (Liquidar, Pular, Criar). At most one per view.",
+      "html": "<button class=\"ds-btn-primary\">Liquidar</button>",
+      "css": ".ds-btn-primary { background: #faff69; color: #0a0a0a; font: 600 14px/1 'Inter Variable', Inter, sans-serif; height: 36px; padding: 0 18px; border: 1px solid transparent; border-radius: 8px; cursor: pointer; } .ds-btn-primary:hover, .ds-btn-primary:active { background: #e6eb52; } .ds-btn-primary:focus-visible { outline: 2px solid #faff69; outline-offset: 2px; } .ds-btn-primary:disabled { background: #3a3a1f; color: #888888; cursor: not-allowed; }"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button-default",
+      "description": "Secondary acts: Cancelar, Nova avulsa.",
+      "html": "<button class=\"ds-btn-default\">Cancelar</button>",
+      "css": ".ds-btn-default { background: #1a1a1a; color: #ffffff; font: 600 14px/1 'Inter Variable', Inter, sans-serif; height: 36px; padding: 0 18px; border: 1px solid #3a3a3a; border-radius: 8px; cursor: pointer; } .ds-btn-default:hover { background: #2a2a2a; } .ds-btn-default:focus-visible { outline: 2px solid #faff69; outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Only the confirming button of a deletion dialog.",
+      "html": "<button class=\"ds-btn-danger\">Excluir</button>",
+      "css": ".ds-btn-danger { background: #ef4444; color: #ffffff; font: 600 14px/1 'Inter Variable', Inter, sans-serif; height: 36px; padding: 0 18px; border: 1px solid transparent; border-radius: 8px; cursor: pointer; } .ds-btn-danger:hover { background: #dc2626; } .ds-btn-danger:focus-visible { outline: 2px solid #faff69; outline-offset: 2px; }"
+    },
+    {
+      "name": "Screen Tabs",
+      "kind": "nav",
+      "refersTo": "category-tab",
+      "description": "Header navigation between Mês and Recorrências.",
+      "html": "<nav class=\"ds-tabs\" aria-label=\"Telas\"><a class=\"ds-tab ds-tab-active\" aria-current=\"page\" href=\"#\">Mês</a><a class=\"ds-tab\" href=\"#\">Recorrências</a></nav>",
+      "css": ".ds-tabs { display: flex; gap: 4px; background: #0a0a0a; padding: 8px; } .ds-tab { display: inline-flex; align-items: center; height: 36px; padding: 0 18px; border-radius: 8px; font: 600 14px/1 'Inter Variable', Inter, sans-serif; color: #cccccc; text-decoration: none; } .ds-tab:hover { background: rgba(255,255,255,0.05); } .ds-tab:focus-visible { outline: 2px solid #faff69; outline-offset: 2px; } .ds-tab-active { background: #1a1a1a; color: #ffffff; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "text-input",
+      "description": "Form field with its label above; money uses an R$ prefix.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Valor</span><input class=\"ds-input\" value=\"R$ 2.200,00\"></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 4px; background: #0a0a0a; padding: 16px; font-family: 'Inter Variable', Inter, sans-serif; } .ds-field-label { font-size: 14px; font-weight: 500; color: #cccccc; } .ds-input { height: 36px; padding: 0 12px; background: #1a1a1a; color: #ffffff; border: 1px solid #3a3a3a; border-radius: 8px; font-size: 14px; } .ds-input:focus { outline: none; border-color: #faff69; }"
+    },
+    {
+      "name": "Ledger Panel",
+      "kind": "card",
+      "refersTo": "ledger-panel",
+      "description": "One group of occurrences: a label, then one panel of ruled rows with settle box, description, due date, amount, badge and actions.",
+      "html": "<section class=\"ds-group\"><h2 class=\"ds-label\">A vencer no mês</h2><ul class=\"ds-panel\"><li class=\"ds-row\"><span class=\"ds-check ds-check-on\" aria-hidden=\"true\"></span><span class=\"ds-desc\"><b>Salário</b><small>05/10</small></span><span class=\"ds-amt ds-in\">R$ 12.500,00</span><span class=\"ds-badge\">Liquidada</span><span class=\"ds-more\">⋯</span></li><li class=\"ds-row\"><span class=\"ds-check\" aria-hidden=\"true\"></span><span class=\"ds-desc\"><b>Aluguel</b><small>10/10</small></span><span class=\"ds-amt\">R$ 2.200,00</span><span class=\"ds-more\">⋯</span></li><li class=\"ds-row\"><span class=\"ds-check\" aria-hidden=\"true\"></span><span class=\"ds-desc\"><b>Cartão de crédito</b><small>25/10</small></span><span class=\"ds-amt ds-tbd\">A definir</span><span class=\"ds-more\">⋯</span></li></ul></section>",
+      "css": ".ds-group { background: #0a0a0a; padding: 16px; font-family: 'Inter Variable', Inter, sans-serif; } .ds-label { margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: #888888; } .ds-panel { list-style: none; margin: 0; padding: 0; background: #1a1a1a; border: 1px solid #3a3a3a; border-radius: 12px; } .ds-row { display: flex; align-items: center; gap: 12px; padding: 12px 20px; } .ds-row + .ds-row { border-top: 1px solid #2a2a2a; } .ds-check { flex: none; width: 20px; height: 20px; border: 1px solid #3a3a3a; border-radius: 8px; background: #1a1a1a; } .ds-check-on { background: #faff69; border-color: #faff69; } .ds-desc { display: flex; flex-direction: column; flex: 1; min-width: 0; } .ds-desc b { color: #ffffff; font-weight: 500; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-desc small { color: #888888; font-size: 14px; } .ds-amt { font-weight: 600; color: #ffffff; white-space: nowrap; } .ds-in { color: #22c55e; } .ds-tbd { color: #888888; } .ds-badge { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #cccccc; background: #1a1a1a; border: 1px solid #3a3a3a; border-radius: 9999px; padding: 2px 8px; } .ds-more { color: #888888; padding: 0 4px; }"
+    },
+    {
+      "name": "Summary Block",
+      "kind": "card",
+      "refersTo": "summary-block",
+      "description": "Entradas or Saídas with Previsto and Realizado figures.",
+      "html": "<section class=\"ds-summary\"><h2>Saídas</h2><div class=\"ds-figs\"><div><span>Previsto</span><b>R$ 3.149,00</b></div><div><span>Realizado</span><b>R$ 0,00</b></div></div></section>",
+      "css": ".ds-summary { background: #1a1a1a; border: 1px solid #3a3a3a; border-radius: 12px; padding: 20px; font-family: 'Inter Variable', Inter, sans-serif; } .ds-summary h2 { margin: 0; font-size: 16px; font-weight: 600; color: #ffffff; } .ds-figs { display: flex; gap: 32px; margin-top: 12px; } .ds-figs div { display: flex; flex-direction: column; gap: 2px; } .ds-figs span { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: #888888; } .ds-figs b { font-size: 20px; font-weight: 700; color: #ffffff; }"
+    },
+    {
+      "name": "Overdue Badge",
+      "kind": "chip",
+      "refersTo": "badge-overdue",
+      "description": "Names the earlier period an overdue row belongs to.",
+      "html": "<span class=\"ds-badge-overdue\">Setembro 2026</span>",
+      "css": ".ds-badge-overdue { display: inline-block; font: 700 11px/1.6 'Inter Variable', Inter, sans-serif; text-transform: uppercase; color: #ef4444; background: rgba(239,68,68,0.15); border-radius: 9999px; padding: 2px 8px; }"
+    },
+    {
+      "name": "Confirmation Dialog",
+      "kind": "custom",
+      "refersTo": "dialog",
+      "description": "Names the act, states it in one sentence with the entity in white, Cancelar then the act.",
+      "html": "<div class=\"ds-dialog\" role=\"dialog\" aria-label=\"Liquidar conta\"><header>Liquidar conta</header><p><b>Aluguel</b> será liquidada por R$ 2.200,00.</p><footer><button class=\"ds-d-default\">Cancelar</button><button class=\"ds-d-primary\">Liquidar</button></footer></div>",
+      "css": ".ds-dialog { max-width: 440px; background: #0a0a0a; border-radius: 8px; padding: 16px; font-family: 'Inter Variable', Inter, sans-serif; color: #cccccc; } .ds-dialog header { font-size: 16px; color: #ffffff; margin-bottom: 16px; } .ds-dialog p { margin: 0 0 16px; font-size: 16px; line-height: 1.55; } .ds-dialog b { color: #ffffff; font-weight: 600; } .ds-dialog footer { display: flex; justify-content: flex-end; gap: 12px; } .ds-dialog button { height: 36px; padding: 0 18px; border-radius: 8px; font: 600 14px/1 inherit; cursor: pointer; } .ds-d-default { background: #1a1a1a; color: #ffffff; border: 1px solid #3a3a3a; } .ds-d-primary { background: #faff69; color: #0a0a0a; border: 1px solid transparent; } .ds-dialog button:focus-visible { outline: 2px solid #faff69; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Night Ledger",
+    "overview": "Mensal is a bank statement read in a dark room. The page is a near-black sheet; each month is a column of quiet grey rows ruled by hairlines; and a single electric-yellow highlighter marks the one thing that needs the reader right now: the button that does the act, the box just ticked, the control under the keyboard. Everything else stays dim on purpose, so the eye lands on what is due and what is left without searching.\n\nComponents are quiet, exact, one-touch. Surfaces sit a hair above the canvas, borders are 1px, and nothing floats. Controls behave like precise instruments: one click settles a row, one menu holds the rest. Density is that of a ledger, not a dashboard. Rows are compact enough to see a whole month at phone width, and nothing on screen is decoration.\n\nThe palette and type were inherited from ClickHouse's marketing system: the black, the yellow, Inter set tight. Mensal keeps only what an app needs. It has no marketing bands, stat callouts, pricing tiers or code windows, and it never sets display type above 32px.",
+    "keyCharacteristics": [
+      "Dark only. Canvas `{colors.canvas}` is the page; `{colors.surface-card}` lifts panels by tone alone.",
+      "One yellow, rationed: primary action, checked state, focus ring, wordmark.",
+      "Green means money coming in; red means late or destructive. Neither is decorative.",
+      "Inter throughout. Display at 700 with tight tracking; everything else 400–600.",
+      "Flat: hairline borders, no shadows on resting surfaces.",
+      "Rows, not cards. A month is a ruled list inside one panel per group."
+    ],
+    "rules": [
+      {
+        "name": "The Highlighter Rule",
+        "body": "Yellow marks the single thing that needs the reader. A view has at most one yellow button. If two things want yellow, one of them is wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The Meaning-Only Rule",
+        "body": "Emerald means money in; rose means late or destructive. They never appear for emphasis, decoration or brand.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tight Display Rule",
+        "body": "Display type is 700 with -1px tracking (set on every `Title` by the theme). Labels go the other way: 12px uppercase opened to +1.5px. Nothing sits in between.",
+        "section": "typography"
+      },
+      {
+        "name": "The Thirty-Two Ceiling Rule",
+        "body": "Nothing is set larger than 32px. A ledger screen has no hero.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Ledger Rule",
+        "body": "If a surface needs to stand out, give it Panel Black and a Panel Edge border. Never a shadow, a glow or a gradient.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Rows-Not-Cards Rule",
+        "body": "A group of occurrences is one panel with ruled rows. Never a card per row, and never a panel nested inside a panel.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep at most one yellow button per view, and give it the act the view exists for.",
+      "Do colour inflow amounts emerald and outflow amounts white. Show \"A definir\" in Pencil Grey when there is no amount.",
+      "Do reserve rose for overdue, errors and destructive actions, using its light variant except on the confirming delete button.",
+      "Do put a group's rows in one 12px-cornered panel ruled by 1px lines.",
+      "Do name the entity in dialog copy in white at 600 weight, inside a plain sentence.",
+      "Do take colours from the theme (`yellow`, `dark`, `green`, `red` in `apps/web/src/theme.ts`) rather than inline hex.",
+      "Do design and check every screen at 375px first. Settling happens on phones."
+    ],
+    "donts": [
+      "Don't add a light theme. The app forces the dark scheme.",
+      "Don't introduce a second accent colour, gradients, glows or shadows on resting surfaces.",
+      "Don't set type above 32px, or add hero, stat-callout or banner treatments carried over from the ClickHouse marketing system.",
+      "Don't use yellow for body text, large fills or decoration.",
+      "Don't use emerald or rose for emphasis that does not mean money in, late or destructive.",
+      "Don't wrap individual rows in cards or nest panels inside panels.",
+      "Don't let the header or the period navigator push the page wider than the viewport. Today both overflow below about 560px wide; fix this rather than copy it."
+    ]
+  }
+}

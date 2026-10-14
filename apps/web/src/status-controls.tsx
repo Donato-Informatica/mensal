@@ -218,14 +218,19 @@ function confirmationCopy({ item, change }: StatusChangeRequest) {
         text: `será pulada em ${formatPeriodInline(item.period)}.`,
         action: "Pular",
       };
+    // Named after the control that asked for it: "Retomar" in the menu, the
+    // checkbox otherwise.
     case "PENDING":
-      return {
-        title: "Voltar para pendente",
-        text:
-          item.status === "SKIPPED"
-            ? "deixará de ser pulada e voltará a ficar pendente."
-            : "deixará de estar liquidada e voltará a ficar pendente.",
-        action: "Voltar para pendente",
-      };
+      return item.status === "SKIPPED"
+        ? {
+            title: "Retomar conta",
+            text: "deixará de ser pulada e voltará a ficar pendente.",
+            action: "Retomar",
+          }
+        : {
+            title: "Voltar para pendente",
+            text: "deixará de estar liquidada e voltará a ficar pendente.",
+            action: "Voltar para pendente",
+          };
   }
 }

@@ -1,6 +1,7 @@
 import { Box, Button, Container, Group } from "@mantine/core";
 import { Link, useMatchRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import classes from "./app-layout.module.css";
 import { SettingsButton } from "./settings.tsx";
 import { SignOutButton } from "./sign-out-button.tsx";
 import { Wordmark } from "./wordmark.tsx";
@@ -13,20 +14,23 @@ export function AppLayout({ children }: { children: ReactNode }) {
         component="header"
         style={{ borderBottom: "1px solid var(--mantine-color-dark-5)" }}
       >
-        <Container size="md" h={64}>
-          <Group h="100%" justify="space-between" wrap="nowrap">
-            <Group gap="lg" wrap="nowrap">
-              <Wordmark />
-              <Group component="nav" aria-label="Telas" gap={4} wrap="nowrap">
-                <ScreenLink to="/">Mês</ScreenLink>
-                <ScreenLink to="/recorrencias">Recorrências</ScreenLink>
-              </Group>
-            </Group>
-            <Group gap={4} wrap="nowrap" align="flex-start">
+        <Container size="md">
+          <div className={classes.bar}>
+            <Wordmark className={classes.brand} />
+            <nav aria-label="Telas" className={classes.nav}>
+              <ScreenLink to="/">Mês</ScreenLink>
+              <ScreenLink to="/recorrencias">Recorrências</ScreenLink>
+            </nav>
+            <Group
+              className={classes.actions}
+              gap={4}
+              wrap="nowrap"
+              align="flex-start"
+            >
               <SettingsButton />
               <SignOutButton variant="subtle" color="gray" size="sm" />
             </Group>
-          </Group>
+          </div>
         </Container>
       </Box>
       <Container component="main" size="md" py="xl">
@@ -52,6 +56,7 @@ function ScreenLink({
       variant={active ? "filled" : "subtle"}
       color={active ? "dark.6" : "gray"}
       size="sm"
+      h={{ base: 44, sm: 30 }}
       aria-current={active ? "page" : undefined}
     >
       {children}

@@ -24,7 +24,13 @@ export function SettingsButton() {
   const [opened, { open, close }] = useDisclosure(false);
   return (
     <>
-      <Button variant="subtle" color="gray" size="sm" onClick={open}>
+      <Button
+        variant="subtle"
+        color="gray"
+        size="sm"
+        h={{ base: 44, sm: 30 }}
+        onClick={open}
+      >
         Configurações
       </Button>
       <Modal opened={opened} onClose={close} title="Configurações" centered>
