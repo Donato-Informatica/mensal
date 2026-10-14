@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --env-file-if-exists=.env --watch src/server.ts",
+    "dev": "node --env-file-if-exists=.env.example --watch src/server.ts",
     "start": "node --env-file-if-exists=.env src/server.ts",
     "typecheck": "tsc",
     "auth:generate": "auth generate --config auth.config.ts --output ../../packages/database/lib/schema/auth.ts --yes && prettier --write ../../packages/database/lib/schema/auth.ts"

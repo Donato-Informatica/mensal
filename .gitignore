@@ -1,6 +1,4 @@
 node_modules
-.claude/skills
-.agent/skills
 .env
 dist
 graphify-out

@@ -49,6 +49,12 @@
       "skillPath": "skills/misc/git-guardrails-claude-code/SKILL.md",
       "computedHash": "ccf581d304132095c2787b0a3bcb7b4ff125863c9f796fb16311d8f1cacef470"
     },
+    "graphify": {
+      "source": "graphify-labs/graphify",
+      "sourceType": "github",
+      "skillPath": "graphify/SKILL.md",
+      "computedHash": "a1f66469475807304ab9ab173a55d70f4aa644e9c527a493a54e883594a45495"
+    },
     "grill-me": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -77,7 +83,7 @@
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "skillPath": ".agents/skills/impeccable/SKILL.md",
-      "computedHash": "de7de6829490819b3c18cfdad2c93d002bd428c4b738d29b971ef3dc8f911d08"
+      "computedHash": "4f1c9edac4c110984200216ed05a2f0b5ced6aa871f5094a7cc4445eacf5477f"
     },
     "implement": {
       "source": "mattpocock/skills",
