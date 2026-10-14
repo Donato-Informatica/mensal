@@ -16,7 +16,6 @@ export function SignOutButton(props: ButtonProps) {
         </Text>
       )}
       <Button
-        h={{ base: 44, sm: 30 }}
         {...props}
         loading={signOut.isPending}
         onClick={() => signOut.mutate()}

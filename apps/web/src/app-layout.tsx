@@ -10,10 +10,7 @@ import { Wordmark } from "./wordmark.tsx";
 export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      <Box
-        component="header"
-        style={{ borderBottom: "1px solid var(--mantine-color-dark-5)" }}
-      >
+      <Box component="header" className={classes.header}>
         <Container size="md">
           <div className={classes.bar}>
             <Wordmark className={classes.brand} />
@@ -28,7 +25,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
               align="flex-start"
             >
               <SettingsButton />
-              <SignOutButton variant="subtle" color="gray" size="sm" />
+              <SignOutButton
+                variant="subtle"
+                color="gray"
+                size="sm"
+                h={{ base: 44, sm: 30 }}
+              />
             </Group>
           </div>
         </Container>

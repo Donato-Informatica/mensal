@@ -1,3 +1,7 @@
+.header {
+  border-bottom: 1px solid var(--mantine-color-dark-5);
+}
+
 /* Phone first: wordmark and actions on one row, the screens on a full-width row below. */
 .bar {
   display: grid;
