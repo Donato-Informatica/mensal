@@ -30,16 +30,22 @@ import { datePickerProps } from "./pickers.ts";
  */
 export function EditOccurrenceButton({
   item,
+  label = `Editar ${item.description}`,
+  className,
   children,
 }: {
   item: PeriodItem;
+  /** The button's accessible name, when it is not the row's main one. */
+  label?: string;
+  className?: string | undefined;
   children: ReactNode;
 }) {
   const [opened, { open, close }] = useDisclosure(false);
   return (
     <>
       <UnstyledButton
-        aria-label={`Editar ${item.description}`}
+        aria-label={label}
+        className={className}
         onClick={open}
         miw={0}
       >

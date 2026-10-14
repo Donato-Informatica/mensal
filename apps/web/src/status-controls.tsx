@@ -19,26 +19,34 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useState } from "react";
 import { formatAmount, formatPeriodInline } from "./format.ts";
+import classes from "./touch.module.css";
 import { invalidatePeriods, updatePeriods } from "./period-query.ts";
 
 const statusChangeKey = ["status-change"];
 
 /**
  * Changes an occurrence's status: the screen shows it at once and rolls back
- * if the API refuses it (PRD §7.5).
+ * if the API refuses it (PRD §7.5), telling `onFailure` which change it was.
  */
-export function useStatusChange() {
+export function useStatusChange({
+  onFailure,
+}: {
+  onFailure?: (request: StatusChangeRequest, error: unknown) => void;
+} = {}) {
   const { api } = useRouteContext({ from: rootRouteId });
   const queryClient = useQueryClient();
   return useMutation({
     mutationKey: statusChangeKey,
-    mutationFn: ({ id, change }: { id: string; change: StatusChange }) =>
-      api.changeStatus(id, change),
-    onMutate: ({ id, change }) =>
+    mutationFn: ({ item, change }: StatusChangeRequest) =>
+      api.changeStatus(item.id, change),
+    onMutate: ({ item, change }) =>
       updatePeriods(queryClient, (payload) =>
-        withStatusChange(payload, id, change, today())
+        withStatusChange(payload, item.id, change, today())
       ),
-    onError: (_error, _variables, undo) => undo?.(),
+    onError: (error, request, undo) => {
+      undo?.();
+      onFailure?.(request, error);
+    },
     // A virtual occurrence comes back persisted, under an id of its own. Only
     // once the last change settles, so a refetch never undoes one in flight;
     // not awaited, so a failure is reported at once, not after its retries.
@@ -64,37 +72,42 @@ export function SettleCheckbox({
   onChange: OnStatusChange;
 }) {
   const [askingAmount, setAskingAmount] = useState(false);
-  const label = `Liquidar ${item.description}`;
+  const settled = item.status === "SETTLED";
+  const label = settled
+    ? `Desfazer liquidação de ${item.description}`
+    : `Liquidar ${item.description}`;
   return (
-    <Popover
-      opened={askingAmount}
-      onDismiss={() => setAskingAmount(false)}
-      position="bottom-start"
-      trapFocus
-      // Focus is trapped inside, so it stays visible even if its row scrolls away.
-      hideDetached={false}
-      withArrow
-    >
-      <Popover.Target>
-        <Checkbox
-          aria-label={label}
-          checked={item.status === "SETTLED"}
-          onChange={(event) => {
-            if (!event.currentTarget.checked) onChange({ status: "PENDING" });
-            else if (item.amount === null) setAskingAmount(true);
-            else onChange({ status: "SETTLED" });
-          }}
-        />
-      </Popover.Target>
-      <Popover.Dropdown aria-label={label}>
-        <AmountForm
-          onSubmit={(amount) => {
-            setAskingAmount(false);
-            onChange({ status: "SETTLED", amount });
-          }}
-        />
-      </Popover.Dropdown>
-    </Popover>
+    <label className={classes.settle}>
+      <Popover
+        opened={askingAmount}
+        onDismiss={() => setAskingAmount(false)}
+        position="bottom-start"
+        trapFocus
+        // Focus is trapped inside, so it stays visible even if its row scrolls away.
+        hideDetached={false}
+        withArrow
+      >
+        <Popover.Target>
+          <Checkbox
+            aria-label={label}
+            checked={settled}
+            onChange={(event) => {
+              if (!event.currentTarget.checked) onChange({ status: "PENDING" });
+              else if (item.amount === null) setAskingAmount(true);
+              else onChange({ status: "SETTLED" });
+            }}
+          />
+        </Popover.Target>
+        <Popover.Dropdown aria-label={`Liquidar ${item.description}`}>
+          <AmountForm
+            onSubmit={(amount) => {
+              setAskingAmount(false);
+              onChange({ status: "SETTLED", amount });
+            }}
+          />
+        </Popover.Dropdown>
+      </Popover>
+    </label>
   );
 }
 
@@ -121,7 +134,12 @@ function AmountForm({ onSubmit }: { onSubmit: (cents: number) => void }) {
           hideControls
           data-autofocus
         />
-        <Button type="submit" size="xs" disabled={!(cents > 0)}>
+        <Button
+          type="submit"
+          size="xs"
+          className={classes.button}
+          disabled={!(cents > 0)}
+        >
           Liquidar
         </Button>
       </Stack>

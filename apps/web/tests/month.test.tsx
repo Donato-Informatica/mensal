@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
@@ -176,5 +176,27 @@ describe("moving between periods", () => {
     expect(
       await screen.findByText("Nenhuma conta neste mês.")
     ).toBeInTheDocument();
+  });
+});
+
+describe("moving between months", () => {
+  it("answers at once, dimming the month on screen until the next lands", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    const content = (
+      await screen.findByText("Nenhuma conta neste mês.")
+    ).closest("[aria-busy]");
+
+    api.stall();
+    await user.click(screen.getByRole("button", { name: "Próximo mês" }));
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Novembro 2026" })
+    ).toBeInTheDocument();
+    expect(content).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByText("Carregando o mês…")).toBeInTheDocument();
+
+    api.resume();
+    await waitFor(() => expect(content).toHaveAttribute("aria-busy", "false"));
   });
 });

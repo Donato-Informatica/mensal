@@ -71,7 +71,7 @@ describe("settling an occurrence", () => {
 
     expect(
       within(await row("Aluguel")).getByRole("checkbox", {
-        name: "Liquidar Aluguel",
+        name: "Desfazer liquidação de Aluguel",
       })
     ).toBeChecked();
     expect(await row("Aluguel")).toHaveTextContent("Liquidada");
@@ -97,7 +97,7 @@ describe("settling an occurrence", () => {
 
     await user.click(
       within(await row("Conserto do carro")).getByRole("checkbox", {
-        name: "Liquidar Conserto do carro",
+        name: "Desfazer liquidação de Conserto do carro",
       })
     );
 
@@ -186,7 +186,7 @@ describe("settling an occurrence", () => {
     // Settled, the row moves to another group, so it is found again.
     expect(
       within(await row("Aluguel")).getByRole("checkbox", {
-        name: "Liquidar Aluguel",
+        name: "Desfazer liquidação de Aluguel",
       })
     ).toBeChecked();
     expect(await row("Aluguel")).toHaveTextContent("Liquidada");
@@ -206,15 +206,65 @@ describe("settling an occurrence", () => {
     api.breakDown();
     await user.click(checkbox);
 
-    expect(
-      await screen.findByText("Algo deu errado. Tente novamente.")
-    ).toBeInTheDocument();
+    // The refusal is explained at the row that failed, with a way to retry.
+    const alert = await within(await row("Aluguel")).findByRole("alert");
+    expect(alert).toHaveTextContent(
+      "Alteração não salva. Algo deu errado. Tente novamente."
+    );
     expect(
       within(await row("Aluguel")).getByRole("checkbox", {
         name: "Liquidar Aluguel",
       })
     ).not.toBeChecked();
     expect(await row("Aluguel")).not.toHaveTextContent("Liquidada");
+    expect(outflowsSettled()).toHaveTextContent("R$ 0,00");
+  });
+});
+
+describe("after a failure", () => {
+  it("retries the change from the row's alert", async () => {
+    api.addRecurrence(email, { description: "Aluguel", defaultAmount: 220000 });
+    openApp(api, "/");
+    const checkbox = within(await row("Aluguel")).getByRole("checkbox", {
+      name: "Liquidar Aluguel",
+    });
+    api.breakDown();
+    await user.click(checkbox);
+    await within(await row("Aluguel")).findByRole("alert");
+
+    api.recover();
+    await user.click(
+      within(await row("Aluguel")).getByRole("button", {
+        name: "Tentar de novo: Aluguel",
+      })
+    );
+
+    expect(await row("Aluguel")).toHaveTextContent("Liquidada");
+    expect(within(await row("Aluguel")).queryByRole("alert")).toBeNull();
+    await waitFor(() => expect(api.occurrencesOf(email)).toHaveLength(1));
+  });
+});
+
+describe("taking a change back", () => {
+  it("offers to undo a settle, and undoes it", async () => {
+    api.addRecurrence(email, { description: "Aluguel", defaultAmount: 220000 });
+    openApp(api, "/");
+    await user.click(
+      within(await row("Aluguel")).getByRole("checkbox", {
+        name: "Liquidar Aluguel",
+      })
+    );
+
+    const notice = await screen.findByText("liquidada.", { exact: false });
+    expect(notice).toHaveTextContent("Aluguel liquidada.");
+    await user.click(screen.getByRole("button", { name: "Desfazer" }));
+
+    expect(
+      within(await row("Aluguel")).getByRole("checkbox", {
+        name: "Liquidar Aluguel",
+      })
+    ).not.toBeChecked();
+    expect(screen.queryByRole("button", { name: "Desfazer" })).toBeNull();
     expect(outflowsSettled()).toHaveTextContent("R$ 0,00");
   });
 });
@@ -315,7 +365,7 @@ describe("confirming a status change", () => {
 
     await user.click(
       within(await row("Conserto do carro")).getByRole("checkbox", {
-        name: "Liquidar Conserto do carro",
+        name: "Desfazer liquidação de Conserto do carro",
       })
     );
     const dialog = await screen.findByRole("dialog", {

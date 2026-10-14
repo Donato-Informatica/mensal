@@ -9,6 +9,7 @@ import { ConfirmRecurrenceDeletion } from "./delete-recurrence.tsx";
 import { EditRecurrenceForm } from "./edit-recurrence.tsx";
 import { EndRecurrenceForm } from "./end-recurrence.tsx";
 import { recurrenceQuery } from "./recurrence-query.ts";
+import classes from "./touch.module.css";
 
 type Action = "edit" | "end" | "delete";
 
@@ -46,6 +47,7 @@ export function RecurrenceActions({
       <Menu position="bottom-end">
         <Menu.Target>
           <ActionIcon
+            className={classes.icon}
             variant="subtle"
             color="gray"
             aria-label={`Mais ações para ${description}`}
@@ -56,8 +58,10 @@ export function RecurrenceActions({
         <Menu.Dropdown>
           {children && (
             <>
+              <Menu.Label>Esta conta</Menu.Label>
               {children}
               <Menu.Divider />
+              <Menu.Label>A recorrência</Menu.Label>
             </>
           )}
           <Menu.Item onClick={() => start("edit")}>{titles.edit}</Menu.Item>

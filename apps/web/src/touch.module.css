@@ -1,0 +1,22 @@
+/* Phone width: controls reach the 44px touch minimum. Desktop keeps its density. */
+@media (max-width: 36em) {
+  .icon {
+    --ai-size: 44px;
+  }
+
+  .button {
+    --button-height: 44px;
+  }
+
+  .settle {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* The checkbox's hit area is its label, so the box itself stays 20px. */
+.settle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

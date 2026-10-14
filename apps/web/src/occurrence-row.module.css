@@ -1,0 +1,131 @@
+/*
+ * Phone: the amount sits under the date, so the description keeps the width
+ * between checkbox and menu (360px has no room for text, amount and badge on
+ * one line). The two groups dissolve into the row's grid.
+ */
+.row {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+}
+
+.lead,
+.trail {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.lead {
+  min-width: 0;
+  gap: var(--mantine-spacing-md);
+}
+
+.trail {
+  gap: var(--mantine-spacing-sm);
+}
+
+.text {
+  display: flex;
+  min-width: 0;
+}
+
+.amount {
+  white-space: nowrap;
+}
+
+/* "A definir": white text on a dashed underline reads as a field to fill in. */
+.pending {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  border-radius: var(--mantine-radius-sm);
+}
+
+.pendingText {
+  text-decoration: underline dashed;
+  text-decoration-color: var(--mantine-color-dark-2);
+  text-underline-offset: 4px;
+}
+
+.pending:hover .pendingText {
+  text-decoration-color: var(--mantine-color-white);
+}
+
+@media (max-width: 36em) {
+  .pending {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 36em) {
+  .row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "check text text menu"
+      "check amount badge menu";
+    align-items: center;
+    column-gap: var(--mantine-spacing-sm);
+  }
+
+  .lead,
+  .trail {
+    display: contents;
+  }
+
+  .check {
+    grid-area: check;
+  }
+
+  .text {
+    grid-area: text;
+  }
+
+  .amount {
+    grid-area: amount;
+  }
+
+  .badge {
+    grid-area: badge;
+    justify-self: end;
+  }
+
+  .menu {
+    grid-area: menu;
+  }
+}
+
+/* A refused change, under the row it belongs to. */
+.failure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  margin-top: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  border: 1px solid var(--mantine-color-red-9);
+  border-radius: var(--mantine-radius-md);
+  background: rgb(239 68 68 / 0.1);
+}
+
+.failureText {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+/* Content of a month on its way out: dims after a beat, so quick loads never flash. */
+.content {
+  transition: opacity 200ms ease-out 250ms;
+}
+
+.content[aria-busy="true"] {
+  opacity: 0.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content {
+    transition: none;
+  }
+}

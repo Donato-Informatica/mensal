@@ -222,7 +222,9 @@ describe("moving between groups", () => {
     ]);
     api.resume();
 
-    await user.click(screen.getByRole("checkbox", { name: "Liquidar Luz" }));
+    await user.click(
+      screen.getByRole("checkbox", { name: "Desfazer liquidação de Luz" })
+    );
     await act(user, "Internet", "Retomar");
 
     expect(await groups()).toEqual({

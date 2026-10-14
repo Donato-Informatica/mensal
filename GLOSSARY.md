@@ -90,3 +90,8 @@ _Avoid_: planned, forecast
 The total of a period's settled occurrences only.
 _UI (pt-BR)_: Realizado
 _Avoid_: actual, realized
+
+**Left over** (total):
+A period's expected inflows minus its expected outflows; negative when the period is short. Computed by the client, never stored.
+_UI (pt-BR)_: Sobra prevista
+_Avoid_: balance, net, profit

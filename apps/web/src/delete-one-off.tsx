@@ -16,6 +16,7 @@ import type { ReactNode } from "react";
 import { errorMessage } from "./api-error.ts";
 import { invalidatePeriods } from "./period-query.ts";
 import { Dots } from "./recurrence-actions.tsx";
+import classes from "./touch.module.css";
 
 /**
  * The actions on a one-off occurrence row, ending with deleting it for good,
@@ -36,6 +37,7 @@ export function OneOffActions({
       <Menu position="bottom-end">
         <Menu.Target>
           <ActionIcon
+            className={classes.icon}
             variant="subtle"
             color="gray"
             aria-label={`Mais ações para ${item.description}`}

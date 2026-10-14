@@ -185,7 +185,7 @@ The palette and type were inherited from ClickHouse's marketing system: the blac
 **Key Characteristics:**
 
 - Dark only. Canvas `{colors.canvas}` is the page; `{colors.surface-card}` lifts panels by tone alone.
-- One yellow, rationed: primary action, checked state, focus ring, wordmark.
+- One yellow, rationed: primary action, checked state, focus ring, wordmark, and the labels and panel edges of the two groups that need you now (Atrasadas, Vencem hoje).
 - Green means money coming in; red means late or destructive. Neither is decorative.
 - Inter throughout. Display at 700 with tight tracking; everything else 400–600.
 - Flat: hairline borders, no shadows on resting surfaces.
@@ -204,13 +204,13 @@ Monochrome on black, with one highlighter and two signal colours that carry mean
 ### Signal
 
 - **Inflow Emerald** (`{colors.accent-emerald}`): the amounts of inflows (Entradas) in ledger rows, and success alerts. Outflows stay white; emerald is the only thing that sets money in apart from money out.
-- **Overdue Rose** (`{colors.accent-rose}`): the "Atrasadas" group label, the badge naming an earlier period's overdue row, error alerts, and destructive actions (Excluir). Light variants (tinted surface, rose text) carry alerts and the overdue badge; solid rose is reserved for the confirming destructive button.
+- **Overdue Rose** (`{colors.accent-rose}`): the badge naming an earlier period's overdue row, error alerts, and destructive actions (Excluir). Light variants (tinted surface, rose text) carry alerts and the overdue badge; solid rose is reserved for the confirming destructive button.
 
 ### Neutral
 
 - **Paper White** (`{colors.ink}`): headings, row descriptions, amounts and summary figures: the facts.
 - **Ledger Grey** (`{colors.body}`): running text, dialog copy and inactive header buttons.
-- **Pencil Grey** (`{colors.muted}`): "dimmed" text, such as due dates under a description, "A definir" and quiet group labels.
+- **Pencil Grey** (`{colors.muted}`): "dimmed" text, such as due dates under a description and quiet group labels.
 - **Faint Grey** (`{colors.muted-soft}`): tertiary marks only.
 - **Night Canvas** (`{colors.canvas}`): the page, the sticky period navigator, dialogs, menus and popovers.
 - **Panel Black** (`{colors.surface-card}`): ledger panels, summary blocks, the auth card, inputs, default buttons, the active screen tab and round icon buttons.
@@ -235,7 +235,7 @@ Monochrome on black, with one highlighter and two signal colours that carry mean
 - **Figure** (`{typography.figure}`): summary amounts under Previsto and Realizado, in white.
 - **Title** (`{typography.title-sm}`): summary block titles (Entradas, Saídas).
 - **Row title** (`{typography.row-title}`): an occurrence's or recurrence's description, in white, truncated on one line.
-- **Amount** (`{typography.amount}`): the row's amount, never wrapping; emerald for inflows, white for outflows, Pencil Grey for "A definir".
+- **Amount** (`{typography.amount}`): the row's amount, never wrapping; emerald for inflows, white for outflows, "A definir" is white on a dashed underline with a pencil, a button that opens the edit dialog. Every amount carries a direction arrow and a +/− sign, so colour is never the only cue.
 - **Body** (`{typography.body-md}`): dialog copy and forms. The entity a dialog acts on is set in white at 600 inside the sentence, e.g. "**Aluguel** será liquidada por R$ 2.200,00."
 - **Small** (`{typography.body-sm}`): due dates, form hints and links on the auth screens, in Pencil Grey.
 - **Label** (`{typography.caption-uppercase}`): group headings (ATRASADAS, A VENCER NO MÊS) and the Previsto/Realizado labels. Uppercase, tracked 1.5px, Pencil Grey, or rose for Atrasadas.
@@ -314,7 +314,7 @@ Panel Black fill, Panel Edge border, 8px corners, 36px tall, labels above the fi
 ### Do:
 
 - **Do** keep at most one yellow button per view, and give it the act the view exists for.
-- **Do** colour inflow amounts emerald and outflow amounts white. Show "A definir" in Pencil Grey when there is no amount.
+- **Do** colour inflow amounts emerald and outflow amounts white. Show "A definir" as a dashed-underlined button when there is no amount, and never let direction rest on colour alone (arrow, sign, hidden Entrada/Saída).
 - **Do** reserve rose for overdue, errors and destructive actions, using its light variant except on the confirming delete button.
 - **Do** put a group's rows in one 12px-cornered panel ruled by 1px lines.
 - **Do** name the entity in dialog copy in white at 600 weight, inside a plain sentence.

@@ -55,15 +55,23 @@ export function Recurrences({ status }: { status: Status }) {
                 { label: "Todas", value: "all" },
               ]}
             />
-            <NewRecurrenceButton />
+            {data.length > 0 && <NewRecurrenceButton />}
           </Group>
         </Group>
         {data.length === 0 ? (
-          <Text c="dimmed" ta="center" py="xl">
-            {status === "active"
-              ? "Nenhuma recorrência ativa."
-              : "Nenhuma recorrência."}
-          </Text>
+          <Stack align="center" gap="sm" py="xl" ta="center">
+            <Text c="dimmed">
+              {status === "active"
+                ? "Nenhuma recorrência ativa."
+                : "Nenhuma recorrência."}
+            </Text>
+            <Text fz="sm" c="dimmed" maw={360}>
+              Uma recorrência é o que se repete todo mês, como aluguel ou
+              salário: ela aparece em cada mês sozinha. Deixe o valor “A
+              definir” se ele muda de mês a mês.
+            </Text>
+            <NewRecurrenceButton />
+          </Stack>
         ) : (
           <Paper bg="dark.6" withBorder radius="lg">
             <Stack
