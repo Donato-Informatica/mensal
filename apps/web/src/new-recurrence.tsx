@@ -26,38 +26,30 @@ import { monthPickerProps } from "./pickers.ts";
 import { invalidateRecurrences } from "./recurrence-query.ts";
 
 /** "Nova recorrência": opens the dialog that creates a recurrence (PRD §7.7). */
-export function NewRecurrenceButton({ period }: { period: string }) {
+export function NewRecurrenceButton() {
   const [opened, { open, close }] = useDisclosure(false);
   return (
     <>
       <Button onClick={open}>Nova recorrência</Button>
       <Modal opened={opened} onClose={close} title="Nova recorrência" centered>
-        <NewRecurrenceForm period={period} onCreated={close} />
+        <NewRecurrenceForm onCreated={close} />
       </Modal>
     </>
   );
 }
 
-/** The form starts on `period` ('YYYY-MM-01'), or the current one if it is past. */
-function NewRecurrenceForm({
-  period,
-  onCreated,
-}: {
-  period: string;
-  onCreated: () => void;
-}) {
+/** The form starts on the current period (PRD §5.10: never earlier). */
+function NewRecurrenceForm({ onCreated }: { onCreated: () => void }) {
   const { api } = useRouteContext({ from: rootRouteId });
   const queryClient = useQueryClient();
-  // A recurrence never starts before the current period (PRD §5.10).
-  const earliestStart = currentPeriod();
   const [direction, setDirection] = useState<Direction>("OUTFLOW");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState<number | string>("");
   const [amountToBeDefined, setAmountToBeDefined] = useState(false);
   const [dueDay, setDueDay] = useState<number | string>("");
-  const [startPeriod, setStartPeriod] = useState(
-    period < earliestStart ? earliestStart : period
-  );
+  // A recurrence never starts before the current period (PRD §5.10).
+  const earliestStart = currentPeriod();
+  const [startPeriod, setStartPeriod] = useState(earliestStart);
   const [endPeriod, setEndPeriod] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
 

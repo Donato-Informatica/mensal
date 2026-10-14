@@ -26,14 +26,13 @@ import {
   useNavigate,
   useRouteContext,
 } from "@tanstack/react-router";
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 import { errorMessage } from "./api-error.ts";
 import { AppLayout } from "./app-layout.tsx";
 import { DeleteOneOffButton } from "./delete-one-off.tsx";
 import { EditOccurrenceButton } from "./edit-occurrence.tsx";
 import { formatAmount, formatDayAndMonth, formatPeriod } from "./format.ts";
 import { NewOneOffButton } from "./new-one-off.tsx";
-import { NewRecurrenceButton } from "./new-recurrence.tsx";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
 import { periodQuery } from "./period-query.ts";
 import { RecurrenceActions } from "./recurrence-actions.tsx";
@@ -54,12 +53,10 @@ export function Month({ period }: { period: string }) {
   return (
     <AppLayout>
       <Stack gap="xl">
-        <PeriodNavigator period={period} />
-        {showSummary && <Summary summary={data.summary} />}
-        <Group justify="flex-end" gap="sm">
+        <PeriodNavigator period={period}>
           <NewOneOffButton period={period} />
-          <NewRecurrenceButton period={period} />
-        </Group>
+        </PeriodNavigator>
+        {showSummary && <Summary summary={data.summary} />}
         {statusChange.error && (
           <Alert
             color="red"
@@ -81,7 +78,13 @@ export function Month({ period }: { period: string }) {
 }
 
 /** `< Outubro 2026 >`: one click, or ← / →, moves a month. */
-function PeriodNavigator({ period }: { period: string }) {
+function PeriodNavigator({
+  period,
+  children,
+}: {
+  period: string;
+  children?: ReactNode;
+}) {
   const navigate = useNavigate();
   const move = (months: number) =>
     void navigate({
@@ -107,29 +110,40 @@ function PeriodNavigator({ period }: { period: string }) {
   // Fixed at the top while the list scrolls (PRD §7.1).
   return (
     <Box pos="sticky" top={0} bg="dark.7" py="xs" style={{ zIndex: 1 }}>
-      <Group justify="space-between" wrap="nowrap" w="100%" maw={400} mx="auto">
-        <ActionIcon
-          color="dark.6"
-          size={36}
-          radius={9999}
-          aria-label="Mês anterior"
-          onClick={() => move(-1)}
-        >
-          <Chevron direction="left" />
-        </ActionIcon>
-        <Title order={1} ta="center">
-          {formatPeriod(period)}
-        </Title>
-        <ActionIcon
-          color="dark.6"
-          size={36}
-          radius={9999}
-          aria-label="Próximo mês"
-          onClick={() => move(1)}
-        >
-          <Chevron direction="right" />
-        </ActionIcon>
-      </Group>
+      <Box
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr auto 1fr",
+          alignItems: "center",
+          gap: "var(--mantine-spacing-sm)",
+        }}
+      >
+        <Box />
+        <Group justify="space-between" wrap="nowrap" w={400} maw="100%">
+          <ActionIcon
+            color="dark.6"
+            size={36}
+            radius={9999}
+            aria-label="Mês anterior"
+            onClick={() => move(-1)}
+          >
+            <Chevron direction="left" />
+          </ActionIcon>
+          <Title order={1} ta="center">
+            {formatPeriod(period)}
+          </Title>
+          <ActionIcon
+            color="dark.6"
+            size={36}
+            radius={9999}
+            aria-label="Próximo mês"
+            onClick={() => move(1)}
+          >
+            <Chevron direction="right" />
+          </ActionIcon>
+        </Group>
+        <Group justify="flex-end">{children}</Group>
+      </Box>
     </Box>
   );
 }

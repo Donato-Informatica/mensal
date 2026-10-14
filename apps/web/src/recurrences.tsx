@@ -22,6 +22,7 @@ import {
 import { AppLayout } from "./app-layout.tsx";
 import { EditRecurrenceButton } from "./edit-recurrence.tsx";
 import { formatAmount, formatPeriodInline } from "./format.ts";
+import { NewRecurrenceButton } from "./new-recurrence.tsx";
 import { RecurrenceActions } from "./recurrence-actions.tsx";
 import { recurrencesQuery } from "./recurrence-query.ts";
 
@@ -39,20 +40,23 @@ export function Recurrences({ status }: { status: Status }) {
       <Stack gap="xl">
         <Group justify="space-between" gap="md">
           <Title order={1}>Recorrências</Title>
-          <SegmentedControl
-            aria-label="Mostrar"
-            value={status}
-            onChange={(value) =>
-              void navigate({
-                to: "/recorrencias",
-                search: { filtro: value === "all" ? "todas" : undefined },
-              })
-            }
-            data={[
-              { label: "Ativas", value: "active" },
-              { label: "Todas", value: "all" },
-            ]}
-          />
+          <Group gap="sm">
+            <SegmentedControl
+              aria-label="Mostrar"
+              value={status}
+              onChange={(value) =>
+                void navigate({
+                  to: "/recorrencias",
+                  search: { filtro: value === "all" ? "todas" : undefined },
+                })
+              }
+              data={[
+                { label: "Ativas", value: "active" },
+                { label: "Todas", value: "all" },
+              ]}
+            />
+            <NewRecurrenceButton />
+          </Group>
         </Group>
         {data.length === 0 ? (
           <Text c="dimmed" ta="center" py="xl">

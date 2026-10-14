@@ -34,6 +34,10 @@ async function rows(): Promise<string[]> {
     .map((row) => row.textContent ?? "");
 }
 
+async function goToMonth() {
+  await user.click(screen.getByRole("link", { name: "Mês" }));
+}
+
 async function openDialog() {
   await user.click(
     await screen.findByRole("button", { name: "Nova recorrência" })
@@ -50,7 +54,7 @@ async function submit(dialog: HTMLElement) {
 
 describe("creating a recurrence", () => {
   it("shows its occurrence in the month without a reload", async () => {
-    openApp(api, "/");
+    openApp(api, "/recorrencias");
     const dialog = await openDialog();
 
     await user.type(within(dialog).getByLabelText("Descrição"), "Internet");
@@ -61,6 +65,7 @@ describe("creating a recurrence", () => {
       "Fibra 500 mega"
     );
     await submit(dialog);
+    await goToMonth();
 
     expect(await rows()).toEqual([
       expect.stringMatching(/Internet.*05\/10.*R\$\s119,90/),
@@ -83,13 +88,14 @@ describe("creating a recurrence", () => {
   });
 
   it("creates an inflow whose amount is to be defined", async () => {
-    openApp(api, "/");
+    openApp(api, "/recorrencias");
     const dialog = await openDialog();
 
     await user.click(within(dialog).getByRole("radio", { name: "Entrada" }));
     await user.type(within(dialog).getByLabelText("Descrição"), "Freela");
     await user.click(within(dialog).getByLabelText("A definir"));
     await submit(dialog);
+    await goToMonth();
 
     expect(await rows()).toEqual([
       expect.stringMatching(/Freela.*Sem vencimento.*A definir/),
@@ -103,26 +109,8 @@ describe("creating a recurrence", () => {
     ]);
   });
 
-  it("starts in the month on screen", async () => {
-    openApp(api, "/?mes=2026-12");
-    const dialog = await openDialog();
-
-    expect(within(dialog).getByLabelText("Início")).toHaveTextContent(
-      "Dezembro 2026"
-    );
-    await user.type(within(dialog).getByLabelText("Descrição"), "Academia");
-    await user.type(within(dialog).getByLabelText("Valor"), "99");
-    await submit(dialog);
-
-    expect(await rows()).toEqual([expect.stringMatching(/Academia/)]);
-    await user.click(screen.getByRole("button", { name: "Mês anterior" }));
-    expect(
-      await screen.findByText("Nenhuma conta neste mês.")
-    ).toBeInTheDocument();
-  });
-
-  it("starts in the current month when the month on screen is past", async () => {
-    openApp(api, "/?mes=2026-08");
+  it("starts in the current month", async () => {
+    openApp(api, "/recorrencias");
     const dialog = await openDialog();
 
     expect(within(dialog).getByLabelText("Início")).toHaveTextContent(
@@ -131,7 +119,7 @@ describe("creating a recurrence", () => {
   });
 
   it("stops in the chosen end month", async () => {
-    openApp(api, "/");
+    openApp(api, "/recorrencias");
     const dialog = await openDialog();
 
     await user.type(within(dialog).getByLabelText("Descrição"), "Geladeira");
@@ -149,7 +137,10 @@ describe("creating a recurrence", () => {
     expect(api.recurrencesOf(email)).toEqual([
       expect.objectContaining({ endPeriod: "2026-12-01" }),
     ]);
-    await user.click(screen.getByRole("button", { name: "Próximo mês" }));
+    await goToMonth();
+    await user.click(
+      await screen.findByRole("button", { name: "Próximo mês" })
+    );
     await user.click(screen.getByRole("button", { name: "Próximo mês" }));
     expect(await rows()).toEqual([expect.stringMatching(/Geladeira/)]);
     await user.click(screen.getByRole("button", { name: "Próximo mês" }));
@@ -159,7 +150,7 @@ describe("creating a recurrence", () => {
   });
 
   it("explains a failure in Portuguese and keeps what was typed", async () => {
-    openApp(api, "/");
+    openApp(api, "/recorrencias");
     const dialog = await openDialog();
     await user.type(within(dialog).getByLabelText("Descrição"), "Internet");
     await user.type(within(dialog).getByLabelText("Valor"), "120");
@@ -174,20 +165,5 @@ describe("creating a recurrence", () => {
     ).toBeInTheDocument();
     expect(within(dialog).getByLabelText("Descrição")).toHaveValue("Internet");
     expect(api.recurrencesOf(email)).toEqual([]);
-  });
-
-  it("keeps the arrow keys inside the dialog from changing the month", async () => {
-    openApp(api, "/");
-    const dialog = await openDialog();
-
-    within(dialog).getByRole("button", { name: "Criar recorrência" }).focus();
-    await user.keyboard("{ArrowRight}");
-    await user.click(within(dialog).getByLabelText("Início"));
-    await user.keyboard("{ArrowRight}");
-
-    expect(
-      screen.getByRole("heading", { name: "Outubro 2026", hidden: true })
-    ).toBeInTheDocument();
-    expect(window.location.search).toBe("");
   });
 });
