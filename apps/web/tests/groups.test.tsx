@@ -17,9 +17,12 @@ beforeEach(() => {
     approved: true,
   });
   api.signIn(email);
+  // Confirming each change is covered on its own, in settle.test.tsx.
+  localStorage.setItem("mensal:confirm-status-changes", "false");
 });
 afterEach(() => {
   vi.useRealTimers();
+  localStorage.clear();
 });
 
 /** Each group of the month's occurrences, in order, with the text of its rows. */

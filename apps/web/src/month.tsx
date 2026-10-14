@@ -26,7 +26,7 @@ import {
   useNavigate,
   useRouteContext,
 } from "@tanstack/react-router";
-import { useId, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { errorMessage } from "./api-error.ts";
 import { AppLayout } from "./app-layout.tsx";
 import { OneOffActions } from "./delete-one-off.tsx";
@@ -36,11 +36,14 @@ import { NewOneOffButton } from "./new-one-off.tsx";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
 import { periodQuery } from "./period-query.ts";
 import { RecurrenceActions } from "./recurrence-actions.tsx";
-import { useShowSummary } from "./settings.tsx";
+import { useConfirmStatusChanges, useShowSummary } from "./settings.tsx";
 import {
+  ConfirmStatusChange,
+  needsConfirmation,
   SettleCheckbox,
   SkipMenuItem,
   useStatusChange,
+  type StatusChangeRequest,
 } from "./status-controls.tsx";
 
 /** The monthly screen: one period's summary and occurrences. */
@@ -49,6 +52,12 @@ export function Month({ period }: { period: string }) {
   const { data } = useSuspenseQuery(periodQuery(api, period));
   const statusChange = useStatusChange();
   const [showSummary] = useShowSummary();
+  const [confirmStatusChanges] = useConfirmStatusChanges();
+  const [confirming, setConfirming] = useState<StatusChangeRequest | null>(
+    null
+  );
+  const changeStatus = ({ item, change }: StatusChangeRequest) =>
+    statusChange.mutate({ id: item.id, change });
 
   return (
     <AppLayout>
@@ -70,9 +79,21 @@ export function Month({ period }: { period: string }) {
         )}
         <Occurrences
           payload={data}
-          onStatusChange={(id, change) => statusChange.mutate({ id, change })}
+          onStatusChange={(request) =>
+            confirmStatusChanges && needsConfirmation(request.change)
+              ? setConfirming(request)
+              : changeStatus(request)
+          }
         />
       </Stack>
+      <ConfirmStatusChange
+        request={confirming}
+        onConfirm={(request) => {
+          setConfirming(null);
+          changeStatus(request);
+        }}
+        onCancel={() => setConfirming(null)}
+      />
     </AppLayout>
   );
 }
@@ -232,7 +253,7 @@ function Occurrences({
   onStatusChange,
 }: {
   payload: PeriodPayload;
-  onStatusChange: (id: string, change: StatusChange) => void;
+  onStatusChange: (request: StatusChangeRequest) => void;
 }) {
   const groups = groupOccurrences(payload, today());
   if (groups.length === 0) {
@@ -263,7 +284,7 @@ function OccurrenceList({
 }: {
   group: OccurrenceGroup;
   period: string;
-  onStatusChange: (id: string, change: StatusChange) => void;
+  onStatusChange: (request: StatusChangeRequest) => void;
 }) {
   const id = useId();
   return (
@@ -294,7 +315,7 @@ function OccurrenceList({
               item={item}
               period={period}
               first={index === 0}
-              onStatusChange={(change) => onStatusChange(item.id, change)}
+              onStatusChange={(change) => onStatusChange({ item, change })}
             />
           ))}
         </Stack>

@@ -1,10 +1,13 @@
 import {
   Button,
   Checkbox,
+  Group,
   Menu,
+  Modal,
   NumberInput,
   Popover,
   Stack,
+  Text,
 } from "@mantine/core";
 import {
   today,
@@ -15,6 +18,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useState } from "react";
+import { formatAmount, formatPeriodInline } from "./format.ts";
 import { invalidatePeriods, updatePeriods } from "./period-query.ts";
 
 const statusChangeKey = ["status-change"];
@@ -144,4 +148,84 @@ export function SkipMenuItem({
       {skipped ? "Retomar" : "Pular"}
     </Menu.Item>
   );
+}
+
+/** A status change on hold until it is confirmed. */
+export type StatusChangeRequest = { item: PeriodItem; change: StatusChange };
+
+/**
+ * Whether a change waits for confirmation: all but settling with an amount
+ * just typed in, which was deliberate enough.
+ */
+export function needsConfirmation(change: StatusChange): boolean {
+  return !(change.status === "SETTLED" && change.amount !== undefined);
+}
+
+/** Asks before settling, skipping or taking an occurrence back to pending. */
+export function ConfirmStatusChange({
+  request,
+  onConfirm,
+  onCancel,
+}: {
+  request: StatusChangeRequest | null;
+  onConfirm: (request: StatusChangeRequest) => void;
+  onCancel: () => void;
+}) {
+  // Kept while the modal fades out, so its text does not vanish first.
+  const [shown, setShown] = useState(request);
+  if (request !== null && request !== shown) setShown(request);
+  const copy = shown && confirmationCopy(shown);
+  return (
+    <Modal
+      opened={request !== null}
+      onClose={onCancel}
+      title={copy?.title}
+      centered
+    >
+      {shown && copy && (
+        <Stack gap="md">
+          <Text>
+            <Text span fw={600} c="white">
+              {shown.item.description}
+            </Text>{" "}
+            {copy.text}
+          </Text>
+          <Group justify="flex-end" gap="sm">
+            <Button variant="default" onClick={onCancel}>
+              Cancelar
+            </Button>
+            <Button onClick={() => onConfirm(shown)} data-autofocus>
+              {copy.action}
+            </Button>
+          </Group>
+        </Stack>
+      )}
+    </Modal>
+  );
+}
+
+function confirmationCopy({ item, change }: StatusChangeRequest) {
+  switch (change.status) {
+    case "SETTLED":
+      return {
+        title: "Liquidar conta",
+        text: `será liquidada por ${formatAmount(change.amount ?? item.amount ?? 0)}.`,
+        action: "Liquidar",
+      };
+    case "SKIPPED":
+      return {
+        title: "Pular conta",
+        text: `será pulada em ${formatPeriodInline(item.period)}.`,
+        action: "Pular",
+      };
+    case "PENDING":
+      return {
+        title: "Voltar para pendente",
+        text:
+          item.status === "SKIPPED"
+            ? "deixará de ser pulada e voltará a ficar pendente."
+            : "deixará de estar liquidada e voltará a ficar pendente.",
+        action: "Voltar para pendente",
+      };
+  }
 }

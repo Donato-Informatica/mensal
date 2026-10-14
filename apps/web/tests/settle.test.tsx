@@ -18,10 +18,13 @@ beforeEach(() => {
     approved: true,
   });
   api.signIn(email);
+  // Confirming each change is covered on its own, at the end.
+  localStorage.setItem("mensal:confirm-status-changes", "false");
   user = userEvent.setup();
 });
 afterEach(() => {
   vi.useRealTimers();
+  localStorage.clear();
 });
 
 /** The month's row for the occurrence described as `description`. */
@@ -243,6 +246,140 @@ describe("skipping an occurrence", () => {
     await waitFor(() =>
       expect(api.occurrencesOf(email)).toEqual([
         expect.objectContaining({ status: "PENDING" }),
+      ])
+    );
+  });
+});
+
+describe("confirming a status change", () => {
+  beforeEach(() => {
+    localStorage.removeItem("mensal:confirm-status-changes");
+  });
+
+  it("settles with the known amount once confirmed", async () => {
+    api.addRecurrence(email, { description: "Aluguel", defaultAmount: 220000 });
+    openApp(api, "/");
+
+    await user.click(
+      within(await row("Aluguel")).getByRole("checkbox", {
+        name: "Liquidar Aluguel",
+      })
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Liquidar conta",
+    });
+    expect(dialog).toHaveTextContent("Aluguel será liquidada por R$ 2.200,00.");
+    expect(api.occurrencesOf(email)).toEqual([]);
+    await user.click(within(dialog).getByRole("button", { name: "Liquidar" }));
+
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    expect(await row("Aluguel")).toHaveTextContent("Liquidada");
+    await waitFor(() =>
+      expect(api.occurrencesOf(email)).toEqual([
+        expect.objectContaining({ status: "SETTLED", amount: 220000 }),
+      ])
+    );
+  });
+
+  it("changes nothing when cancelled", async () => {
+    api.addRecurrence(email, { description: "Aluguel", defaultAmount: 220000 });
+    openApp(api, "/");
+
+    await user.click(
+      within(await row("Aluguel")).getByRole("checkbox", {
+        name: "Liquidar Aluguel",
+      })
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Liquidar conta",
+    });
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    expect(
+      within(await row("Aluguel")).getByRole("checkbox", {
+        name: "Liquidar Aluguel",
+      })
+    ).not.toBeChecked();
+    expect(api.occurrencesOf(email)).toEqual([]);
+  });
+
+  it("takes a settled occurrence back to pending once confirmed", async () => {
+    api.addOccurrence(email, {
+      description: "Conserto do carro",
+      status: "SETTLED",
+      amount: 85000,
+      settledAt: "2026-10-05",
+    });
+    openApp(api, "/");
+
+    await user.click(
+      within(await row("Conserto do carro")).getByRole("checkbox", {
+        name: "Liquidar Conserto do carro",
+      })
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Voltar para pendente",
+    });
+    await user.click(
+      within(dialog).getByRole("button", { name: "Voltar para pendente" })
+    );
+
+    await waitFor(() =>
+      expect(api.occurrencesOf(email)).toEqual([
+        expect.objectContaining({ status: "PENDING", settledAt: null }),
+      ])
+    );
+  });
+
+  it("skips, and takes the skip back, once confirmed", async () => {
+    api.addRecurrence(email, { description: "Academia", defaultAmount: 9900 });
+    openApp(api, "/");
+
+    await act("Academia", "Pular");
+    let dialog = await screen.findByRole("dialog", { name: "Pular conta" });
+    expect(dialog).toHaveTextContent("Academia será pulada em outubro 2026.");
+    await user.click(within(dialog).getByRole("button", { name: "Pular" }));
+    expect(await row("Academia")).toHaveTextContent("Pulada");
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+
+    await act("Academia", "Retomar");
+    dialog = await screen.findByRole("dialog", {
+      name: "Voltar para pendente",
+    });
+    await user.click(
+      within(dialog).getByRole("button", { name: "Voltar para pendente" })
+    );
+    expect(await row("Academia")).not.toHaveTextContent("Pulada");
+    await waitFor(() =>
+      expect(api.occurrencesOf(email)).toEqual([
+        expect.objectContaining({ status: "PENDING" }),
+      ])
+    );
+  });
+
+  it("asks nothing more once the amount to be defined is typed in", async () => {
+    api.addRecurrence(email, {
+      description: "Cartão de crédito",
+      defaultAmount: null,
+    });
+    openApp(api, "/");
+
+    await user.click(
+      within(await row("Cartão de crédito")).getByRole("checkbox", {
+        name: "Liquidar Cartão de crédito",
+      })
+    );
+    const popover = await screen.findByRole("dialog", {
+      name: "Liquidar Cartão de crédito",
+    });
+    await user.type(within(popover).getByLabelText("Valor"), "3120,90");
+    await user.click(within(popover).getByRole("button", { name: "Liquidar" }));
+
+    expect(screen.queryByRole("dialog", { name: "Liquidar conta" })).toBeNull();
+    await waitFor(() =>
+      expect(api.occurrencesOf(email)).toEqual([
+        expect.objectContaining({ status: "SETTLED", amount: 312090 }),
       ])
     );
   });

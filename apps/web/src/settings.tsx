@@ -10,6 +10,15 @@ export function useShowSummary() {
   });
 }
 
+/** Whether settling, skipping or taking back to pending is confirmed first. */
+export function useConfirmStatusChanges() {
+  return useLocalStorage({
+    key: "mensal:confirm-status-changes",
+    defaultValue: true,
+    getInitialValueInEffect: false,
+  });
+}
+
 /** Header button that opens the settings modal. */
 export function SettingsButton() {
   const [opened, { open, close }] = useDisclosure(false);
@@ -27,12 +36,21 @@ export function SettingsButton() {
 
 function SettingsForm() {
   const [showSummary, setShowSummary] = useShowSummary();
+  const [confirmStatusChanges, setConfirmStatusChanges] =
+    useConfirmStatusChanges();
   return (
     <Stack gap="md">
       <Switch
         label="Mostrar resumo de entradas e saídas"
         checked={showSummary}
         onChange={(event) => setShowSummary(event.currentTarget.checked)}
+      />
+      <Switch
+        label="Confirmar antes de liquidar, pular ou voltar uma conta para pendente"
+        checked={confirmStatusChanges}
+        onChange={(event) =>
+          setConfirmStatusChanges(event.currentTarget.checked)
+        }
       />
     </Stack>
   );
