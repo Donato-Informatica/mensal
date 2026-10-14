@@ -25,10 +25,13 @@ const titles: Record<Action, string> = {
 export function RecurrenceActions({
   description,
   recurrenceId,
+  children,
 }: {
   /** Names the row: the recurrence's, or the occurrence's. */
   description: string;
   recurrenceId: string;
+  /** Menu items on the row's own occurrence, listed first. */
+  children?: ReactNode;
 }) {
   const [opened, { open, close }] = useDisclosure(false);
   // Kept once the dialog closes, so its content stays through the transition.
@@ -51,6 +54,12 @@ export function RecurrenceActions({
           </ActionIcon>
         </Menu.Target>
         <Menu.Dropdown>
+          {children && (
+            <>
+              {children}
+              <Menu.Divider />
+            </>
+          )}
           <Menu.Item onClick={() => start("edit")}>{titles.edit}</Menu.Item>
           <Menu.Item onClick={() => start("end")}>{titles.end}</Menu.Item>
           <Menu.Item color="red" onClick={() => start("delete")}>
@@ -113,7 +122,7 @@ function LoadedRecurrence({
   return children(data);
 }
 
-function Dots() {
+export function Dots() {
   return (
     <svg
       width="18"

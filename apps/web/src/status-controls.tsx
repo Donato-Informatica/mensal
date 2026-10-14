@@ -1,4 +1,11 @@
-import { Button, Checkbox, NumberInput, Popover, Stack } from "@mantine/core";
+import {
+  Button,
+  Checkbox,
+  Menu,
+  NumberInput,
+  Popover,
+  Stack,
+} from "@mantine/core";
 import {
   today,
   withStatusChange,
@@ -118,8 +125,11 @@ function AmountForm({ onSubmit }: { onSubmit: (cents: number) => void }) {
   );
 }
 
-/** Skips the occurrence in its period, or takes the skip back (PRD §5.7). */
-export function SkipButton({
+/**
+ * Skips the occurrence in its period, or takes the skip back (PRD §5.7): an
+ * item of the row's "Mais ações" menu.
+ */
+export function SkipMenuItem({
   item,
   onChange,
 }: {
@@ -127,16 +137,11 @@ export function SkipButton({
   onChange: OnStatusChange;
 }) {
   const skipped = item.status === "SKIPPED";
-  const action = skipped ? "Retomar" : "Pular";
   return (
-    <Button
-      variant="subtle"
-      color="gray"
-      size="compact-xs"
-      aria-label={`${action} ${item.description}`}
+    <Menu.Item
       onClick={() => onChange({ status: skipped ? "PENDING" : "SKIPPED" })}
     >
-      {action}
-    </Button>
+      {skipped ? "Retomar" : "Pular"}
+    </Menu.Item>
   );
 }

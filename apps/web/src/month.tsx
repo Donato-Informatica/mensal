@@ -29,7 +29,7 @@ import {
 import { useId, type ReactNode } from "react";
 import { errorMessage } from "./api-error.ts";
 import { AppLayout } from "./app-layout.tsx";
-import { DeleteOneOffButton } from "./delete-one-off.tsx";
+import { OneOffActions } from "./delete-one-off.tsx";
 import { EditOccurrenceButton } from "./edit-occurrence.tsx";
 import { formatAmount, formatDayAndMonth, formatPeriod } from "./format.ts";
 import { NewOneOffButton } from "./new-one-off.tsx";
@@ -39,7 +39,7 @@ import { RecurrenceActions } from "./recurrence-actions.tsx";
 import { useShowSummary } from "./settings.tsx";
 import {
   SettleCheckbox,
-  SkipButton,
+  SkipMenuItem,
   useStatusChange,
 } from "./status-controls.tsx";
 
@@ -359,14 +359,17 @@ function Row({
           {item.amount === null ? "A definir" : formatAmount(item.amount)}
         </Text>
         {status && <Badge {...status.badge}>{status.label}</Badge>}
-        <SkipButton item={item} onChange={onStatusChange} />
         {item.recurrenceId === null ? (
-          <DeleteOneOffButton item={item} />
+          <OneOffActions item={item}>
+            <SkipMenuItem item={item} onChange={onStatusChange} />
+          </OneOffActions>
         ) : (
           <RecurrenceActions
             description={item.description}
             recurrenceId={item.recurrenceId}
-          />
+          >
+            <SkipMenuItem item={item} onChange={onStatusChange} />
+          </RecurrenceActions>
         )}
       </Group>
     </Group>

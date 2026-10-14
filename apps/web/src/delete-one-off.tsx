@@ -1,28 +1,55 @@
-import { Alert, Button, Group, Modal, Stack, Text } from "@mantine/core";
+import {
+  ActionIcon,
+  Alert,
+  Button,
+  Group,
+  Menu,
+  Modal,
+  Stack,
+  Text,
+} from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import type { PeriodItem } from "@mensal/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { errorMessage } from "./api-error.ts";
 import { invalidatePeriods } from "./period-query.ts";
+import { Dots } from "./recurrence-actions.tsx";
 
 /**
- * Deletes a one-off occurrence for good, once confirmed (PRD §5.9). One of a
- * recurrence is skipped instead, so it gets no such button.
+ * The actions on a one-off occurrence row, ending with deleting it for good,
+ * once confirmed (PRD §5.9). One of a recurrence is skipped instead, so it gets
+ * no such action.
  */
-export function DeleteOneOffButton({ item }: { item: PeriodItem }) {
+export function OneOffActions({
+  item,
+  children,
+}: {
+  item: PeriodItem;
+  /** Menu items listed before the deletion. */
+  children?: ReactNode;
+}) {
   const [opened, { open, close }] = useDisclosure(false);
   return (
     <>
-      <Button
-        variant="subtle"
-        color="gray"
-        size="compact-xs"
-        aria-label={`Excluir ${item.description}`}
-        onClick={open}
-      >
-        Excluir
-      </Button>
+      <Menu position="bottom-end">
+        <Menu.Target>
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            aria-label={`Mais ações para ${item.description}`}
+          >
+            <Dots />
+          </ActionIcon>
+        </Menu.Target>
+        <Menu.Dropdown>
+          {children}
+          <Menu.Item color="red" onClick={open}>
+            Excluir
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
       <Modal opened={opened} onClose={close} title="Excluir conta" centered>
         <ConfirmDeletion item={item} onCancel={close} onDeleted={close} />
       </Modal>

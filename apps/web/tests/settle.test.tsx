@@ -41,6 +41,20 @@ function outflowsSettled() {
   return within(block).getByLabelText("Realizado");
 }
 
+/** Picks the action `name` from the "Mais ações" menu of the row `description`. */
+async function act(description: string, name: string) {
+  await user.click(
+    await screen.findByRole("button", {
+      name: `Mais ações para ${description}`,
+    })
+  );
+  // By its text: a role query over the whole page is slow in jsdom, and the
+  // dropdown counts as hidden until its transition ends.
+  await user.click(
+    await screen.findByText(name, { selector: "[role=menuitem] *" })
+  );
+}
+
 describe("settling an occurrence", () => {
   it("settles a virtual occurrence with one click", async () => {
     api.addRecurrence(email, { description: "Aluguel", defaultAmount: 220000 });
@@ -208,11 +222,7 @@ describe("skipping an occurrence", () => {
     openApp(api, "/");
     const outflows = () => screen.getByRole("region", { name: "Saídas" });
 
-    await user.click(
-      within(await row("Academia")).getByRole("button", {
-        name: "Pular Academia",
-      })
-    );
+    await act("Academia", "Pular");
 
     expect(await row("Academia")).toHaveTextContent("Pulada");
     expect(within(outflows()).getByLabelText("Previsto")).toHaveTextContent(
@@ -224,11 +234,7 @@ describe("skipping an occurrence", () => {
       ])
     );
 
-    await user.click(
-      within(await row("Academia")).getByRole("button", {
-        name: "Retomar Academia",
-      })
-    );
+    await act("Academia", "Retomar");
 
     expect(await row("Academia")).not.toHaveTextContent("Pulada");
     expect(within(outflows()).getByLabelText("Previsto")).toHaveTextContent(

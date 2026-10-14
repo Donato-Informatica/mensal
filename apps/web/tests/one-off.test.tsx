@@ -49,6 +49,20 @@ function pickDay(date: string) {
   return screen.findByLabelText(date, { selector: "button" });
 }
 
+/** Picks the action `name` from the "Mais ações" menu of the row `description`. */
+async function act(description: string, name: string) {
+  await user.click(
+    await screen.findByRole("button", {
+      name: `Mais ações para ${description}`,
+    })
+  );
+  // By its text: a role query over the whole page is slow in jsdom, and the
+  // dropdown counts as hidden until its transition ends.
+  await user.click(
+    await screen.findByText(name, { selector: "[role=menuitem] *" })
+  );
+}
+
 describe("creating a one-off occurrence", () => {
   it("shows it in the month without a reload", async () => {
     openApp(api, "/");
@@ -140,11 +154,14 @@ describe("deleting a one-off occurrence", () => {
     api.addOccurrence(email, { description: "Conserto do carro" });
     openApp(api, "/");
 
+    await user.click(
+      await screen.findByRole("button", { name: "Mais ações para Aluguel" })
+    );
     expect(
-      await screen.findByRole("button", { name: "Excluir Conserto do carro" })
+      await screen.findByText("Pular", { selector: "[role=menuitem] *" })
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Excluir Aluguel" })
+      screen.queryByText("Excluir", { selector: "[role=menuitem] *" })
     ).not.toBeInTheDocument();
   });
 
@@ -156,9 +173,7 @@ describe("deleting a one-off occurrence", () => {
     });
     openApp(api, "/");
 
-    await user.click(
-      await screen.findByRole("button", { name: "Excluir Conserto do carro" })
-    );
+    await act("Conserto do carro", "Excluir");
     const dialog = await screen.findByRole("dialog", { name: "Excluir conta" });
     expect(dialog).toHaveTextContent("Conserto do carro");
     await user.click(within(dialog).getByRole("button", { name: "Excluir" }));
@@ -174,9 +189,7 @@ describe("deleting a one-off occurrence", () => {
     api.addOccurrence(email, { description: "Conserto do carro" });
     openApp(api, "/");
 
-    await user.click(
-      await screen.findByRole("button", { name: "Excluir Conserto do carro" })
-    );
+    await act("Conserto do carro", "Excluir");
     const dialog = await screen.findByRole("dialog", { name: "Excluir conta" });
     await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
     await waitFor(() => expect(dialog).not.toBeInTheDocument());
@@ -188,9 +201,7 @@ describe("deleting a one-off occurrence", () => {
   it("explains a failure in Portuguese, keeping the occurrence", async () => {
     api.addOccurrence(email, { description: "Conserto do carro" });
     openApp(api, "/");
-    await user.click(
-      await screen.findByRole("button", { name: "Excluir Conserto do carro" })
-    );
+    await act("Conserto do carro", "Excluir");
     const dialog = await screen.findByRole("dialog", { name: "Excluir conta" });
 
     api.breakDown();

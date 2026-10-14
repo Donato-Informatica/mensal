@@ -1,5 +1,5 @@
 import { screen, waitFor, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
@@ -36,6 +36,20 @@ async function groups(): Promise<Record<string, string[]>> {
           .getAllByRole("listitem")
           .map((row) => row.textContent ?? ""),
       ])
+  );
+}
+
+/** Picks the action `name` from the "Mais ações" menu of the row `description`. */
+async function act(user: UserEvent, description: string, name: string) {
+  await user.click(
+    await screen.findByRole("button", {
+      name: `Mais ações para ${description}`,
+    })
+  );
+  // By its text: a role query over the whole page is slow in jsdom, and the
+  // dropdown counts as hidden until its transition ends.
+  await user.click(
+    await screen.findByText(name, { selector: "[role=menuitem] *" })
   );
 }
 
@@ -192,7 +206,7 @@ describe("moving between groups", () => {
 
     api.stall();
     await user.click(screen.getByRole("checkbox", { name: "Liquidar Luz" }));
-    await user.click(screen.getByRole("button", { name: "Pular Internet" }));
+    await act(user, "Internet", "Pular");
 
     expect(await groups()).toEqual({
       "Liquidadas e puladas": [
@@ -206,7 +220,7 @@ describe("moving between groups", () => {
     api.resume();
 
     await user.click(screen.getByRole("checkbox", { name: "Liquidar Luz" }));
-    await user.click(screen.getByRole("button", { name: "Retomar Internet" }));
+    await act(user, "Internet", "Retomar");
 
     expect(await groups()).toEqual({
       "Vencem hoje": [expect.stringMatching(/Luz/)],

@@ -263,12 +263,17 @@ describe("editing a recurrence from the monthly screen", () => {
     api.addOccurrence(email, { description: "Conserto do carro" });
     openApp(api, "/");
 
-    expect(await monthRows()).toEqual([
-      expect.stringMatching(/Conserto do carro/),
-    ]);
-    expect(
-      screen.queryByRole("button", {
+    await user.click(
+      await screen.findByRole("button", {
         name: "Mais ações para Conserto do carro",
+      })
+    );
+    expect(
+      await screen.findByText("Excluir", { selector: "[role=menuitem] *" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Editar recorrência", {
+        selector: "[role=menuitem] *",
       })
     ).not.toBeInTheDocument();
   });
