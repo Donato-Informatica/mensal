@@ -1,6 +1,7 @@
 import { Box, Button, Container, Group } from "@mantine/core";
 import { Link, useMatchRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { SettingsButton } from "./settings.tsx";
 import { SignOutButton } from "./sign-out-button.tsx";
 import { Wordmark } from "./wordmark.tsx";
 
@@ -21,7 +22,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 <ScreenLink to="/recorrencias">Recorrências</ScreenLink>
               </Group>
             </Group>
-            <SignOutButton variant="subtle" color="gray" size="sm" />
+            <Group gap={4} wrap="nowrap" align="flex-start">
+              <SettingsButton />
+              <SignOutButton variant="subtle" color="gray" size="sm" />
+            </Group>
           </Group>
         </Container>
       </Box>

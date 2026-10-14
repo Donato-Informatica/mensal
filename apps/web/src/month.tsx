@@ -37,6 +37,7 @@ import { NewRecurrenceButton } from "./new-recurrence.tsx";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
 import { periodQuery } from "./period-query.ts";
 import { RecurrenceActions } from "./recurrence-actions.tsx";
+import { useShowSummary } from "./settings.tsx";
 import {
   SettleCheckbox,
   SkipButton,
@@ -48,12 +49,13 @@ export function Month({ period }: { period: string }) {
   const { api } = useRouteContext({ from: rootRouteId });
   const { data } = useSuspenseQuery(periodQuery(api, period));
   const statusChange = useStatusChange();
+  const [showSummary] = useShowSummary();
 
   return (
     <AppLayout>
       <Stack gap="xl">
         <PeriodNavigator period={period} />
-        <Summary summary={data.summary} />
+        {showSummary && <Summary summary={data.summary} />}
         <Group justify="flex-end" gap="sm">
           <NewOneOffButton period={period} />
           <NewRecurrenceButton period={period} />
