@@ -8,8 +8,8 @@
 
 **Status:** ready-for-agent
 
-- [ ] A failed save in the modal flips the switch back and shows the `Alert` above the switches with "Alteração não salva." and the error's message.
-- [ ] A later successful save clears the `Alert`.
-- [ ] The fake API can make `update-user` fail, without mocking anything but the network.
-- [ ] Web test covering the failure state above.
-- [ ] `npm run check` green.
+- [x] A failed save in the modal flips the switch back and shows the `Alert` above the switches with "Alteração não salva." and the error's message.
+- [x] A later successful save clears the `Alert`.
+- [x] The fake API can make `update-user` fail, without mocking anything but the network.
+- [x] Web test covering the failure state above.
+- [x] `npm run check` green.
