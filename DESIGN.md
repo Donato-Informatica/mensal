@@ -258,7 +258,7 @@ Monochrome on black, with one highlighter and two signal colours that carry mean
 - **Scale:** Mantine's default spacing, 10 / 12 / 16 / 20 / 32px (`xs` to `xl`). Radii and colours are themed; spacing is not.
 - **Period navigator:** sticky at the top of the month screen on the canvas colour, a three-column grid of [empty | ‹ title › | empty]. The centre group is 400px wide at most.
 - **Summary:** two blocks, one column on phones and two from 576px (`xs`) up.
-- **Auth screens:** a single 400px card, centred in the viewport, with the lockup above it.
+- **Auth screens:** a single 400px card, centred in the viewport. From 48em the stacked lockup sits beside it on the left, 64px away and on the card's vertical centre; on phones it is centred above the card, 32px (`xl`) clear of it.
 - **Responsive:** phones are the main device for settling (PRODUCT.md), so every screen must hold at 360–375px with touch targets of at least 36px. The header and the navigator row both fit at that width; the longer month names wrap the title onto two lines.
 
 ## Elevation & Depth
@@ -315,9 +315,9 @@ Panel Black fill, Panel Edge border, 8px corners, 36px tall, labels above the fi
 
 ### Lockup
 
-The logo mark, a 10px (`xs`) gap, then the wordmark. The mark is 28px in the header and 48px above the auth card; it is decorative (empty alt), since the wordmark names the app. The same mark is the favicon.
+In the header, the 28px logo mark, a 10px (`xs`) gap, then the wordmark. On the auth screens the lockup is stacked and centred: the mark over the wordmark, 12px (`sm`) apart, the mark 160px from 48em and 80px on phones. The mark is decorative (empty alt), since the wordmark names the app. The same mark is the favicon.
 
-- **Wordmark:** "Mensal" in 18px / 700 Highlighter Yellow. Apart from text links on the auth screens (Mantine anchors take the primary colour), it is the only yellow text in the product.
+- **Wordmark:** "Mensal" in 18px / 700 Highlighter Yellow in the header; in the stacked lockup it takes the display step, 32px / 700 at -1px tracking (24px on phones). Apart from text links on the auth screens (Mantine anchors take the primary colour), it is the only yellow text in the product.
 - **Logo mark:** `apps/web/public/logo.svg`, a Night Canvas tile edged in Highlighter Yellow holding three ledger rows: two quiet Faint Grey rows and, between them, a settled one (a yellow checked box beside a Paper White line). Its colours are the tokens above; change them here first.
 
 ## Do's and Don'ts
