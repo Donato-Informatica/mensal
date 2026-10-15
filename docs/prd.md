@@ -351,6 +351,18 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 - **Primary seam:** the pure `resolvePeriod` function in `@shared`, unit-tested for clamping (February, leap years), virtual projection, ordering, summary, overdue (including earlier periods) and the `America/Sao_Paulo` "today".
 - **API integration tests** against a real Postgres (docker-compose), with no database mocks: upsert idempotency, the uniqueness constraint, tenant isolation, the approval gate and the deletion rules.
 
+### 8.6 Security
+
+A minimal baseline against opportunistic internet traffic (scanners, credential stuffing, sign-up spam, fingerprinting), applied in the API process so it travels with the container whatever proxy sits in front.
+
+- **Headers:** `helmet` with its defaults is the first middleware in the Express app. It also removes `X-Powered-By`.
+- **Rate limiting on `/api/auth` only:** Better-Auth's built-in limiter, enabled in every environment (not only production), in memory (one container), keyed on the client IP read from `x-forwarded-for` as set by the proxy. Per IP: sign-in 5 per minute, sign-up 3 per hour, password-reset request 3 per hour, the rest Better-Auth's default (100 per 10 s). Over the limit: `429`. `/api/v1` has no limiter: only approved users reach it.
+- **Errors are JSON:** a final error handler answers malformed JSON with `400 INVALID_INPUT` (`fields: []`), an oversized body with `413 PAYLOAD_TOO_LARGE`, and anything else with `500 INTERNAL_ERROR`, logging the error server-side and returning no detail.
+- **Boot check:** in production the API refuses to start when `BETTER_AUTH_SECRET` is the `.env.example` value or shorter than 32 characters, or when `BETTER_AUTH_URL` is not `https://`.
+- **Deliberately unchanged:** the 100 kB JSON body limit; no CORS package (same origin, §8.4); no CSRF tokens on `/api/v1` (`SameSite=Lax` keeps the session cookie off cross-site writes, and Better-Auth checks the origin on `/api/auth`); password-reset links in the server log (§8.2).
+- **Out of scope for the MVP:** 2FA, account lockout, audit logs, a password policy beyond Better-Auth's 8–128 characters, dependency auditing in the gate.
+- **At the proxy (M4):** the static frontend's own headers (CSP, `frame-ancestors`) are set where the HTML is served, not by the API. The proxy must overwrite any client-sent `X-Forwarded-For`, and the API port is not published on the VPS; behind Cloudflare the client IP would come from `cf-connecting-ip` instead.
+
 ---
 
 ## 9. MVP Milestones and Acceptance Criteria
