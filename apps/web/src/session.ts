@@ -36,6 +36,7 @@ export type Preference = "showSummary" | "confirmStatusChanges";
 /**
  * A preference of the signed-in user and a setter that saves it to the
  * account. The change shows at once; a failed save restores the old value.
+ * The third item is the save itself, for screens that report its failure.
  */
 export function usePreference(preference: Preference) {
   const { authClient } = useRouteContext({ from: rootRouteId });
@@ -51,7 +52,7 @@ export function usePreference(preference: Preference) {
     );
   }
 
-  const { mutate } = useMutation({
+  const save = useMutation({
     mutationFn: async (to: boolean) =>
       unwrap(await authClient.updateUser({ [preference]: to })),
     onMutate: async (to) => {
@@ -67,7 +68,7 @@ export function usePreference(preference: Preference) {
       if (context?.from !== undefined) patch(context.from);
     },
   });
-  return [value, mutate] as const;
+  return [value, save.mutate, save] as const;
 }
 
 /**
