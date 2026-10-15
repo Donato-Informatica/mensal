@@ -28,6 +28,9 @@ export default defineConfig({
           include: [web],
           environment: "jsdom",
           setupFiles: ["apps/web/tests/setup.ts"],
+          // A whole-app render through a dialog takes ~3 s in jsdom alone, and
+          // over the 5 s default when every worker runs at once.
+          testTimeout: 15_000,
         },
       },
     ],
