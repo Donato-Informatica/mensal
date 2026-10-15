@@ -9,6 +9,11 @@ The manual release an administrator grants a newly signed-up user; without it th
 _UI (pt-BR)_: Aprovação
 _Avoid_: activation, verification, confirmation
 
+**Preference**:
+A choice a user makes about how the product behaves for them, shared by every device they sign in on; it never changes their data.
+_UI (pt-BR)_: Configurações
+_Avoid_: setting, config, option
+
 ## Time
 
 **Period**:

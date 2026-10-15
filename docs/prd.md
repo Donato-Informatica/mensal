@@ -134,6 +134,18 @@ Sign-up is open, but a new user cannot use the product until an administrator ap
 - The administrator approves users by setting `approved = true` directly in the database.
 - No email verification is required.
 
+### 3.5 Preferences
+
+A user's preferences belong to the account, not the device: every browser they sign in on uses the same values ([ADR-0002](adr/0002-preferences-on-auth-user.md)).
+
+| Preference             | Type      | Default | Effect                                                                                     |
+| ---------------------- | --------- | ------- | ------------------------------------------------------------------------------------------ |
+| `showSummary`          | `boolean` | `true`  | Shows the summary bar on the monthly screen. Closing the bar turns it off.                 |
+| `confirmStatusChanges` | `boolean` | `true`  | Asks for confirmation before settling, skipping or taking an occurrence back to `PENDING`. |
+
+- Each is a Better-Auth `user.additionalFields` entry with `input: true`, so it travels with the session and is written by Better-Auth's `update-user` endpoint. `approved` stays `input: false` and cannot be written that way.
+- The UI applies a change at once and saves it in the background, rolling back on failure. Other open devices pick the change up the next time they reload the session (on window focus); there is no live push.
+
 ---
 
 ## 4. Period Resolution Algorithm
@@ -330,6 +342,7 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 - Better-Auth is mounted inside the Express app (no separate auth service).
 - Email and password sign-in; sessions in HttpOnly cookies (`SameSite=Lax`).
 - An Express middleware injects the verified `userId` and rejects unapproved users with `403 USER_NOT_APPROVED`. The `approved` field travels with the session, so the frontend can show the "Aguardando aprovação" screen.
+- The user's preferences (§3.5) travel with the session too, and are written through Better-Auth's `update-user`, outside `/api/v1`.
 - Password reset: `sendResetPassword` writes the reset URL to the server log, and the administrator forwards it to the user manually. No email provider in the MVP.
 
 ### 8.3 Data Layer (Drizzle + Postgres)
