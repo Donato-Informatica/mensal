@@ -3,8 +3,8 @@ import { createApp } from "./app.ts";
 import { createAuth } from "./auth.ts";
 import { readConfig } from "./config.ts";
 
-const { databaseUrl, baseURL, secret, port } = readConfig(process.env);
-const db = createDatabase(databaseUrl);
+const { databaseURL, baseURL, secret, port } = readConfig(process.env);
+const db = createDatabase(databaseURL);
 const auth = createAuth({ db, baseURL, secret });
 
 const server = createApp({ auth, db }).listen(port, () => {

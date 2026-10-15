@@ -11,7 +11,7 @@ const development = {
 describe("readConfig", () => {
   it("reads the database, the public origin, the secret and the port", () => {
     expect(readConfig({ ...development, PORT: "4000" })).toEqual({
-      databaseUrl: "postgres://mensal:mensal@localhost:5432/mensal",
+      databaseURL: "postgres://mensal:mensal@localhost:5432/mensal",
       baseURL: "http://localhost:5173",
       secret: "change-me-to-a-long-random-string",
       port: 4000,

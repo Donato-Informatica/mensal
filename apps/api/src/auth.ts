@@ -1,6 +1,7 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { schema, type Database } from "@mensal/database";
 import { betterAuth } from "better-auth";
+import type { Log } from "./log.ts";
 
 export interface AuthOptions {
   db: Database;
@@ -8,7 +9,7 @@ export interface AuthOptions {
   baseURL: string;
   secret: string;
   /** Where the password-reset links are written; the console by default. */
-  log?: (message: string) => void;
+  log?: Log;
   /** Better-Auth's per-IP rate limiter on `/api/auth`; on by default. */
   rateLimit?: boolean;
 }

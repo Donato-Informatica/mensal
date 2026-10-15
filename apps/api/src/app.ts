@@ -4,6 +4,7 @@ import express from "express";
 import helmet from "helmet";
 import type { Auth } from "./auth.ts";
 import { errorHandler } from "./error-handler.ts";
+import type { Log } from "./log.ts";
 import { occurrencesRouter } from "./occurrences.ts";
 import { periodsRouter } from "./periods.ts";
 import { recurrencesRouter } from "./recurrences.ts";
@@ -15,7 +16,7 @@ export interface AppOptions {
   /** The clock "today" is read from. */
   now?: () => Date;
   /** Where unexpected errors are written; the console by default. */
-  log?: (message: string) => void;
+  log?: Log;
 }
 
 export function createApp({

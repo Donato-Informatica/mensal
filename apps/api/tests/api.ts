@@ -4,6 +4,7 @@ import type { AddressInfo } from "node:net";
 import { createDatabase, type Database } from "@mensal/database";
 import { createApp } from "../src/app.ts";
 import { createAuth } from "../src/auth.ts";
+import type { Log } from "../src/log.ts";
 import { testDatabaseUrl } from "./database.ts";
 
 export interface TestApi {
@@ -20,7 +21,7 @@ export async function startApi({
 }: {
   now?: () => Date;
   /** Where the API's own log lines go, instead of the console. */
-  log?: (message: string) => void;
+  log?: Log;
   /**
    * Turns Better-Auth's rate limiter on. Off by default: every test request
    * comes from one address, so the suite's many sign-ups would trip it.

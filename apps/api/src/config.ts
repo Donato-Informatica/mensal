@@ -1,5 +1,5 @@
 export interface Config {
-  databaseUrl: string;
+  databaseURL: string;
   /** Public origin the app is served from (PRD §8.4). */
   baseURL: string;
   secret: string;
@@ -21,7 +21,7 @@ export function readConfig(env: Record<string, string | undefined>): Config {
   }
 
   const config = {
-    databaseUrl: required("DATABASE_URL"),
+    databaseURL: required("DATABASE_URL"),
     baseURL: required("BETTER_AUTH_URL"),
     secret: required("BETTER_AUTH_SECRET"),
     port: Number(env.PORT ?? 3000),
