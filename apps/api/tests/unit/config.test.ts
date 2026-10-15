@@ -1,11 +1,22 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import { readConfig } from "../src/config.ts";
+import { readConfig } from "../../src/config.ts";
+
+/** The placeholder `BETTER_AUTH_SECRET` a developer copies from `.env.example`. */
+const exampleSecret = await (async () => {
+  const example = await readFile(
+    new URL("../../.env.example", import.meta.url),
+    "utf8"
+  );
+  const [, secret] = /^BETTER_AUTH_SECRET=(.+)$/m.exec(example) ?? [];
+  if (!secret) throw new Error(".env.example sets no BETTER_AUTH_SECRET");
+  return secret;
+})();
 
 const development = {
   DATABASE_URL: "postgres://mensal:mensal@localhost:5432/mensal",
   BETTER_AUTH_URL: "http://localhost:5173",
-  BETTER_AUTH_SECRET: "change-me-to-a-long-random-string",
+  BETTER_AUTH_SECRET: exampleSecret,
 };
 
 describe("readConfig", () => {
@@ -13,7 +24,7 @@ describe("readConfig", () => {
     expect(readConfig({ ...development, PORT: "4000" })).toEqual({
       databaseURL: "postgres://mensal:mensal@localhost:5432/mensal",
       baseURL: "http://localhost:5173",
-      secret: "change-me-to-a-long-random-string",
+      secret: exampleSecret,
       port: 4000,
     });
   });
@@ -39,16 +50,10 @@ describe("readConfig", () => {
       });
     });
 
-    it("refuses the secret from .env.example", async () => {
-      const example = await readFile(
-        new URL("../.env.example", import.meta.url),
-        "utf8"
-      );
-      const [, secret] = /^BETTER_AUTH_SECRET=(.*)$/m.exec(example) ?? [];
-
+    it("refuses the secret from .env.example", () => {
       expect(() =>
-        readConfig({ ...production, BETTER_AUTH_SECRET: secret })
-      ).toThrow("BETTER_AUTH_SECRET");
+        readConfig({ ...production, BETTER_AUTH_SECRET: exampleSecret })
+      ).toThrow("BETTER_AUTH_SECRET must be");
     });
 
     it("refuses a secret shorter than 32 characters", () => {

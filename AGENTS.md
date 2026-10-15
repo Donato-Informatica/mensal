@@ -17,8 +17,8 @@ Mensal: forecast and settle a person's monthly cash flow. npm-workspaces monorep
 
 Three vitest projects (`vitest.config.ts`):
 
-- `unit` — everything except the two below.
-- `api` — the real Express app against real Postgres, no database mocks. `apps/api/tests/global-setup.ts` creates and migrates `mensal_test` (override via `TEST_DATABASE_URL`) and truncates users; development data is never touched. If Postgres is down it fails telling you to run `docker compose up -d`.
+- `unit` — everything except the two below, including `apps/api/tests/unit/`.
+- `api` — every other test under `apps/api/tests/`: the real Express app against real Postgres, no database mocks. An API test that needs neither the app nor the database (e.g. `readConfig`) goes in `apps/api/tests/unit/` instead. `apps/api/tests/global-setup.ts` creates and migrates `mensal_test` (override via `TEST_DATABASE_URL`) and truncates users; development data is never touched. If Postgres is down it fails telling you to run `docker compose up -d`.
 - `web` — jsdom; the whole app rendered via `openApp()` against `apps/web/tests/fake-api.ts`, an in-memory stand-in for Better-Auth and `/api/v1` built on the real `resolvePeriod`. Only the network is faked: don't mock domain logic or reach for MSW.
 
 ## Architecture

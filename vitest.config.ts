@@ -1,6 +1,12 @@
 import { defineConfig } from "vitest/config";
 
+// The API's tests run against Postgres, except the pure ones under tests/unit/.
 const integration = "apps/api/tests/**/*.test.ts";
+const apiUnit = "apps/api/tests/unit/**";
+const integrationOutsideUnit = [
+  "apps/api/tests/*.test.ts",
+  "apps/api/tests/!(unit)/**",
+];
 const web = "apps/web/tests/**/*.test.{ts,tsx}";
 
 export default defineConfig({
@@ -10,7 +16,7 @@ export default defineConfig({
         test: {
           name: "unit",
           include: ["{apps,packages}/*/tests/**/*.test.{ts,tsx}"],
-          exclude: [integration, web],
+          exclude: [...integrationOutsideUnit, web],
         },
       },
       {
@@ -18,6 +24,7 @@ export default defineConfig({
         test: {
           name: "api",
           include: [integration],
+          exclude: [apiUnit],
           globalSetup: ["apps/api/tests/global-setup.ts"],
         },
       },
