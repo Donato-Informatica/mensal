@@ -23,6 +23,7 @@ import { useState } from "react";
 import { errorMessage } from "./api-error.ts";
 import { invalidatePeriods } from "./period-query.ts";
 import { monthPickerProps } from "./pickers.ts";
+import { PrimaryActionButton } from "./primary-action-button.tsx";
 import { invalidateRecurrences } from "./recurrence-query.ts";
 
 /** "Nova recorrência": opens the dialog that creates a recurrence (PRD §7.7). */
@@ -30,7 +31,7 @@ export function NewRecurrenceButton() {
   const [opened, { open, close }] = useDisclosure(false);
   return (
     <>
-      <Button onClick={open}>Nova recorrência</Button>
+      <PrimaryActionButton onClick={open}>Nova recorrência</PrimaryActionButton>
       <Modal opened={opened} onClose={close} title="Nova recorrência" centered>
         <NewRecurrenceForm onCreated={close} />
       </Modal>

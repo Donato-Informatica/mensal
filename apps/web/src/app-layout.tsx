@@ -11,7 +11,10 @@ export function AppLayout({
   action,
   children,
 }: {
-  /** The screen's primary action, centered in the header. */
+  /**
+   * The screen's primary action: floating at the bottom right on phones,
+   * centered in the header from 48em up. Rendered once; CSS moves it.
+   */
   action?: ReactNode;
   children: ReactNode;
 }) {
@@ -43,7 +46,7 @@ export function AppLayout({
           </div>
         </Container>
       </Box>
-      <Container component="main" size="md" py="xl">
+      <Container component="main" size="md" className={classes.main}>
         {children}
       </Container>
     </>

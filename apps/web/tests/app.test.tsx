@@ -153,6 +153,28 @@ describe("approved", () => {
     ).toBeInTheDocument();
     expect(window.location.pathname).toBe("/entrar");
   });
+
+  // On phones it floats at the bottom right, on wider screens it sits in the
+  // header: one button either way, which CSS moves (jsdom ignores the media query).
+  it.each([
+    { screenName: "Mês", path: "/", action: "Nova avulsa" },
+    {
+      screenName: "Recorrências",
+      path: "/recorrencias",
+      action: "Nova recorrência",
+    },
+  ])(
+    "shows $screenName's primary action once, a + icon beside its label",
+    async ({ path, action }) => {
+      openApp(path);
+
+      const button = await screen.findByRole("button", { name: action });
+      expect(screen.getAllByRole("button", { name: action })).toHaveLength(1);
+      const icon = button.querySelector("svg");
+      expect(icon).not.toBeNull();
+      expect(icon).toHaveAttribute("aria-hidden", "true");
+    }
+  );
 });
 
 describe("when things go wrong", () => {

@@ -7,8 +7,7 @@
   display: grid;
   grid-template-areas:
     "brand actions"
-    "nav nav"
-    "action action";
+    "nav nav";
   grid-template-columns: 1fr auto;
   align-items: center;
   row-gap: 4px;
@@ -30,12 +29,27 @@
   gap: 4px;
 }
 
+/*
+ * On phones the screen's primary action floats at the bottom right, clear of
+ * the edges and the notch. Flat: no shadow (DESIGN.md, Flat Ledger Rule).
+ */
 .action {
-  grid-area: action;
-  justify-self: center;
+  position: fixed;
+  right: calc(var(--mantine-spacing-md) + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--mantine-spacing-md) + env(safe-area-inset-bottom, 0px));
+  z-index: var(--mantine-z-index-app);
 }
 
-/* Wide enough for everything on a single row. */
+/* Room below the last row, so the floating action never covers it. */
+.main {
+  padding-top: var(--mantine-spacing-xl);
+  padding-bottom: calc(
+    44px + var(--mantine-spacing-md) + var(--mantine-spacing-xl) +
+      env(safe-area-inset-bottom, 0px)
+  );
+}
+
+/* Wide enough for everything on a single row, the action back in the header. */
 @media (min-width: 48em) {
   .bar {
     grid-template-areas: "brand nav action actions";
@@ -49,5 +63,15 @@
   .nav {
     display: flex;
     gap: 4px;
+  }
+
+  .action {
+    position: static;
+    grid-area: action;
+    justify-self: center;
+  }
+
+  .main {
+    padding-bottom: var(--mantine-spacing-xl);
   }
 }

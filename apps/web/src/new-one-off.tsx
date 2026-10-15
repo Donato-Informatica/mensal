@@ -21,15 +21,14 @@ import { errorMessage } from "./api-error.ts";
 import { formatPeriod } from "./format.ts";
 import { invalidatePeriods } from "./period-query.ts";
 import { datePickerProps } from "./pickers.ts";
+import { PrimaryActionButton } from "./primary-action-button.tsx";
 
 /** "Nova avulsa": opens the dialog that records a one-off occurrence (PRD §7.7). */
 export function NewOneOffButton({ period }: { period: string }) {
   const [opened, { open, close }] = useDisclosure(false);
   return (
     <>
-      <Button variant="default" onClick={open}>
-        Nova avulsa
-      </Button>
+      <PrimaryActionButton onClick={open}>Nova avulsa</PrimaryActionButton>
       <Modal opened={opened} onClose={close} title="Nova conta avulsa" centered>
         <NewOneOffForm period={period} onCreated={close} />
       </Modal>
