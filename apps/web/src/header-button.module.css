@@ -1,0 +1,6 @@
+/* Phones show only the icon, so the icon's gap to the (hidden) label goes too. */
+@media (max-width: 47.99em) {
+  .section {
+    margin-inline-end: 0;
+  }
+}

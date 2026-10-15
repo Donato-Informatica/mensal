@@ -5,6 +5,7 @@ Mensal: forecast and settle a person's monthly cash flow. npm-workspaces monorep
 - `docs/prd.md` is the spec. Code, tickets and comments cite it as "PRD §x.y"; honor those references.
 - `GLOSSARY.md` fixes domain vocabulary. Use its terms and their pt-BR UI strings; code, data and docs stay English.
 - `DESIGN.md` is the UI theme source (near-black canvas, electric yellow `#faff69`, Inter), mapped onto Mantine in `apps/web/src/theme.ts`.
+- Icons come from `@tabler/icons-react` (18px, `aria-hidden`); don't hand-write inline SVGs.
 
 ## Commands
 

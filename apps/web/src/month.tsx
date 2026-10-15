@@ -24,6 +24,13 @@ import {
   type PeriodSummary,
   type StatusChange,
 } from "@mensal/shared";
+import {
+  IconArrowDownLeft,
+  IconArrowUpRight,
+  IconChevronLeft,
+  IconChevronRight,
+  IconPencil,
+} from "@tabler/icons-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   rootRouteId,
@@ -207,7 +214,7 @@ function PeriodNavigator() {
             aria-label="Mês anterior"
             onClick={() => move(-1)}
           >
-            <Chevron direction="left" />
+            <IconChevronLeft size={20} aria-hidden="true" />
           </ActionIcon>
           <Title order={1} ta="center">
             {formatPeriod(target)}
@@ -219,30 +226,12 @@ function PeriodNavigator() {
             aria-label="Próximo mês"
             onClick={() => move(1)}
           >
-            <Chevron direction="right" />
+            <IconChevronRight size={20} aria-hidden="true" />
           </ActionIcon>
         </Group>
         <Box />
       </Box>
     </Box>
-  );
-}
-
-function Chevron({ direction }: { direction: "left" | "right" }) {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d={direction === "left" ? "M15 6l-6 6 6 6" : "M9 6l6 6-6 6"} />
-    </svg>
   );
 }
 
@@ -617,7 +606,11 @@ function Amount({ item }: { item: PeriodItem }) {
           <Text fw={600} c="white" span className={classes.pendingText}>
             A definir
           </Text>
-          <PencilIcon />
+          <IconPencil
+            size={14}
+            style={{ flex: "none", color: "var(--mantine-color-dark-2)" }}
+            aria-hidden="true"
+          />
         </Group>
       </EditOccurrenceButton>
     );
@@ -634,40 +627,15 @@ function Amount({ item }: { item: PeriodItem }) {
 }
 
 function DirectionIcon({ inflow }: { inflow: boolean }) {
+  const Icon = inflow ? IconArrowDownLeft : IconArrowUpRight;
   return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={inflow ? "var(--mantine-color-green-5)" : "currentColor"}
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
+    <Icon
+      size={14}
+      stroke={2.5}
+      color={inflow ? "var(--mantine-color-green-5)" : undefined}
       style={{ flex: "none", color: "var(--mantine-color-dark-2)" }}
-    >
-      <path d={inflow ? "M17 7L7 17M7 9v8h8" : "M7 17L17 7M9 7h8v8"} />
-    </svg>
-  );
-}
-
-function PencilIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
       aria-hidden="true"
-      style={{ flex: "none", color: "var(--mantine-color-dark-2)" }}
-    >
-      <path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" />
-    </svg>
+    />
   );
 }
 

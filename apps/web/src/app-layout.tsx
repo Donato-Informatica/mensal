@@ -1,7 +1,9 @@
 import { Box, Button, Container, Group } from "@mantine/core";
+import { IconCalendarMonth, IconRepeat } from "@tabler/icons-react";
 import { Link, useMatchRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import classes from "./app-layout.module.css";
+import headerButton from "./header-button.module.css";
 import { SettingsButton } from "./settings.tsx";
 import { SignOutButton } from "./sign-out-button.tsx";
 import { Wordmark } from "./wordmark.tsx";
@@ -25,8 +27,18 @@ export function AppLayout({
           <div className={classes.bar}>
             <Wordmark className={classes.brand} />
             <nav aria-label="Telas" className={classes.nav}>
-              <ScreenLink to="/">Mês</ScreenLink>
-              <ScreenLink to="/recorrencias">Recorrências</ScreenLink>
+              <ScreenLink
+                to="/"
+                icon={<IconCalendarMonth size={18} aria-hidden="true" />}
+              >
+                Mês
+              </ScreenLink>
+              <ScreenLink
+                to="/recorrencias"
+                icon={<IconRepeat size={18} aria-hidden="true" />}
+              >
+                Recorrências
+              </ScreenLink>
             </nav>
             {action && <div className={classes.action}>{action}</div>}
             <Group
@@ -41,6 +53,7 @@ export function AppLayout({
                 color="gray"
                 size="sm"
                 h={{ base: 44, sm: 30 }}
+                iconOnlyOnPhones
               />
             </Group>
           </div>
@@ -56,10 +69,12 @@ export function AppLayout({
 // DESIGN.md category-tab: the active one on surface-card, the rest muted.
 function ScreenLink({
   to,
+  icon,
   children,
 }: {
   to: "/" | "/recorrencias";
-  children: ReactNode;
+  icon: ReactNode;
+  children: string;
 }) {
   const active = Boolean(useMatchRoute()({ to }));
   return (
@@ -70,9 +85,15 @@ function ScreenLink({
       color={active ? "dark.6" : "gray"}
       size="sm"
       h={{ base: 44, sm: 30 }}
+      leftSection={icon}
+      classNames={{ section: headerButton.section }}
+      aria-label={children}
+      title={children}
       aria-current={active ? "page" : undefined}
     >
-      {children}
+      <Box component="span" visibleFrom="sm">
+        {children}
+      </Box>
     </Button>
   );
 }

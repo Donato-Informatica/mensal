@@ -1,4 +1,5 @@
 import { Button } from "@mantine/core";
+import { IconPlus } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 import classes from "./primary-action-button.module.css";
 
@@ -19,28 +20,9 @@ export function PrimaryActionButton({
       onClick={onClick}
       radius={9999}
       className={classes.button}
-      leftSection={<PlusIcon />}
+      leftSection={<IconPlus size={18} aria-hidden="true" />}
     >
       {children}
     </Button>
-  );
-}
-
-// No icon library: a small inline SVG, hidden so the label alone names the button.
-function PlusIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M12 5v14M5 12h14" />
-    </svg>
   );
 }

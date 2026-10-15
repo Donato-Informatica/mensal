@@ -1,4 +1,5 @@
 import { ActionIcon, Alert, Center, Loader, Menu, Modal } from "@mantine/core";
+import { IconDots } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 import type { Recurrence } from "@mensal/shared";
 import { useQuery } from "@tanstack/react-query";
@@ -52,7 +53,7 @@ export function RecurrenceActions({
             color="gray"
             aria-label={`Mais ações para ${description}`}
           >
-            <Dots />
+            <IconDots size={18} aria-hidden="true" />
           </ActionIcon>
         </Menu.Target>
         <Menu.Dropdown>
@@ -124,20 +125,4 @@ function LoadedRecurrence({
     );
   }
   return children(data);
-}
-
-export function Dots() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <circle cx="5" cy="12" r="1.75" />
-      <circle cx="12" cy="12" r="1.75" />
-      <circle cx="19" cy="12" r="1.75" />
-    </svg>
-  );
 }

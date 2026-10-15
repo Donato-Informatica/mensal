@@ -8,6 +8,7 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
+import { IconDots } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 import type { PeriodItem } from "@mensal/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,7 +16,6 @@ import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { errorMessage } from "./api-error.ts";
 import { invalidatePeriods } from "./period-query.ts";
-import { Dots } from "./recurrence-actions.tsx";
 import classes from "./touch.module.css";
 
 /**
@@ -42,7 +42,7 @@ export function OneOffActions({
             color="gray"
             aria-label={`Mais ações para ${item.description}`}
           >
-            <Dots />
+            <IconDots size={18} aria-hidden="true" />
           </ActionIcon>
         </Menu.Target>
         <Menu.Dropdown>

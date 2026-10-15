@@ -1,5 +1,7 @@
-import { Button, Modal, Stack, Switch } from "@mantine/core";
+import { Box, Button, Modal, Stack, Switch } from "@mantine/core";
 import { useDisclosure, useLocalStorage } from "@mantine/hooks";
+import { IconSettings } from "@tabler/icons-react";
+import headerButton from "./header-button.module.css";
 
 /** Per-device display preferences, kept in the browser. */
 export function useShowSummary() {
@@ -29,9 +31,15 @@ export function SettingsButton() {
         color="gray"
         size="sm"
         h={{ base: 44, sm: 30 }}
+        leftSection={<IconSettings size={18} aria-hidden="true" />}
+        classNames={{ section: headerButton.section }}
+        aria-label="Configurações"
+        title="Configurações"
         onClick={open}
       >
-        Configurações
+        <Box component="span" visibleFrom="sm">
+          Configurações
+        </Box>
       </Button>
       <Modal opened={opened} onClose={close} title="Configurações" centered>
         <SettingsForm />
