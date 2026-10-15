@@ -62,6 +62,9 @@ export function createAuth({
     },
     advanced: {
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax" },
+      // Without `trustedProxies` Better-Auth accepts only a single-value
+      // X-Forwarded-For: a chain or a missing header puts every client in one
+      // shared bucket, so the proxy must overwrite the header (ticket 02).
       ipAddress: { ipAddressHeaders: ["x-forwarded-for"] },
     },
   });
