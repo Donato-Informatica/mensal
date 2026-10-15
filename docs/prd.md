@@ -138,13 +138,15 @@ Sign-up is open, but a new user cannot use the product until an administrator ap
 
 A user's preferences belong to the account, not the device: every browser they sign in on uses the same values ([ADR-0002](adr/0002-preferences-on-auth-user.md)).
 
-| Preference             | Type      | Default | Effect                                                                                     |
-| ---------------------- | --------- | ------- | ------------------------------------------------------------------------------------------ |
-| `showSummary`          | `boolean` | `true`  | Shows the summary bar on the monthly screen. Closing the bar turns it off.                 |
-| `confirmStatusChanges` | `boolean` | `true`  | Asks for confirmation before settling, skipping or taking an occurrence back to `PENDING`. |
+| Preference             | Type                          | Default  | Effect                                                                                                                           |
+| ---------------------- | ----------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `showSummary`          | `boolean`                     | `true`   | Shows the summary bar on the monthly screen. Closing the bar turns it off.                                                       |
+| `confirmStatusChanges` | `boolean`                     | `true`   | Asks for confirmation before settling, skipping or taking an occurrence back to `PENDING`.                                       |
+| `colorScheme`          | `"dark" \| "light" \| "auto"` | `"dark"` | The app's theme (Tema): Escuro, Claro, or Automático, which follows the device's own setting, live. Any other value is rejected. |
 
 - Each is a Better-Auth `user.additionalFields` entry with `input: true`, so it travels with the session and is written by Better-Auth's `update-user` endpoint. `approved` stays `input: false` and cannot be written that way.
 - The UI applies a change at once and saves it in the background, rolling back on failure. Other open devices pick the change up the next time they reload the session (on window focus); there is no live push.
+- Before the session is known (first paint, and the signed-out screens), each device uses the last theme it applied, or Escuro if it has none. That copy is only a cache: once the session loads, the account's value wins, and the cache is never sent at sign-up.
 
 ---
 

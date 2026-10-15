@@ -16,6 +16,21 @@ colors:
   on-primary: "#0a0a0a"
   accent-emerald: "#22c55e"
   accent-rose: "#ef4444"
+  # The light scheme (Claro): the same roles on paper. Yellow stays a fill.
+  light-primary: "#faff69"
+  light-primary-active: "#e6eb52"
+  light-primary-disabled: "#f2f4c8"
+  light-ink: "#0a0a0a"
+  light-body: "#333333"
+  light-muted: "#666666"
+  light-muted-soft: "#a3a3a3"
+  light-hairline: "#e5e5e5"
+  light-hairline-strong: "#d4d4d4"
+  light-canvas: "#f5f5f5"
+  light-surface-card: "#ffffff"
+  light-on-primary: "#0a0a0a"
+  light-accent-emerald: "#15803d"
+  light-accent-rose: "#dc2626"
 typography:
   display-sm:
     fontFamily: "Inter Variable, Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif"
@@ -189,9 +204,11 @@ Components are quiet, exact, one-touch. Surfaces sit a hair above the canvas, bo
 
 The palette and type were inherited from ClickHouse's marketing system: the black, the yellow, Inter set tight. Mensal keeps only what an app needs. It has no marketing bands, stat callouts, pricing tiers or code windows, and it never sets display type above 32px.
 
+The Night Ledger is the signature and the default. A user can also choose the light scheme (Claro), or follow their device (Automático), as a preference of their account (PRD §3.5). The light scheme is the same ledger on paper, not an inversion: same layout, same roles, same rules, with yellow kept to fills (see Light scheme).
+
 **Key Characteristics:**
 
-- Dark only. Canvas `{colors.canvas}` is the page; `{colors.surface-card}` lifts panels by tone alone.
+- Dark first. Canvas `{colors.canvas}` is the page; `{colors.surface-card}` lifts panels by tone alone. The light scheme mirrors every role on paper.
 - One yellow, rationed: primary action, checked state, focus ring, the lockup (wordmark and logo mark), and the labels and panel edges of the two groups that need you now (Atrasadas, Vencem hoje).
 - Green means money coming in; red means late or destructive. Neither is decorative.
 - Inter throughout. Display at 700 with tight tracking; everything else 400–600.
@@ -227,6 +244,16 @@ Monochrome on black, with one highlighter and two signal colours that carry mean
 **The Highlighter Rule.** Yellow marks the single thing that needs the reader. A view has at most one yellow button. If two things want yellow, one of them is wrong.
 
 **The Meaning-Only Rule.** Emerald means money in; rose means late or destructive. They never appear for emphasis, decoration or brand.
+
+### Light scheme
+
+Every role above has a light counterpart, prefixed `light-`. The page is Paper Canvas (`{colors.light-canvas}`) and panels lift to pure white (`{colors.light-surface-card}`), so depth is still tonal and still upwards. Text runs Ink (`{colors.light-ink}`) for the facts, `{colors.light-body}` for running text and `{colors.light-muted}` for dimmed text. Hairlines are `{colors.light-hairline}` and `{colors.light-hairline-strong}`. Inflow amounts take `{colors.light-accent-emerald}` and rose takes `{colors.light-accent-rose}`, both dark enough to pass 4.5:1 as text on white.
+
+**The Fill-Only Rule.** On paper, yellow is too faint to read as text or as a line, so in the light scheme it is only ever a fill with ink on or inside it: the primary button and primary action, the checked settle box (black tick), a switch turned on, and the needs-you group labels. Everything that is yellow text or a yellow line in the dark scheme turns ink instead: the wordmark, text links on the auth screens, and the focus ring. Yellow fills that are controls (the checked box, a switch's track) carry a 1px ink border so their shape still reads on white.
+
+- **Needs-you groups** (Atrasadas, Vencem hoje): the label is ink on a yellow fill, padded like a highlighter stroke (2px × 6px, `{rounded.xs}`), and the panel edge is ink instead of Panel Edge.
+- **Spent Highlighter** (`{colors.light-primary-disabled}`): a pale yellow with `{colors.light-muted}` text.
+- **Danger:** solid `{colors.light-accent-rose}` with white text.
 
 ## Typography
 
@@ -283,7 +310,7 @@ Gently squared. Buttons, inputs, checkboxes and dialogs use 8px corners (`{round
 - **Default:** Panel Black with a Panel Edge border and white text, for secondary acts such as "Cancelar".
 - **Danger:** solid Overdue Rose, only for confirming a deletion. In a destructive dialog, focus starts on "Cancelar".
 - **Subtle:** no fill and near-white text, for header actions (Configurações, Sair).
-- **Focus:** Mantine's 2px yellow focus ring on every control, offset from the edge. It is never removed.
+- **Focus:** Mantine's 2px focus ring on every control, offset from the edge: yellow in the dark scheme, ink in the light one. It is never removed.
 
 ### Screen tabs (category-tab)
 
@@ -309,7 +336,7 @@ Panel Black fill, Panel Edge border, 8px corners, 36px tall, labels above the fi
 
 ### Dialogs, menus and popovers
 
-- **Dialog:** centred, on the canvas colour, edged by a 1px Panel Edge border and no shadow, padded 20px over a page dimmed to 75%. The title names the act ("Liquidar conta", "Excluir conta") in the figure step, 20px / 700 white. The body is one sentence with the entity in white 600. Buttons sit right-aligned: Cancelar (default) then the act (primary, or danger); on phones they share the row at 44px, and the close button grows to 44px. Settings are ruled rows, label first and switch at the row's end. Errors appear as a light rose alert at the top of the dialog body.
+- **Dialog:** centred, on the canvas colour, edged by a 1px Panel Edge border and no shadow, padded 20px over a page dimmed to 75%. The title names the act ("Liquidar conta", "Excluir conta") in the figure step, 20px / 700 white. The body is one sentence with the entity in white 600. Buttons sit right-aligned: Cancelar (default) then the act (primary, or danger); on phones they share the row at 44px, and the close button grows to 44px. Settings are ruled rows, label first and switch at the row's end; the theme (Tema) is the first row, a segmented control (Escuro · Claro · Automático) in place of the switch. Errors appear as a light rose alert at the top of the dialog body.
 - **Menu:** opened from the row's ⋯ action icon. Items are plain text and destructive items are rose.
 - **Popover:** anchored to the control that opened it, with an arrow and focus trapped inside. It asks for one thing only.
 
@@ -317,8 +344,8 @@ Panel Black fill, Panel Edge border, 8px corners, 36px tall, labels above the fi
 
 In the header, the 28px logo mark, a 10px (`xs`) gap, then the wordmark. On the auth screens the lockup is stacked and centred: the mark over the wordmark, 12px (`sm`) apart, the mark 160px from 48em and 80px on phones. The mark is decorative (empty alt), since the wordmark names the app. The same mark is the favicon.
 
-- **Wordmark:** "Mensal" in 18px / 700 Highlighter Yellow in the header; in the stacked lockup it takes the display step, 32px / 700 at -1px tracking (24px on phones). Apart from text links on the auth screens (Mantine anchors take the primary colour), it is the only yellow text in the product.
-- **Logo mark:** `apps/web/public/logo.svg`, a Night Canvas tile edged in Highlighter Yellow holding three ledger rows: two quiet Faint Grey rows and, between them, a settled one (a yellow checked box beside a Paper White line). Its colours are the tokens above; change them here first.
+- **Wordmark:** "Mensal" in 18px / 700 Highlighter Yellow in the header; in the stacked lockup it takes the display step, 32px / 700 at -1px tracking (24px on phones). Apart from text links on the auth screens (Mantine anchors take the primary colour), it is the only yellow text in the product. In the light scheme it is ink (the Fill-Only Rule).
+- **Logo mark:** `apps/web/public/logo.svg`, a Night Canvas tile edged in Highlighter Yellow holding three ledger rows: two quiet Faint Grey rows and, between them, a settled one (a yellow checked box beside a Paper White line). Its colours are the tokens above; change them here first. It is the same in both schemes: a dark tile reads on paper too.
 
 ## Do's and Don'ts
 
@@ -329,12 +356,13 @@ In the header, the 28px logo mark, a 10px (`xs`) gap, then the wordmark. On the 
 - **Do** reserve rose for overdue, errors and destructive actions, using its light variant except on the confirming delete button.
 - **Do** put a group's rows in one 12px-cornered panel ruled by 1px lines.
 - **Do** name the entity in dialog copy in white at 600 weight, inside a plain sentence.
-- **Do** take colours from the theme (`yellow`, `dark`, `green`, `red` in `apps/web/src/theme.ts`) rather than inline hex.
+- **Do** take colours from the theme (`apps/web/src/theme.ts`) by role, so each resolves per scheme, rather than inline hex or a fixed palette shade like `white` or `dark.6`.
 - **Do** design and check every screen at 375px first. Settling happens on phones.
+- **Do** check every screen in both schemes.
 
 ### Don't:
 
-- **Don't** add a light theme. The app forces the dark scheme.
+- **Don't** use yellow as text or as a line in the light scheme. On paper it is a fill, with ink on it.
 - **Don't** introduce a second accent colour, gradients, glows or shadows on resting surfaces.
 - **Don't** set type above 32px, or add hero, stat-callout or banner treatments carried over from the ClickHouse marketing system.
 - **Don't** use yellow for body text, large fills or decoration.
