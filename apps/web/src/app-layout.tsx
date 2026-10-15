@@ -20,7 +20,7 @@ export function AppLayout({
 }) {
   return (
     <>
-      <Box component="header" className={classes.header}>
+      <Box component="header">
         <Container size="md">
           <div className={classes.bar}>
             <Wordmark className={classes.brand} />

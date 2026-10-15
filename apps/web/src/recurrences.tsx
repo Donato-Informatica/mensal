@@ -20,6 +20,7 @@ import {
   useRouteContext,
 } from "@tanstack/react-router";
 import { AppLayout } from "./app-layout.tsx";
+import appLayout from "./app-layout.module.css";
 import { EditRecurrenceButton } from "./edit-recurrence.tsx";
 import { formatAmount, formatPeriodInline } from "./format.ts";
 import { NewRecurrenceButton } from "./new-recurrence.tsx";
@@ -38,7 +39,12 @@ export function Recurrences({ status }: { status: Status }) {
   return (
     <AppLayout action={<NewRecurrenceButton />}>
       <Stack gap="xl">
-        <Group justify="space-between" gap="md">
+        <Group
+          justify="space-between"
+          gap="md"
+          pb="md"
+          className={appLayout.mobileRule}
+        >
           <Title order={1}>Recorrências</Title>
           <Group gap="sm">
             <SegmentedControl

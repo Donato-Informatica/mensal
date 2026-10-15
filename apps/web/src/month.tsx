@@ -34,6 +34,7 @@ import {
 import { useCallback, useId, useState } from "react";
 import { errorMessage } from "./api-error.ts";
 import { AppLayout } from "./app-layout.tsx";
+import appLayout from "./app-layout.module.css";
 import { OneOffActions } from "./delete-one-off.tsx";
 import { EditOccurrenceButton } from "./edit-occurrence.tsx";
 import { useFlip } from "./flip.ts";
@@ -186,10 +187,8 @@ function PeriodNavigator() {
       top={0}
       bg="dark.7"
       py="xs"
-      style={{
-        zIndex: 1,
-        borderBottom: "1px solid var(--mantine-color-dark-5)",
-      }}
+      className={appLayout.mobileRule}
+      style={{ zIndex: 1 }}
     >
       <Box
         style={{

@@ -1,7 +1,3 @@
-.header {
-  border-bottom: 1px solid var(--mantine-color-dark-5);
-}
-
 /* Phone first: wordmark and actions on one row, the screens on a full-width row below. */
 .bar {
   display: grid;
@@ -76,5 +72,16 @@
 
   .main {
     padding-bottom: var(--mantine-spacing-xl);
+  }
+}
+
+/* A rule under a screen's heading bar, on phones only. */
+.mobileRule {
+  border-bottom: 1px solid var(--mantine-color-dark-5);
+}
+
+@media (min-width: 48em) {
+  .mobileRule {
+    border-bottom: 0;
   }
 }
