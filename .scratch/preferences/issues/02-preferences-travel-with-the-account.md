@@ -8,14 +8,14 @@
 
 **Status:** ready-for-agent
 
-- [ ] `showSummary` and `confirmStatusChanges` are Better-Auth `user.additionalFields`: `type: "boolean"`, `required: true`, `defaultValue: true`, `input: true`. `approved` is unchanged (`input: false`).
-- [ ] Both columns land in one migration: Better-Auth schema regenerated with `npm run -w @mensal/api auth:generate` (no `--adapter`), then `npm run -w @mensal/database generate`. `migrations/` is never hand-edited.
-- [ ] API test (real app, real Postgres): a new user gets `true` for both; a signed-in user changes both through `POST /api/auth/update-user`, and `get-session` returns the new values.
-- [ ] API test: `update-user` cannot change `approved`. Sending `approved: true` leaves the user unapproved, whether the request is rejected or the field is ignored.
-- [ ] The web hooks `useShowSummary` and `useConfirmStatusChanges` read from the session and keep their `[value, setValue]` shape, so the monthly screen and the settings form barely change. The "Per-device" doc comment is replaced.
-- [ ] Optimistic save: a change cancels any in-flight session refetch, patches the cached `["session"]` data at once, and sends **only the field that changed** to `updateUser`. A successful response does not overwrite the cache, so quick repeated toggles don't flicker. A failed save restores the old value.
-- [ ] Old `mensal:show-summary` / `mensal:confirm-status-changes` localStorage values are ignored, with no migration or upload. Everyone starts from the server value.
-- [ ] The fake API's user carries both preferences (default `true`), `get-session` returns them, and `POST /api/auth/update-user` updates them. Tests can start a user with given preferences.
-- [ ] Web tests that seed `localStorage` (settle, groups, settings) seed the fake user's preferences instead.
-- [ ] Web test: a preference changed in Configurações survives a reload (a new `openApp()` against the same fake API).
-- [ ] `npm run check` green.
+- [x] `showSummary` and `confirmStatusChanges` are Better-Auth `user.additionalFields`: `type: "boolean"`, `required: true`, `defaultValue: true`, `input: true`. `approved` is unchanged (`input: false`).
+- [x] Both columns land in one migration: Better-Auth schema regenerated with `npm run -w @mensal/api auth:generate` (no `--adapter`), then `npm run -w @mensal/database generate`. `migrations/` is never hand-edited.
+- [x] API test (real app, real Postgres): a new user gets `true` for both; a signed-in user changes both through `POST /api/auth/update-user`, and `get-session` returns the new values.
+- [x] API test: `update-user` cannot change `approved`. Sending `approved: true` leaves the user unapproved, whether the request is rejected or the field is ignored.
+- [x] The web hooks `useShowSummary` and `useConfirmStatusChanges` read from the session and keep their `[value, setValue]` shape, so the monthly screen and the settings form barely change. The "Per-device" doc comment is replaced.
+- [x] Optimistic save: a change cancels any in-flight session refetch, patches the cached `["session"]` data at once, and sends **only the field that changed** to `updateUser`. A successful response does not overwrite the cache, so quick repeated toggles don't flicker. A failed save restores the old value.
+- [x] Old `mensal:show-summary` / `mensal:confirm-status-changes` localStorage values are ignored, with no migration or upload. Everyone starts from the server value.
+- [x] The fake API's user carries both preferences (default `true`), `get-session` returns them, and `POST /api/auth/update-user` updates them. Tests can start a user with given preferences.
+- [x] Web tests that seed `localStorage` (settle, groups, settings) seed the fake user's preferences instead.
+- [x] Web test: a preference changed in Configurações survives a reload (a new `openApp()` against the same fake API).
+- [x] `npm run check` green.

@@ -25,6 +25,9 @@ interface Account {
   email: string;
   password: string;
   approved: boolean;
+  /** Preferences (PRD §3.5), as Better-Auth keeps them on the user. */
+  showSummary: boolean;
+  confirmStatusChanges: boolean;
   recurrences: Recurrence[];
   occurrences: Occurrence[];
 }
@@ -52,11 +55,40 @@ export function fakeApi() {
     });
   }
 
-  function sessionOf({ id, name, email, approved }: Account) {
+  function sessionOf({
+    id,
+    name,
+    email,
+    approved,
+    showSummary,
+    confirmStatusChanges,
+  }: Account) {
     return {
-      user: { id, name, email, approved, emailVerified: false },
+      user: {
+        id,
+        name,
+        email,
+        approved,
+        showSummary,
+        confirmStatusChanges,
+        emailVerified: false,
+      },
       session: { id: `session-${id}`, userId: id },
     };
+  }
+
+  /**
+   * POST /api/auth/update-user: the user's own preferences. Anything else,
+   * such as `approved`, is ignored, as Better-Auth does for fields that are
+   * not `input`.
+   */
+  function updateUser(body: Record<string, unknown>): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    for (const field of ["showSummary", "confirmStatusChanges"] as const) {
+      const value = body[field];
+      if (typeof value === "boolean") signedIn[field] = value;
+    }
+    return json(200, { status: true });
   }
 
   /** GET /api/v1/periods/:yyyy-mm, behind the approval gate. */
@@ -380,6 +412,9 @@ export function fakeApi() {
       }
       const text = await request.text();
       const body = text ? JSON.parse(text) : {};
+      if (request.method === "POST" && pathname === "/api/auth/update-user") {
+        return updateUser(body);
+      }
       if (request.method === "POST" && pathname === "/api/v1/recurrences") {
         return postRecurrence(body);
       }
@@ -411,13 +446,18 @@ export function fakeApi() {
 
     addAccount({
       approved = false,
+      showSummary = true,
+      confirmStatusChanges = true,
       ...account
-    }: Pick<Account, "name" | "email" | "password"> & {
-      approved?: boolean;
-    }): Account {
+    }: Pick<Account, "name" | "email" | "password"> &
+      Partial<
+        Pick<Account, "approved" | "showSummary" | "confirmStatusChanges">
+      >): Account {
       const created = {
         id: `user-${accounts.size + 1}`,
         approved,
+        showSummary,
+        confirmStatusChanges,
         recurrences: [],
         occurrences: [],
         ...account,
@@ -458,6 +498,22 @@ export function fakeApi() {
       };
       account.recurrences.push(recurrence);
       return recurrence;
+    },
+
+    /** Changes the account's preferences, as the user does on another device. */
+    setPreferences(
+      email: string,
+      preferences: Partial<
+        Pick<Account, "showSummary" | "confirmStatusChanges">
+      >
+    ) {
+      Object.assign(accounts.get(email)!, preferences);
+    },
+
+    /** The account's preferences, as the database holds them. */
+    preferencesOf(email: string) {
+      const { showSummary, confirmStatusChanges } = accounts.get(email)!;
+      return { showSummary, confirmStatusChanges };
     },
 
     /** The account's recurrences, as the database holds them. */

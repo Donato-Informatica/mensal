@@ -16,15 +16,14 @@ beforeEach(() => {
     email,
     password: "correct-horse",
     approved: true,
+    // Confirming each change is covered on its own, at the end.
+    confirmStatusChanges: false,
   });
   api.signIn(email);
-  // Confirming each change is covered on its own, at the end.
-  localStorage.setItem("mensal:confirm-status-changes", "false");
   user = userEvent.setup();
 });
 afterEach(() => {
   vi.useRealTimers();
-  localStorage.clear();
 });
 
 /** The month's row for the occurrence described as `description`. */
@@ -303,7 +302,7 @@ describe("skipping an occurrence", () => {
 
 describe("confirming a status change", () => {
   beforeEach(() => {
-    localStorage.removeItem("mensal:confirm-status-changes");
+    api.setPreferences(email, { confirmStatusChanges: true });
   });
 
   it("settles with the known amount once confirmed", async () => {

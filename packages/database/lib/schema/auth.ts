@@ -13,6 +13,10 @@ export const users = pgTable("users", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   approved: boolean("approved").default(false).notNull(),
+  showSummary: boolean("show_summary").default(true).notNull(),
+  confirmStatusChanges: boolean("confirm_status_changes")
+    .default(true)
+    .notNull(),
 });
 
 export const sessions = pgTable(

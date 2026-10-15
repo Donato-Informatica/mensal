@@ -1,25 +1,24 @@
 import { Box, Button, Modal, Switch } from "@mantine/core";
-import { useDisclosure, useLocalStorage } from "@mantine/hooks";
+import { useDisclosure } from "@mantine/hooks";
 import { IconSettings } from "@tabler/icons-react";
 import headerButton from "./header-button.module.css";
+import { usePreference } from "./session.ts";
 import classes from "./settings.module.css";
 
-/** Per-device display preferences, kept in the browser. */
+/**
+ * Whether the month shows its summary of inflows and outflows: a preference
+ * of the account, shared by every device the user signs in on (PRD §3.5).
+ */
 export function useShowSummary() {
-  return useLocalStorage({
-    key: "mensal:show-summary",
-    defaultValue: true,
-    getInitialValueInEffect: false,
-  });
+  return usePreference("showSummary");
 }
 
-/** Whether settling, skipping or taking back to pending is confirmed first. */
+/**
+ * Whether settling, skipping or taking back to pending is confirmed first: a
+ * preference of the account (PRD §3.5).
+ */
 export function useConfirmStatusChanges() {
-  return useLocalStorage({
-    key: "mensal:confirm-status-changes",
-    defaultValue: true,
-    getInitialValueInEffect: false,
-  });
+  return usePreference("confirmStatusChanges");
 }
 
 /** Header button that opens the settings modal. */

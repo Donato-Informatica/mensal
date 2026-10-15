@@ -7,8 +7,23 @@ export function createAuthClient(fetchImpl: typeof fetch = fetch) {
     baseURL: window.location.origin,
     fetchOptions: { customFetchImpl: fetchImpl },
     plugins: [
+      // Mirrors `user.additionalFields` in apps/api/src/auth.ts.
       inferAdditionalFields({
-        user: { approved: { type: "boolean", required: true, input: false } },
+        user: {
+          approved: { type: "boolean", required: true, input: false },
+          showSummary: {
+            type: "boolean",
+            required: true,
+            defaultValue: true,
+            input: true,
+          },
+          confirmStatusChanges: {
+            type: "boolean",
+            required: true,
+            defaultValue: true,
+            input: true,
+          },
+        },
       }),
     ],
   });

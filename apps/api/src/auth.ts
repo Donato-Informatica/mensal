@@ -58,6 +58,21 @@ export function createAuth({
           defaultValue: false,
           input: false,
         },
+        // Preferences (PRD §3.5, ADR-0002): the user's own choice, so `input`
+        // lets update-user (and sign-up) set them. Each must stay safe to
+        // choose freely.
+        showSummary: {
+          type: "boolean",
+          required: true,
+          defaultValue: true,
+          input: true,
+        },
+        confirmStatusChanges: {
+          type: "boolean",
+          required: true,
+          defaultValue: true,
+          input: true,
+        },
       },
     },
     advanced: {

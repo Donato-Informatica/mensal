@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
@@ -38,6 +38,98 @@ describe("settings", () => {
 
     expect(screen.queryByRole("region", { name: "Entradas" })).toBeNull();
     expect(screen.queryByRole("region", { name: "Saídas" })).toBeNull();
+  });
+
+  it("starts from the account's preferences", async () => {
+    api.addAccount({
+      name: "Bia",
+      email: "bia@example.com",
+      password: "correct-horse",
+      approved: true,
+      showSummary: false,
+    });
+    api.signIn("bia@example.com");
+    openApp(api, "/");
+
+    expect(
+      await screen.findByRole("button", { name: "Mês anterior" })
+    ).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Entradas" })).toBeNull();
+  });
+
+  it("keeps a changed preference on every device", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    await user.click(
+      await screen.findByRole("button", { name: "Configurações" })
+    );
+    await user.click(
+      await screen.findByRole("switch", {
+        name: "Mostrar resumo de entradas e saídas",
+      })
+    );
+    await waitFor(() =>
+      expect(api.preferencesOf(email)).toMatchObject({ showSummary: false })
+    );
+
+    // Another device: a fresh app with nothing in the browser.
+    cleanup();
+    localStorage.clear();
+    openApp(api, "/");
+
+    expect(
+      await screen.findByRole("button", { name: "Mês anterior" })
+    ).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Entradas" })).toBeNull();
+  });
+
+  it("saves only the preference that changed", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    await user.click(
+      await screen.findByRole("button", { name: "Configurações" })
+    );
+    // Meanwhile another device turns the summary off.
+    api.setPreferences(email, { showSummary: false });
+
+    await user.click(
+      await screen.findByRole("switch", {
+        name: "Confirmar antes de liquidar, pular ou voltar uma conta para pendente",
+      })
+    );
+
+    await waitFor(() =>
+      expect(api.preferencesOf(email)).toEqual({
+        showSummary: false,
+        confirmStatusChanges: false,
+      })
+    );
+  });
+
+  it("restores a preference that could not be saved", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    await user.click(
+      await screen.findByRole("button", { name: "Configurações" })
+    );
+    const summarySwitch = await screen.findByRole("switch", {
+      name: "Mostrar resumo de entradas e saídas",
+    });
+    api.breakDown();
+
+    await user.click(summarySwitch);
+
+    await waitFor(() => expect(summarySwitch).toBeChecked());
+    expect(api.preferencesOf(email)).toMatchObject({ showSummary: true });
+  });
+
+  it("ignores what an older version kept in the browser", async () => {
+    localStorage.setItem("mensal:show-summary", "false");
+    openApp(api, "/");
+
+    expect(
+      await screen.findByRole("region", { name: "Entradas" })
+    ).toBeTruthy();
   });
 
   it("settles with one click once confirmations are turned off", async () => {

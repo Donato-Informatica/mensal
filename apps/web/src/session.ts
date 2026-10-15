@@ -30,6 +30,46 @@ export function useSession() {
   return useSuspenseQuery(sessionQuery(authClient)).data;
 }
 
+/** A preference (PRD §3.5), kept on the account's Better-Auth user (ADR-0002). */
+export type Preference = "showSummary" | "confirmStatusChanges";
+
+/**
+ * A preference of the signed-in user and a setter that saves it to the
+ * account. The change shows at once; a failed save restores the old value.
+ */
+export function usePreference(preference: Preference) {
+  const { authClient } = useRouteContext({ from: rootRouteId });
+  const queryClient = useQueryClient();
+  const { queryKey } = sessionQuery(authClient);
+  const value = useSession()?.user[preference] ?? true;
+
+  function patch(to: boolean) {
+    queryClient.setQueryData(
+      queryKey,
+      (session) =>
+        session && { ...session, user: { ...session.user, [preference]: to } }
+    );
+  }
+
+  const { mutate } = useMutation({
+    mutationFn: async (to: boolean) =>
+      unwrap(await authClient.updateUser({ [preference]: to })),
+    onMutate: async (to) => {
+      // A refetch already on its way would land the old value over this one.
+      await queryClient.cancelQueries({ queryKey });
+      const from = queryClient.getQueryData(queryKey)?.user[preference];
+      patch(to);
+      return { from };
+    },
+    // On success the cache already holds the new value: writing the response
+    // over it could undo a quicker, later toggle.
+    onError: (_error, _to, context) => {
+      if (context?.from !== undefined) patch(context.from);
+    },
+  });
+  return [value, mutate] as const;
+}
+
 /**
  * A mutation that changes who is signed in, then goes to `to` so the route
  * guards place the user afresh.
