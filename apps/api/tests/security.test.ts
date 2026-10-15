@@ -28,15 +28,11 @@ describe("security headers", () => {
 });
 
 describe("error responses", () => {
-  /** Posts `body` as is, from an approved user, to an endpoint that parses JSON. */
-  async function postRaw(body: string): Promise<Response> {
+  /** Posts `rawBody` as is, from an approved user, to an endpoint that parses JSON. */
+  async function postRaw(rawBody: string): Promise<Response> {
     const { cookie, email } = await signUp(api);
     await approve(api, email);
-    return fetch(`${api.url}/api/v1/recurrences`, {
-      method: "POST",
-      headers: { origin: api.url, cookie, "content-type": "application/json" },
-      body,
-    });
+    return request(api, "/api/v1/recurrences", { cookie, rawBody });
   }
 
   it("answers a malformed JSON body with 400 INVALID_INPUT", async () => {
@@ -92,10 +88,11 @@ describe("rate limiting on /api/auth", () => {
     await limited.close();
   });
 
-  /** A documentation address (RFC 5737), fresh for each test. */
+  let issued = 0;
+  /** A documentation address (RFC 5737's 198.51.100.0/24), fresh for each call. */
   function newIp(): string {
-    const octet = () => Math.floor(Math.random() * 254) + 1;
-    return `198.51.${octet()}.${octet()}`;
+    issued += 1;
+    return `198.51.100.${issued}`;
   }
 
   function signIn(ip: string) {

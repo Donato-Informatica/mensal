@@ -63,11 +63,15 @@ export function request(
   {
     cookie,
     body,
-    method = body === undefined ? "GET" : "POST",
+    rawBody = body === undefined ? undefined : JSON.stringify(body),
+    method = rawBody === undefined ? "GET" : "POST",
     ip,
   }: {
     cookie?: string;
+    /** A JSON body, stringified here. */
     body?: unknown;
+    /** A JSON body sent as is, e.g. one that is malformed or oversized. */
+    rawBody?: string;
     method?: string;
     /** The client address, as the proxy reports it in `X-Forwarded-For`. */
     ip?: string;
@@ -76,11 +80,11 @@ export function request(
   const headers = new Headers({ origin: api.url });
   if (cookie) headers.set("cookie", cookie);
   if (ip) headers.set("x-forwarded-for", ip);
-  if (body !== undefined) headers.set("content-type", "application/json");
+  if (rawBody !== undefined) headers.set("content-type", "application/json");
   return fetch(api.url + path, {
     method,
     headers,
-    ...(body !== undefined && { body: JSON.stringify(body) }),
+    ...(rawBody !== undefined && { body: rawBody }),
   });
 }
 
