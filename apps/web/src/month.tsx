@@ -3,6 +3,7 @@ import {
   Badge,
   Box,
   Button,
+  CloseButton,
   Group,
   Paper,
   SimpleGrid,
@@ -62,7 +63,7 @@ export function Month({ period }: { period: string }) {
   const { data } = useSuspenseQuery(periodQuery(api, period));
   // Another month is on its way: this one stays up, dimmed, until it lands.
   const loading = useRouterState({ select: (state) => state.isLoading });
-  const [showSummary] = useShowSummary();
+  const [showSummary, setShowSummary] = useShowSummary();
   const [confirmStatusChanges] = useConfirmStatusChanges();
   const [confirming, setConfirming] = useState<StatusChangeRequest | null>(
     null
@@ -103,6 +104,7 @@ export function Month({ period }: { period: string }) {
           {showSummary && (
             <Summary
               summary={data.summary}
+              onClose={() => setShowSummary(false)}
               excluded={data.items.some(
                 (item) => item.amount === null || item.status === "SKIPPED"
               )}
@@ -248,15 +250,25 @@ function Chevron({ direction }: { direction: "left" | "right" }) {
 function Summary({
   summary,
   excluded,
+  onClose,
 }: {
   summary: PeriodSummary;
+  /** Hides the summary; it comes back from the settings. */
+  onClose: () => void;
   /** Whether the month holds a skipped or "A definir" item the totals leave out. */
   excluded: boolean;
 }) {
   const id = useId();
   const leftOver = summary.inflowExpected - summary.outflowExpected;
   return (
-    <Stack gap="md">
+    <Stack gap="md" pos="relative">
+      <CloseButton
+        pos="absolute"
+        top={0}
+        right={0}
+        aria-label="Ocultar resumo"
+        onClick={onClose}
+      />
       <Box component="section" aria-labelledby={id} px="xs">
         <Text id={id} fz="xs" c="dimmed" tt="uppercase" fw={600} lts="1.5px">
           Sobra prevista
