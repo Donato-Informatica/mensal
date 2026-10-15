@@ -179,6 +179,47 @@ describe("moving between periods", () => {
   });
 });
 
+describe("hiding the summary", () => {
+  it("brings the summary back with a retry when hiding it could not be saved", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    const close = await screen.findByRole("button", { name: "Ocultar resumo" });
+    api.breakDown();
+
+    await user.click(close);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(
+      "Alteração não salva. Algo deu errado. Tente novamente."
+    );
+    expect(screen.getByRole("region", { name: "Entradas" })).toBeVisible();
+    expect(
+      within(alert).getByRole("button", { name: "Tentar de novo" })
+    ).toBeVisible();
+    expect(api.preferencesOf(email)).toMatchObject({ showSummary: true });
+  });
+
+  it("hides the summary once the retry is saved", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    const close = await screen.findByRole("button", { name: "Ocultar resumo" });
+    api.breakDown();
+    await user.click(close);
+    const alert = await screen.findByRole("alert");
+
+    api.recover();
+    await user.click(
+      within(alert).getByRole("button", { name: "Tentar de novo" })
+    );
+
+    await waitFor(() =>
+      expect(screen.queryByRole("region", { name: "Entradas" })).toBeNull()
+    );
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(api.preferencesOf(email)).toMatchObject({ showSummary: false });
+  });
+});
+
 describe("moving between months", () => {
   it("answers at once, dimming the month on screen until the next lands", async () => {
     const user = userEvent.setup();

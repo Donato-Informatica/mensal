@@ -71,7 +71,7 @@ export function Month({ period }: { period: string }) {
   const { data } = useSuspenseQuery(periodQuery(api, period));
   // Another month is on its way: this one stays up, dimmed, until it lands.
   const loading = useRouterState({ select: (state) => state.isLoading });
-  const [showSummary, setShowSummary] = useShowSummary();
+  const [showSummary, setShowSummary, saveShowSummary] = useShowSummary();
   const [confirmStatusChanges] = useConfirmStatusChanges();
   const [confirming, setConfirming] = useState<StatusChangeRequest | null>(
     null
@@ -113,6 +113,12 @@ export function Month({ period }: { period: string }) {
             <Summary
               summary={data.summary}
               onClose={() => setShowSummary(false)}
+              // Closing it came back refused: the bar is back, saying so.
+              closeFailure={
+                saveShowSummary.isError && saveShowSummary.variables === false
+                  ? saveShowSummary.error
+                  : undefined
+              }
               excluded={data.items.some(
                 (item) => item.amount === null || item.status === "SKIPPED"
               )}
@@ -239,10 +245,13 @@ function Summary({
   summary,
   excluded,
   onClose,
+  closeFailure,
 }: {
   summary: PeriodSummary;
   /** Hides the summary; it comes back from the settings. */
   onClose: () => void;
+  /** Why hiding the summary could not be saved, if it could not; retried by `onClose`. */
+  closeFailure: unknown;
   /** Whether the month holds a skipped or "A definir" item the totals leave out. */
   excluded: boolean;
 }) {
@@ -287,6 +296,25 @@ function Summary({
         <Text fz="sm" c="dimmed" px="xs">
           O Previsto não conta contas “A definir” nem puladas.
         </Text>
+      )}
+      {closeFailure !== undefined && (
+        <Box role="alert" className={classes.failure}>
+          <Text className={classes.failureText} fz="sm">
+            <Text span fw={600} c="red.4">
+              Alteração não salva.
+            </Text>{" "}
+            {errorMessage(closeFailure)}
+          </Text>
+          <Button
+            variant="subtle"
+            color="red.4"
+            size="xs"
+            h={{ base: 44, sm: 30 }}
+            onClick={onClose}
+          >
+            Tentar de novo
+          </Button>
+        </Box>
       )}
     </Stack>
   );
