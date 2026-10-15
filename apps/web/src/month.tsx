@@ -30,7 +30,7 @@ import {
   useRouteContext,
   useRouterState,
 } from "@tanstack/react-router";
-import { useCallback, useId, useState, type ReactNode } from "react";
+import { useCallback, useId, useState } from "react";
 import { errorMessage } from "./api-error.ts";
 import { AppLayout } from "./app-layout.tsx";
 import { OneOffActions } from "./delete-one-off.tsx";
@@ -39,7 +39,6 @@ import { useFlip } from "./flip.ts";
 import { formatAmount, formatDayAndMonth, formatPeriod } from "./format.ts";
 import classes from "./occurrence-row.module.css";
 import { NewOneOffButton } from "./new-one-off.tsx";
-import { NewRecurrenceButton } from "./new-recurrence.tsx";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
 import { periodQuery } from "./period-query.ts";
 import { RecurrenceActions } from "./recurrence-actions.tsx";
@@ -97,11 +96,9 @@ export function Month({ period }: { period: string }) {
   const dismissUndo = useCallback(() => setUndoable(null), []);
 
   return (
-    <AppLayout>
+    <AppLayout action={<NewOneOffButton period={period} />}>
       <Stack gap="xl">
-        <PeriodNavigator>
-          <NewOneOffButton period={period} />
-        </PeriodNavigator>
+        <PeriodNavigator />
         <Stack gap="xl" className={classes.content} aria-busy={loading}>
           {showSummary && (
             <Summary
@@ -149,7 +146,7 @@ export function Month({ period }: { period: string }) {
 }
 
 /** `< Outubro 2026 >`: one click, or ← / →, moves a month. */
-function PeriodNavigator({ children }: { children?: ReactNode }) {
+function PeriodNavigator() {
   const navigate = useNavigate();
   // The month asked for, which runs ahead of the one on screen while it loads:
   // the title answers a click at once and fast repeats keep stepping.
@@ -224,7 +221,7 @@ function PeriodNavigator({ children }: { children?: ReactNode }) {
             <Chevron direction="right" />
           </ActionIcon>
         </Group>
-        <Group justify="flex-end">{children}</Group>
+        <Box />
       </Box>
     </Box>
   );
@@ -395,10 +392,9 @@ function EmptyMonth({ period }: { period: string }) {
       ) : (
         <>
           <Text fz="sm" c="dimmed" maw={360}>
-            Cadastre o que se repete todo mês e ele aparece aqui sozinho. O que
-            acontece uma vez só entra em “Nova avulsa”.
+            Cadastre o que se repete todo mês em Recorrências e ele aparece aqui
+            sozinho. O que acontece uma vez só entra em “Nova avulsa”.
           </Text>
-          <NewRecurrenceButton />
         </>
       )}
     </Stack>

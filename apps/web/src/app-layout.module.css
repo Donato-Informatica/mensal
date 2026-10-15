@@ -7,7 +7,8 @@
   display: grid;
   grid-template-areas:
     "brand actions"
-    "nav nav";
+    "nav nav"
+    "action action";
   grid-template-columns: 1fr auto;
   align-items: center;
   row-gap: 4px;
@@ -29,11 +30,16 @@
   gap: 4px;
 }
 
+.action {
+  grid-area: action;
+  justify-self: center;
+}
+
 /* Wide enough for everything on a single row. */
 @media (min-width: 48em) {
   .bar {
-    grid-template-areas: "brand nav actions";
-    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "brand nav action actions";
+    grid-template-columns: auto auto 1fr auto;
     column-gap: var(--mantine-spacing-lg);
     row-gap: 0;
     height: 64px;

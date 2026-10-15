@@ -36,7 +36,7 @@ export function Recurrences({ status }: { status: Status }) {
   const period = currentPeriod();
 
   return (
-    <AppLayout>
+    <AppLayout action={<NewRecurrenceButton />}>
       <Stack gap="xl">
         <Group justify="space-between" gap="md">
           <Title order={1}>Recorrências</Title>
@@ -55,7 +55,6 @@ export function Recurrences({ status }: { status: Status }) {
                 { label: "Todas", value: "all" },
               ]}
             />
-            {data.length > 0 && <NewRecurrenceButton />}
           </Group>
         </Group>
         {data.length === 0 ? (
@@ -70,7 +69,6 @@ export function Recurrences({ status }: { status: Status }) {
               salário: ela aparece em cada mês sozinha. Deixe o valor “A
               definir” se ele muda de mês a mês.
             </Text>
-            <NewRecurrenceButton />
           </Stack>
         ) : (
           <Paper bg="dark.6" withBorder radius="lg">

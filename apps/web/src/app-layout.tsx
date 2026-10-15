@@ -7,7 +7,14 @@ import { SignOutButton } from "./sign-out-button.tsx";
 import { Wordmark } from "./wordmark.tsx";
 
 /** The frame of the app proper: a header with the wordmark, screens and sign-out. */
-export function AppLayout({ children }: { children: ReactNode }) {
+export function AppLayout({
+  action,
+  children,
+}: {
+  /** The screen's primary action, centered in the header. */
+  action?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <>
       <Box component="header" className={classes.header}>
@@ -18,6 +25,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <ScreenLink to="/">Mês</ScreenLink>
               <ScreenLink to="/recorrencias">Recorrências</ScreenLink>
             </nav>
+            {action && <div className={classes.action}>{action}</div>}
             <Group
               className={classes.actions}
               gap={4}
