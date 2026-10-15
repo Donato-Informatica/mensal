@@ -1,7 +1,9 @@
 import type { Database } from "@mensal/database";
 import { toNodeHandler } from "better-auth/node";
 import express from "express";
+import helmet from "helmet";
 import type { Auth } from "./auth.ts";
+import { errorHandler } from "./error-handler.ts";
 import { occurrencesRouter } from "./occurrences.ts";
 import { periodsRouter } from "./periods.ts";
 import { recurrencesRouter } from "./recurrences.ts";
@@ -12,10 +14,20 @@ export interface AppOptions {
   db: Database;
   /** The clock "today" is read from. */
   now?: () => Date;
+  /** Where unexpected errors are written; the console by default. */
+  log?: (message: string) => void;
 }
 
-export function createApp({ auth, db, now = () => new Date() }: AppOptions) {
+export function createApp({
+  auth,
+  db,
+  now = () => new Date(),
+  log = console.error,
+}: AppOptions) {
   const app = express();
+
+  // Security headers on every response, and no X-Powered-By (PRD §8.6).
+  app.use(helmet());
 
   // Better-Auth reads the raw body, so it goes before any body parser.
   app.all("/api/auth/*splat", toNodeHandler(auth));
@@ -30,6 +42,8 @@ export function createApp({ auth, db, now = () => new Date() }: AppOptions) {
   v1.use("/periods", periodsRouter({ db, now }));
   v1.use("/recurrences", recurrencesRouter({ db, now }));
   app.use("/api/v1", v1);
+
+  app.use(errorHandler(log));
 
   return app;
 }

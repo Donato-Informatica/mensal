@@ -16,10 +16,16 @@ export interface TestApi {
 export async function startApi({
   now,
   log,
+  rateLimit = false,
 }: {
   now?: () => Date;
   /** Where the API's own log lines go, instead of the console. */
   log?: (message: string) => void;
+  /**
+   * Turns Better-Auth's rate limiter on. Off by default: every test request
+   * comes from one address, so the suite's many sign-ups would trip it.
+   */
+  rateLimit?: boolean;
 } = {}): Promise<TestApi> {
   const db = createDatabase(testDatabaseUrl);
   const server = createServer();
@@ -30,9 +36,13 @@ export async function startApi({
     db,
     baseURL: url,
     secret: "integration-tests-secret-0123456789abcdef",
+    rateLimit,
     ...(log && { log }),
   });
-  server.on("request", createApp({ auth, db, ...(now && { now }) }));
+  server.on(
+    "request",
+    createApp({ auth, db, ...(now && { now }), ...(log && { log }) })
+  );
   return {
     url,
     db,
@@ -54,10 +64,18 @@ export function request(
     cookie,
     body,
     method = body === undefined ? "GET" : "POST",
-  }: { cookie?: string; body?: unknown; method?: string } = {}
+    ip,
+  }: {
+    cookie?: string;
+    body?: unknown;
+    method?: string;
+    /** The client address, as the proxy reports it in `X-Forwarded-For`. */
+    ip?: string;
+  } = {}
 ): Promise<Response> {
   const headers = new Headers({ origin: api.url });
   if (cookie) headers.set("cookie", cookie);
+  if (ip) headers.set("x-forwarded-for", ip);
   if (body !== undefined) headers.set("content-type", "application/json");
   return fetch(api.url + path, {
     method,
