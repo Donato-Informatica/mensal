@@ -1,4 +1,4 @@
-import { cleanup, screen, waitFor } from "@testing-library/react";
+import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
@@ -121,6 +121,56 @@ describe("settings", () => {
 
     await waitFor(() => expect(summarySwitch).toBeChecked());
     expect(api.preferencesOf(email)).toMatchObject({ showSummary: true });
+  });
+
+  it("says when a preference could not be saved", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    await user.click(
+      await screen.findByRole("button", { name: "Configurações" })
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Configurações" });
+    api.breakDown();
+
+    await user.click(
+      within(dialog).getByRole("switch", {
+        name: "Mostrar resumo de entradas e saídas",
+      })
+    );
+
+    expect((await within(dialog).findByRole("alert")).textContent).toBe(
+      "Alteração não salva. Algo deu errado. Tente novamente."
+    );
+  });
+
+  it("clears the failure once a later change is saved", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    await user.click(
+      await screen.findByRole("button", { name: "Configurações" })
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Configurações" });
+    api.breakDown();
+    await user.click(
+      within(dialog).getByRole("switch", {
+        name: "Mostrar resumo de entradas e saídas",
+      })
+    );
+    await within(dialog).findByRole("alert");
+    api.recover();
+
+    await user.click(
+      within(dialog).getByRole("switch", {
+        name: "Confirmar antes de liquidar, pular ou voltar uma conta para pendente",
+      })
+    );
+
+    await waitFor(() =>
+      expect(api.preferencesOf(email)).toMatchObject({
+        confirmStatusChanges: false,
+      })
+    );
+    expect(within(dialog).queryByRole("alert")).toBeNull();
   });
 
   it("ignores what an older version kept in the browser", async () => {

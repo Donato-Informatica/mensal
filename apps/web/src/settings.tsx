@@ -1,6 +1,7 @@
-import { Box, Button, Modal, Switch } from "@mantine/core";
+import { Alert, Box, Button, Modal, Switch, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconSettings } from "@tabler/icons-react";
+import { errorMessage } from "./api-error.ts";
 import headerButton from "./header-button.module.css";
 import { usePreference } from "./session.ts";
 import classes from "./settings.module.css";
@@ -60,24 +61,38 @@ const switchProps = {
 } as const;
 
 function SettingsForm() {
-  const [showSummary, setShowSummary] = useShowSummary();
-  const [confirmStatusChanges, setConfirmStatusChanges] =
+  const [showSummary, setShowSummary, summarySave] = useShowSummary();
+  const [confirmStatusChanges, setConfirmStatusChanges, confirmSave] =
     useConfirmStatusChanges();
+  // The Alert reports the latest change only: starting one forgets the other.
+  const error = summarySave.error ?? confirmSave.error;
   return (
     <Box>
+      {error && (
+        <Alert color="red" variant="light" mb="md">
+          <Text span fw={600}>
+            Alteração não salva.
+          </Text>{" "}
+          {errorMessage(error)}
+        </Alert>
+      )}
       <Switch
         {...switchProps}
         label="Mostrar resumo de entradas e saídas"
         checked={showSummary}
-        onChange={(event) => setShowSummary(event.currentTarget.checked)}
+        onChange={(event) => {
+          confirmSave.reset();
+          setShowSummary(event.currentTarget.checked);
+        }}
       />
       <Switch
         {...switchProps}
         label="Confirmar antes de liquidar, pular ou voltar uma conta para pendente"
         checked={confirmStatusChanges}
-        onChange={(event) =>
-          setConfirmStatusChanges(event.currentTarget.checked)
-        }
+        onChange={(event) => {
+          summarySave.reset();
+          setConfirmStatusChanges(event.currentTarget.checked);
+        }}
       />
     </Box>
   );
