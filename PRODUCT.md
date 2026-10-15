@@ -38,7 +38,7 @@ Minimalist and opinionated where most personal-finance tools overdo it (PRD §1.
 
 ## Brand Commitments
 
-- Name: **Mensal**, shown as a wordmark in the app header.
+- Name: **Mensal**, shown as a lockup (the logo mark, `apps/web/public/logo.svg`, beside the wordmark) in the app header and above the auth card; the mark is also the favicon.
 - Voice: plain, short Brazilian Portuguese that uses the glossary's terms and never its listed synonyms to avoid.
 - The visual system is recorded in `DESIGN.md` and mapped onto Mantine in `apps/web/src/theme.ts`; it is not restated here.
 

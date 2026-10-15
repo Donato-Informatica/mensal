@@ -25,7 +25,7 @@ export function AppLayout({
       <Box component="header">
         <Container size="md">
           <div className={classes.bar}>
-            <Wordmark className={classes.brand} />
+            <Wordmark markSize={28} className={classes.brand} />
             <nav aria-label="Telas" className={classes.nav}>
               <ScreenLink
                 to="/"

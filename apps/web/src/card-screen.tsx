@@ -15,7 +15,7 @@ export function CardScreen({
   return (
     <Center mih="100dvh" p="md">
       <Box w="100%" maw={400}>
-        <Wordmark mb="xl" />
+        <Wordmark markSize={48} mb="xl" />
         <Paper bg="dark.6" withBorder p="xl" radius="lg">
           <Stack gap="lg">
             <Stack gap={4}>

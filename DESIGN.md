@@ -192,7 +192,7 @@ The palette and type were inherited from ClickHouse's marketing system: the blac
 **Key Characteristics:**
 
 - Dark only. Canvas `{colors.canvas}` is the page; `{colors.surface-card}` lifts panels by tone alone.
-- One yellow, rationed: primary action, checked state, focus ring, wordmark, and the labels and panel edges of the two groups that need you now (Atrasadas, Vencem hoje).
+- One yellow, rationed: primary action, checked state, focus ring, the lockup (wordmark and logo mark), and the labels and panel edges of the two groups that need you now (Atrasadas, Vencem hoje).
 - Green means money coming in; red means late or destructive. Neither is decorative.
 - Inter throughout. Display at 700 with tight tracking; everything else 400–600.
 - Flat: hairline borders, no shadows on resting surfaces.
@@ -204,7 +204,7 @@ Monochrome on black, with one highlighter and two signal colours that carry mean
 
 ### Primary
 
-- **Highlighter Yellow** (`{colors.primary}`): the primary button, the checked settle box, switches turned on, the focus ring and the wordmark. It is never body text or a large fill.
+- **Highlighter Yellow** (`{colors.primary}`): the primary button, the checked settle box, switches turned on, the focus ring, the wordmark and the logo mark's edge and checked box. It is never body text or a large fill.
 - **Pressed Highlighter** (`{colors.primary-active}`): hover and pressed state of the primary button.
 - **Spent Highlighter** (`{colors.primary-disabled}`): a disabled primary button, such as the amount popover's "Liquidar" before a value is typed.
 
@@ -253,12 +253,12 @@ Monochrome on black, with one highlighter and two signal colours that carry mean
 
 ## Layout
 
-- **Frame:** a header ruled off by a `{colors.hairline}` line, then one centred column, Mantine's `md` container (960px max), with 32px of vertical padding. From 48em the header is one 64px row: wordmark, screen tabs, the screen's primary action, Configurações, Sair. On phones it is two rows (wordmark with Configurações and Sair, then the screen tabs), the primary action floats at the bottom right, and the column's bottom padding grows to clear it.
+- **Frame:** a header ruled off by a `{colors.hairline}` line, then one centred column, Mantine's `md` container (960px max), with 32px of vertical padding. From 48em the header is one 64px row: lockup, screen tabs, the screen's primary action, Configurações, Sair. On phones it is two rows (lockup with Configurações and Sair, then the screen tabs), the primary action floats at the bottom right, and the column's bottom padding grows to clear it.
 - **Rhythm:** sections of a screen are 32px apart (`xl`). A group label sits 12px (`sm`) above its panel. Rows are padded 12px × 20px. Summary blocks pad 20px and the auth card 32px.
 - **Scale:** Mantine's default spacing, 10 / 12 / 16 / 20 / 32px (`xs` to `xl`). Radii and colours are themed; spacing is not.
 - **Period navigator:** sticky at the top of the month screen on the canvas colour, a three-column grid of [empty | ‹ title › | empty]. The centre group is 400px wide at most.
 - **Summary:** two blocks, one column on phones and two from 576px (`xs`) up.
-- **Auth screens:** a single 400px card, centred in the viewport, with the wordmark above it.
+- **Auth screens:** a single 400px card, centred in the viewport, with the lockup above it.
 - **Responsive:** phones are the main device for settling (PRODUCT.md), so every screen must hold at 360–375px with touch targets of at least 36px. The header and the navigator row both fit at that width; the longer month names wrap the title onto two lines.
 
 ## Elevation & Depth
@@ -313,9 +313,12 @@ Panel Black fill, Panel Edge border, 8px corners, 36px tall, labels above the fi
 - **Menu:** opened from the row's ⋯ action icon. Items are plain text and destructive items are rose.
 - **Popover:** anchored to the control that opened it, with an arrow and focus trapped inside. It asks for one thing only.
 
-### Wordmark
+### Lockup
 
-"Mensal" in 18px / 700 Highlighter Yellow. Apart from text links on the auth screens (Mantine anchors take the primary colour), it is the only yellow text in the product.
+The logo mark, a 10px (`xs`) gap, then the wordmark. The mark is 28px in the header and 48px above the auth card; it is decorative (empty alt), since the wordmark names the app. The same mark is the favicon.
+
+- **Wordmark:** "Mensal" in 18px / 700 Highlighter Yellow. Apart from text links on the auth screens (Mantine anchors take the primary colour), it is the only yellow text in the product.
+- **Logo mark:** `apps/web/public/logo.svg`, a Night Canvas tile edged in Highlighter Yellow holding three ledger rows: two quiet Faint Grey rows and, between them, a settled one (a yellow checked box beside a Paper White line). Its colours are the tokens above; change them here first.
 
 ## Do's and Don'ts
 

@@ -41,6 +41,13 @@ describe("signed out", () => {
     ).toBeInTheDocument();
     expect(window.location.pathname).toBe("/entrar");
   });
+
+  it("names the app once, beside a mark screen readers skip", async () => {
+    openApp("/entrar");
+
+    expect(await screen.findByText("Mensal")).toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
 });
 
 describe("signing in", () => {

@@ -1,9 +1,19 @@
-import { Text, type TextProps } from "@mantine/core";
+import { Group, Text, type GroupProps } from "@mantine/core";
 
-export function Wordmark(props: TextProps) {
+/**
+ * The lockup: the logo mark, then "Mensal". The mark is decorative; the text
+ * names the app.
+ */
+export function Wordmark({
+  markSize,
+  ...props
+}: GroupProps & { markSize: number }) {
   return (
-    <Text fw={700} fz="lg" c="yellow" {...props}>
-      Mensal
-    </Text>
+    <Group gap="xs" wrap="nowrap" {...props}>
+      <img src="/logo.svg" alt="" width={markSize} height={markSize} />
+      <Text fw={700} fz="lg" c="yellow">
+        Mensal
+      </Text>
+    </Group>
   );
 }
