@@ -95,6 +95,13 @@ components:
   button-primary-disabled:
     backgroundColor: "{colors.primary-disabled}"
     textColor: "{colors.muted}"
+  button-primary-action:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.on-primary}"
+    typography: "{typography.button}"
+    rounded: "{rounded.pill}"
+    padding: 0 18px
+    height: 44px # 36px from 48em, in the header
   button-default:
     backgroundColor: "{colors.surface-card}"
     textColor: "{colors.ink}"
@@ -178,7 +185,7 @@ components:
 
 Mensal is a bank statement read in a dark room. The page is a near-black sheet; each month is a column of quiet grey rows ruled by hairlines; and a single electric-yellow highlighter marks the one thing that needs the reader right now: the button that does the act, the box just ticked, the control under the keyboard. Everything else stays dim on purpose, so the eye lands on what is due and what is left without searching.
 
-Components are quiet, exact, one-touch. Surfaces sit a hair above the canvas, borders are 1px, and nothing floats. Controls behave like precise instruments: one click settles a row, one menu holds the rest. Density is that of a ledger, not a dashboard. Rows are compact enough to see a whole month at phone width, and nothing on screen is decoration.
+Components are quiet, exact, one-touch. Surfaces sit a hair above the canvas, borders are 1px, and nothing floats but interruptions and, on phones, the screen's primary action, as flat as the rest. Controls behave like precise instruments: one click settles a row, one menu holds the rest. Density is that of a ledger, not a dashboard. Rows are compact enough to see a whole month at phone width, and nothing on screen is decoration.
 
 The palette and type were inherited from ClickHouse's marketing system: the black, the yellow, Inter set tight. Mensal keeps only what an app needs. It has no marketing bands, stat callouts, pricing tiers or code windows, and it never sets display type above 32px.
 
@@ -246,23 +253,23 @@ Monochrome on black, with one highlighter and two signal colours that carry mean
 
 ## Layout
 
-- **Frame:** a 64px header (wordmark, screen tabs, Configurações, Sair) ruled off by a `{colors.hairline}` line, then one centred column, Mantine's `md` container (960px max), with 32px of vertical padding.
+- **Frame:** a header ruled off by a `{colors.hairline}` line, then one centred column, Mantine's `md` container (960px max), with 32px of vertical padding. From 48em the header is one 64px row: wordmark, screen tabs, the screen's primary action, Configurações, Sair. On phones it is two rows (wordmark with Configurações and Sair, then the screen tabs), the primary action floats at the bottom right, and the column's bottom padding grows to clear it.
 - **Rhythm:** sections of a screen are 32px apart (`xl`). A group label sits 12px (`sm`) above its panel. Rows are padded 12px × 20px. Summary blocks pad 20px and the auth card 32px.
 - **Scale:** Mantine's default spacing, 10 / 12 / 16 / 20 / 32px (`xs` to `xl`). Radii and colours are themed; spacing is not.
-- **Period navigator:** sticky at the top of the month screen on the canvas colour, a three-column grid of [empty | ‹ title › | actions]. The centre group is 400px wide at most.
+- **Period navigator:** sticky at the top of the month screen on the canvas colour, a three-column grid of [empty | ‹ title › | empty]. The centre group is 400px wide at most.
 - **Summary:** two blocks, one column on phones and two from 576px (`xs`) up.
 - **Auth screens:** a single 400px card, centred in the viewport, with the wordmark above it.
-- **Responsive:** phones are the main device for settling (PRODUCT.md), so every screen must hold at 360–375px with touch targets of at least 36px. The header and the navigator row do not yet fit at that width (see Do's and Don'ts).
+- **Responsive:** phones are the main device for settling (PRODUCT.md), so every screen must hold at 360–375px with touch targets of at least 36px. The header and the navigator row both fit at that width; the longer month names wrap the title onto two lines.
 
 ## Elevation & Depth
 
-Flat. Depth is tonal: `{colors.surface-card}` panels sit on the `{colors.canvas}` page, edged by a 1px `{colors.hairline-strong}` border. No resting surface casts a shadow. The only layering is interruption: dialogs, menus and popovers open over the page, and dialogs dim it with Mantine's overlay. Their default Mantine shadow is tolerated, not part of the language.
+Flat. Depth is tonal: `{colors.surface-card}` panels sit on the `{colors.canvas}` page, edged by a 1px `{colors.hairline-strong}` border. No resting surface casts a shadow. Layering is interruption: dialogs, menus and popovers open over the page, and dialogs dim it with Mantine's overlay. Their default Mantine shadow is tolerated, not part of the language. The one exception is the screen's primary action on phones, which floats at the bottom right, flat and shadowless: yellow on the canvas is enough.
 
 **The Flat Ledger Rule.** If a surface needs to stand out, give it Panel Black and a Panel Edge border. Never a shadow, a glow or a gradient.
 
 ## Shapes
 
-Gently squared. Buttons, inputs, checkboxes and dialogs use 8px corners (`{rounded.md}`). Panels, summary blocks and the auth card use 12px (`{rounded.lg}`). Fully round is kept for the 36px month-step buttons (‹ ›) and for badges. Borders are always 1px. Rows inside a panel are separated by a 1px rule, never boxed.
+Gently squared. Buttons, inputs, checkboxes and dialogs use 8px corners (`{rounded.md}`). Panels, summary blocks and the auth card use 12px (`{rounded.lg}`). Fully round is kept for the 36px month-step buttons (‹ ›), the screen's primary action and badges. Borders are always 1px. Rows inside a panel are separated by a 1px rule, never boxed.
 
 **The Rows-Not-Cards Rule.** A group of occurrences is one panel with ruled rows. Never a card per row, and never a panel nested inside a panel.
 
@@ -270,9 +277,10 @@ Gently squared. Buttons, inputs, checkboxes and dialogs use 8px corners (`{round
 
 ### Buttons
 
-- **Shape:** gently squared (8px), 36px tall, 14px / 600 labels.
+- **Shape:** gently squared (8px), 36px tall, 14px / 600 labels. The screen's primary action is the exception.
 - **Primary:** Highlighter Yellow with black text. The act a view exists for: "Liquidar", "Pular", "Criar", "Entrar".
-- **Default:** Panel Black with a Panel Edge border and white text, for secondary acts such as "Cancelar" and "Nova avulsa".
+- **Primary action** (button-primary-action): the act a screen exists for, "Nova avulsa" on Mês and "Nova recorrência" on Recorrências. A primary pill with a `+` before its label, 44px tall on phones and 36px from 48em. On phones it floats at the bottom right, clear of the edges and the safe area; from 48em it sits in the header. One per screen, flat, never icon-only.
+- **Default:** Panel Black with a Panel Edge border and white text, for secondary acts such as "Cancelar".
 - **Danger:** solid Overdue Rose, only for confirming a deletion. In a destructive dialog, focus starts on "Cancelar".
 - **Subtle:** no fill and near-white text, for header actions (Configurações, Sair).
 - **Focus:** Mantine's 2px yellow focus ring on every control, offset from the edge. It is never removed.
@@ -329,4 +337,4 @@ Panel Black fill, Panel Edge border, 8px corners, 36px tall, labels above the fi
 - **Don't** use yellow for body text, large fills or decoration.
 - **Don't** use emerald or rose for emphasis that does not mean money in, late or destructive.
 - **Don't** wrap individual rows in cards or nest panels inside panels.
-- **Don't** let the header or the period navigator push the page wider than the viewport. Today both overflow below about 560px wide; fix this rather than copy it.
+- **Don't** let the header or the period navigator push the page wider than the viewport. Check both at 360px.
