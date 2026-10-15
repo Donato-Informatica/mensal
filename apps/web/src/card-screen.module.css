@@ -1,0 +1,17 @@
+/* Phone first: the lockup centred above the card. */
+.layout {
+  display: grid;
+  gap: var(--mantine-spacing-xl);
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Wide enough for both: the lockup beside the card, on its vertical centre. */
+@media (min-width: 48em) {
+  .layout {
+    grid-template-columns: 1fr 400px;
+    align-items: center;
+    column-gap: 64px;
+    max-width: 736px;
+  }
+}

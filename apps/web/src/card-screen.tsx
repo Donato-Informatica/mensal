@@ -1,8 +1,12 @@
 import { Box, Center, Paper, Stack, Text, Title } from "@mantine/core";
 import type { ReactNode } from "react";
-import { Wordmark } from "./wordmark.tsx";
+import classes from "./card-screen.module.css";
 
-/** The narrow centered card the screens outside the app proper sit in. */
+/**
+ * The narrow centered card the screens outside the app proper sit in, with the
+ * lockup stacked large beside it (above it on phones). The mark is decorative;
+ * the text names the app.
+ */
 export function CardScreen({
   title,
   subtitle,
@@ -14,8 +18,20 @@ export function CardScreen({
 }) {
   return (
     <Center mih="100dvh" p="md">
-      <Box w="100%" maw={400}>
-        <Wordmark markSize={48} mb="xl" />
+      <div className={classes.layout}>
+        <Stack align="center" gap="sm">
+          <Box
+            component="img"
+            src="/logo.svg"
+            alt=""
+            display="block"
+            w={{ base: 80, sm: 160 }}
+            h={{ base: 80, sm: 160 }}
+          />
+          <Text fw={700} fz={{ base: 24, sm: 32 }} lh={1.2} lts={-1} c="yellow">
+            Mensal
+          </Text>
+        </Stack>
         <Paper bg="dark.6" withBorder p="xl" radius="lg">
           <Stack gap="lg">
             <Stack gap={4}>
@@ -27,7 +43,7 @@ export function CardScreen({
             {children}
           </Stack>
         </Paper>
-      </Box>
+      </div>
     </Center>
   );
 }
