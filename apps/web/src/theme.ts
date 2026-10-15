@@ -1,12 +1,21 @@
 import {
+  Checkbox,
   createTheme,
+  defaultVariantColorsResolver,
+  Input,
+  Loader,
   Modal,
   PasswordInput,
+  rem,
+  SegmentedControl,
+  Switch,
   TextInput,
   Title,
   type CSSVariablesResolver,
   type MantineColorsTuple,
+  type VariantColorsResolver,
 } from "@mantine/core";
+import controls from "./controls.module.css";
 import dialog from "./dialog.module.css";
 
 // DESIGN.md: near-black canvas, one electric yellow, Inter throughout.
@@ -38,7 +47,8 @@ const dark: MantineColorsTuple = [
   "#000000",
 ];
 
-// DESIGN.md's accents, at shade 5: accent-emerald and accent-rose.
+// DESIGN.md's accents, at shade 5: accent-emerald and accent-rose. Their light
+// counterparts are shade 7 (light-accent-emerald) and 6 (light-accent-rose).
 const green: MantineColorsTuple = [
   "#f0fdf4",
   "#dcfce7",
@@ -47,7 +57,7 @@ const green: MantineColorsTuple = [
   "#4ade80",
   "#22c55e", // accent-emerald
   "#16a34a",
-  "#15803d",
+  "#15803d", // light-accent-emerald
   "#166534",
   "#14532d",
 ];
@@ -59,17 +69,67 @@ const red: MantineColorsTuple = [
   "#fca5a5",
   "#f87171",
   "#ef4444", // accent-rose
-  "#dc2626",
+  "#dc2626", // light-accent-rose
   "#b91c1c",
   "#991b1b",
   "#7f1d1d",
 ];
+
+/**
+ * Mantine's light scheme draws its surfaces, borders and quiet text from
+ * gray[0–9], a blue-tinted grey. On paper, DESIGN.md's greys are neutral, so
+ * the light scheme gets these instead; the dark scheme keeps Mantine's own.
+ */
+const paperGray: MantineColorsTuple = [
+  "#fafafa",
+  "#f5f5f5", // light-canvas
+  "#e5e5e5", // light-hairline
+  "#d4d4d4", // light-hairline-strong (Mantine's panel borders)
+  "#d4d4d4", // light-hairline-strong (Mantine's input borders)
+  "#a3a3a3", // light-muted-soft
+  "#666666", // light-muted
+  "#4d4d4d",
+  "#333333", // light-body
+  "#1a1a1a",
+];
+
+/**
+ * Two variants of the app's own, so a control can take a role rather than a
+ * fixed shade (DESIGN.md: "take colours from the theme by role"):
+ * - `surface`: Panel Black with ink on it (icon-button-round, category-tab-active).
+ * - `overdue`: the overdue badge, rose (badge-overdue).
+ * A confirming delete (filled red) carries `--mensal-color-on-danger`.
+ */
+const variantColorResolver: VariantColorsResolver = (input) => {
+  if (input.variant === "surface") {
+    return {
+      background: "var(--mensal-color-surface-card)",
+      hover: "var(--mantine-color-body)",
+      color: "var(--mantine-color-bright)",
+      border: `${rem(1)} solid transparent`,
+    };
+  }
+  if (input.variant === "overdue") {
+    return {
+      background: "var(--mensal-color-overdue)",
+      hover: "var(--mensal-color-overdue)",
+      color: "var(--mantine-color-red-light-color)",
+      border: `${rem(1)} solid transparent`,
+    };
+  }
+  const colors = defaultVariantColorsResolver(input);
+  if (input.variant === "filled" && input.color === "red") {
+    return { ...colors, color: "var(--mensal-color-on-danger)" };
+  }
+  return colors;
+};
 
 export const theme = createTheme({
   colors: { yellow, dark, green, red },
   primaryColor: "yellow",
   primaryShade: 4,
   autoContrast: true,
+  variantColorResolver,
   black: "#0a0a0a",
   white: "#ffffff",
   fontFamily:
@@ -80,12 +140,26 @@ export const theme = createTheme({
   },
   defaultRadius: "md",
   radius: { xs: "4px", sm: "6px", md: "8px", lg: "12px", xl: "12px" },
+  // The highlighter as a line (the focus ring, a focused field, a spinner) is
+  // --mensal-color-highlight: yellow at night, ink on paper.
+  focusClassName: controls.focus ?? "",
   components: {
+    Loader: Loader.extend({
+      defaultProps: { color: "var(--mensal-color-highlight)" },
+    }),
     // Forms here ask only for what they need, so every field is required and
     // an asterisk on each would be noise.
     TextInput: TextInput.extend({ defaultProps: { withAsterisk: false } }),
     PasswordInput: PasswordInput.extend({
       defaultProps: { withAsterisk: false },
+    }),
+    Input: Input.extend({ classNames: { input: controls.input } }),
+    Checkbox: Checkbox.extend({ classNames: { input: controls.checkbox } }),
+    Switch: Switch.extend({
+      classNames: { input: controls.switchInput, track: controls.switchTrack },
+    }),
+    SegmentedControl: SegmentedControl.extend({
+      classNames: { label: controls.segment },
     }),
     // DESIGN.md, Dialogs: centred, padded like a summary block, the page
     // dimmed enough behind them that the dialog is all there is to read.
@@ -106,16 +180,86 @@ export const theme = createTheme({
     }),
     Title: Title.extend({
       styles: {
-        root: { color: "var(--mantine-color-white)", letterSpacing: "-1px" },
+        root: { color: "var(--mantine-color-bright)", letterSpacing: "-1px" },
       },
     }),
   },
 });
 
-// One source for the floating primary action's height on phones (DESIGN.md,
-// Buttons): the button takes it, and the page and the undo toast leave room for it.
+const paperGrayVariables = Object.fromEntries(
+  paperGray.map((shade, index) => [`--mantine-color-gray-${index}`, shade])
+);
+
+/**
+ * Every colour role, resolved per scheme (DESIGN.md, Colors and its Light
+ * scheme). Ink is Mantine's `bright`, running text its `text`, dimmed text its
+ * `dimmed` and the canvas its `body`; the rest are `--mensal-color-*`. Yellow
+ * is a line or text only in the dark scheme: on paper those roles turn ink
+ * and yellow stays a fill (the Fill-Only Rule).
+ *
+ * `--mensal-primary-action-height` is the one source for the floating primary
+ * action's height on phones (DESIGN.md, Buttons): the button takes it, and the
+ * page and the undo toast leave room for it.
+ */
 export const cssVariablesResolver: CSSVariablesResolver = () => ({
   variables: { "--mensal-primary-action-height": "44px" },
-  light: {},
-  dark: {},
+  dark: {
+    "--mensal-color-surface-card": "var(--mantine-color-dark-6)",
+    "--mensal-color-hairline": "var(--mantine-color-dark-5)",
+    "--mensal-color-hairline-strong": "var(--mantine-color-dark-4)",
+    "--mensal-color-inflow": "var(--mantine-color-green-5)",
+    "--mensal-color-rose": "var(--mantine-color-red-5)",
+    "--mensal-color-rose-text": "var(--mantine-color-red-4)",
+    "--mensal-color-rose-tint": "rgb(239 68 68 / 0.1)",
+    "--mensal-color-rose-edge": "var(--mantine-color-red-9)",
+    "--mensal-color-overdue": "var(--mantine-color-red-5)",
+    "--mensal-color-on-danger": "var(--mantine-color-black)",
+    "--mensal-color-highlight": "var(--mantine-primary-color-filled)",
+    "--mensal-color-wordmark": "var(--mantine-color-yellow-4)",
+    "--mensal-color-needs-you-label": "var(--mantine-color-yellow-4)",
+    "--mensal-color-needs-you-fill": "transparent",
+    "--mensal-color-needs-you-edge": "var(--mantine-color-yellow-9)",
+    // The fill's own colour: no edge shows at night.
+    "--mensal-color-filled-control-edge": "var(--mantine-primary-color-filled)",
+    "--mensal-shadow-interruption": "0 8px 24px rgb(0 0 0 / 0.5)",
+  },
+  light: {
+    ...paperGrayVariables,
+    "--mantine-color-body": "#f5f5f5", // light-canvas
+    "--mantine-color-text": "#333333", // light-body
+    "--mantine-color-bright": "#0a0a0a", // light-ink
+    "--mantine-color-dimmed": "#666666", // light-muted
+    "--mantine-color-placeholder": "#a3a3a3", // light-muted-soft
+    "--mantine-color-anchor": "var(--mantine-color-bright)",
+    "--mantine-color-default": "var(--mensal-color-surface-card)",
+    "--mantine-color-default-hover": "var(--mantine-color-body)",
+    "--mantine-color-default-color": "var(--mantine-color-bright)",
+    "--mantine-color-default-border": "var(--mensal-color-hairline-strong)",
+    "--mantine-color-disabled": "var(--mensal-color-hairline)",
+    "--mantine-color-disabled-color": "var(--mantine-color-placeholder)",
+    "--mantine-color-disabled-border": "var(--mensal-color-hairline-strong)",
+    "--mantine-color-error": "var(--mensal-color-rose)",
+    "--mantine-color-red-filled": "var(--mantine-color-red-6)",
+    "--mantine-color-red-filled-hover": "var(--mantine-color-red-7)",
+    // A subtle primary button (Desfazer) is ink, yellow only as its hover fill.
+    "--mantine-color-yellow-light-color": "var(--mantine-color-bright)",
+    "--mensal-color-surface-card": "#ffffff", // light-surface-card
+    "--mensal-color-hairline": "#e5e5e5", // light-hairline
+    "--mensal-color-hairline-strong": "#d4d4d4", // light-hairline-strong
+    "--mensal-color-inflow": "var(--mantine-color-green-7)",
+    "--mensal-color-rose": "var(--mantine-color-red-6)",
+    "--mensal-color-rose-text": "var(--mantine-color-red-6)",
+    "--mensal-color-rose-tint": "rgb(220 38 38 / 0.06)",
+    "--mensal-color-rose-edge": "var(--mantine-color-red-2)",
+    "--mensal-color-overdue": "var(--mantine-color-red-light)",
+    "--mensal-color-on-danger": "var(--mantine-color-white)",
+    "--mensal-color-highlight": "var(--mantine-color-bright)",
+    "--mensal-color-wordmark": "var(--mantine-color-bright)",
+    "--mensal-color-needs-you-label": "var(--mantine-color-bright)",
+    "--mensal-color-needs-you-fill": "var(--mantine-primary-color-filled)",
+    "--mensal-color-needs-you-edge": "var(--mantine-color-bright)",
+    "--mensal-color-filled-control-edge": "var(--mantine-color-bright)",
+    // Still an interruption over the page, but a softer one on paper.
+    "--mensal-shadow-interruption": "0 8px 24px rgb(0 0 0 / 0.12)",
+  },
 });

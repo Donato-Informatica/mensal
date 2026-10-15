@@ -1,0 +1,32 @@
+/*
+ * Mantine draws focus and checked controls in the primary colour. DESIGN.md's
+ * Fill-Only Rule keeps yellow a fill on paper, so the lines below take roles
+ * from theme.ts instead: yellow at night, ink on paper.
+ */
+
+/* The focus ring on every control (theme.focusClassName): Mantine's own, by role. */
+.focus:focus-visible {
+  outline: 2px solid var(--mensal-color-highlight);
+  outline-offset: calc(0.125rem * var(--mantine-scale));
+}
+
+/* A focused field's border. An error keeps its own (Mantine's rule is more specific). */
+.input:focus,
+.input:focus-within {
+  --input-bd: var(--mensal-color-highlight);
+}
+
+/* Switches and segmented controls draw their own focus outline; only its colour changes. */
+.switchInput:focus-visible + .switchTrack,
+.segment {
+  outline-color: var(--mensal-color-highlight);
+}
+
+/* Yellow fills that are controls carry an edge, so their shape reads on paper. */
+.checkbox:checked:not(:disabled) {
+  border-color: var(--mensal-color-filled-control-edge);
+}
+
+.switchInput:checked:not(:disabled) + .switchTrack {
+  box-shadow: inset 0 0 0 1px var(--mensal-color-filled-control-edge);
+}
