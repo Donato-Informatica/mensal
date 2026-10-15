@@ -81,8 +81,8 @@ function ScreenLink({
     <Button
       component={Link}
       to={to}
-      variant={active ? "filled" : "subtle"}
-      color={active ? "dark.6" : "gray"}
+      variant={active ? "surface" : "subtle"}
+      color="gray"
       size="sm"
       h={{ base: 44, sm: 30 }}
       leftSection={icon}

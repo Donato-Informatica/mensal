@@ -53,7 +53,7 @@ export function EndRecurrenceForm({
           </Alert>
         )}
         <Text>
-          <Text span fw={600} c="white">
+          <Text span fw={600} c="bright">
             {recurrence.description}
           </Text>{" "}
           deixa de aparecer depois do último mês. As contas já registradas ficam

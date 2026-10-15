@@ -67,7 +67,7 @@ export function ConfirmRecurrenceDeletion({
         </Alert>
       )}
       <Text>
-        <Text span fw={600} c="white">
+        <Text span fw={600} c="bright">
           {recurrence.description}
         </Text>{" "}
         será excluída. Isso não pode ser desfeito.

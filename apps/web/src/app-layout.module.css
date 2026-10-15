@@ -77,7 +77,7 @@
 
 /* A rule under a screen's heading bar, on phones only. */
 .mobileRule {
-  border-bottom: 1px solid var(--mantine-color-dark-5);
+  border-bottom: 1px solid var(--mensal-color-hairline);
 }
 
 @media (min-width: 48em) {

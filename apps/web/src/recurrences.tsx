@@ -77,7 +77,7 @@ export function Recurrences({ status }: { status: Status }) {
             </Text>
           </Stack>
         ) : (
-          <Paper bg="dark.6" withBorder radius="lg">
+          <Paper bg="var(--mensal-color-surface-card)" withBorder radius="lg">
             <Stack
               component="ul"
               aria-label="Recorrências"
@@ -122,12 +122,12 @@ function Row({
       style={
         first
           ? undefined
-          : { borderTop: "1px solid var(--mantine-color-dark-5)" }
+          : { borderTop: "1px solid var(--mensal-color-hairline)" }
       }
     >
       <EditRecurrenceButton recurrence={recurrence}>
         <Stack gap={0} miw={0}>
-          <Text c="white" fw={500} truncate>
+          <Text c="bright" fw={500} truncate>
             {description}
           </Text>
           <Text fz="sm" c="dimmed">
@@ -143,8 +143,8 @@ function Row({
             defaultAmount === null
               ? "dimmed"
               : direction === "INFLOW"
-                ? "green.5"
-                : "white"
+                ? "var(--mensal-color-inflow)"
+                : "bright"
           }
           style={{ whiteSpace: "nowrap" }}
         >

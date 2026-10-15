@@ -195,7 +195,7 @@ function PeriodNavigator() {
     <Box
       pos="sticky"
       top={0}
-      bg="dark.7"
+      bg="var(--mantine-color-body)"
       py="xs"
       className={appLayout.mobileRule}
       style={{ zIndex: 1 }}
@@ -211,7 +211,7 @@ function PeriodNavigator() {
         <Box />
         <Group justify="space-between" wrap="nowrap">
           <ActionIcon
-            color="dark.6"
+            variant="surface"
             size={36}
             radius={9999}
             aria-label="Mês anterior"
@@ -223,7 +223,7 @@ function PeriodNavigator() {
             {formatPeriod(target)}
           </Title>
           <ActionIcon
-            color="dark.6"
+            variant="surface"
             size={36}
             radius={9999}
             aria-label="Próximo mês"
@@ -272,7 +272,7 @@ function Summary({
           fz={{ base: 36, xs: 52 }}
           lh={1.1}
           fw={700}
-          c={leftOver < 0 ? "red.5" : "white"}
+          c={leftOver < 0 ? "var(--mensal-color-rose)" : "bright"}
         >
           {formatAmount(leftOver)}
         </Text>
@@ -319,7 +319,7 @@ function SummaryBlock({
     <Paper
       component="section"
       aria-labelledby={`${id}-title`}
-      bg="dark.6"
+      bg="var(--mensal-color-surface-card)"
       withBorder
       p="md"
       radius="lg"
@@ -342,7 +342,7 @@ function Figure({ label, cents }: { label: string; cents: number }) {
       <Text id={id} fz="xs" c="dimmed" tt="uppercase" fw={600} lts="1.5px">
         {label}
       </Text>
-      <Text aria-labelledby={id} fz="md" fw={600} c="white">
+      <Text aria-labelledby={id} fz="md" fw={600} c="bright">
         {formatAmount(cents)}
       </Text>
     </Stack>
@@ -433,7 +433,11 @@ function OccurrenceList({
         order={2}
         id={id}
         fz="sm"
-        c={needsYou(title) ? "yellow.4" : "dimmed"}
+        c={needsYou(title) ? "var(--mensal-color-needs-you-label)" : "dimmed"}
+        bg={
+          needsYou(title) ? "var(--mensal-color-needs-you-fill)" : "transparent"
+        }
+        className={needsYou(title) ? classes.needsYouLabel : undefined}
         tt="uppercase"
         fw={600}
         lts="1.5px"
@@ -441,12 +445,12 @@ function OccurrenceList({
         {title}
       </Title>
       <Paper
-        bg="dark.6"
+        bg="var(--mensal-color-surface-card)"
         withBorder
         radius="lg"
         style={
           needsYou(title)
-            ? { borderColor: "var(--mantine-color-yellow-9)" }
+            ? { borderColor: "var(--mensal-color-needs-you-edge)" }
             : undefined
         }
       >
@@ -513,7 +517,7 @@ function Row({
       style={
         first
           ? undefined
-          : { borderTop: "1px solid var(--mantine-color-dark-5)" }
+          : { borderTop: "1px solid var(--mensal-color-hairline)" }
       }
     >
       <Box className={classes.row}>
@@ -524,7 +528,7 @@ function Row({
           <Box className={classes.text}>
             <EditOccurrenceButton item={item}>
               <Stack gap={0} miw={0}>
-                <Text c="white" fw={500} truncate>
+                <Text c="bright" fw={500} truncate>
                   {item.description}
                 </Text>
                 <Text fz="sm" c="dimmed">
@@ -587,7 +591,7 @@ function FailureNotice({
   return (
     <Box role="alert" className={classes.failure}>
       <Text className={classes.failureText} fz="sm">
-        <Text span fw={600} c="red.4">
+        <Text span fw={600} c="var(--mensal-color-rose-text)">
           Alteração não salva.
         </Text>{" "}
         {errorMessage(error)}
@@ -595,7 +599,7 @@ function FailureNotice({
       <Group gap={4} wrap="nowrap">
         <Button
           variant="subtle"
-          color="red.4"
+          color="var(--mensal-color-rose-text)"
           size="xs"
           h={{ base: 44, sm: 30 }}
           onClick={onRetry}
@@ -639,12 +643,12 @@ function Amount({ item }: { item: PeriodItem }) {
       >
         <Group gap={6} wrap="nowrap" className={classes.amount}>
           {direction}
-          <Text fw={600} c="white" span className={classes.pendingText}>
+          <Text fw={600} c="bright" span className={classes.pendingText}>
             A definir
           </Text>
           <IconPencil
             size={14}
-            style={{ flex: "none", color: "var(--mantine-color-dark-2)" }}
+            style={{ flex: "none", color: "var(--mantine-color-dimmed)" }}
             aria-hidden="true"
           />
         </Group>
@@ -654,7 +658,7 @@ function Amount({ item }: { item: PeriodItem }) {
   return (
     <Group gap={6} wrap="nowrap" className={classes.amount}>
       {direction}
-      <Text fw={600} c={inflow ? "green.5" : "white"} span>
+      <Text fw={600} c={inflow ? "var(--mensal-color-inflow)" : "bright"} span>
         <span aria-hidden="true">{inflow ? "+" : "−"}</span>
         {formatAmount(item.amount)}
       </Text>
@@ -668,8 +672,8 @@ function DirectionIcon({ inflow }: { inflow: boolean }) {
     <Icon
       size={14}
       stroke={2.5}
-      color={inflow ? "var(--mantine-color-green-5)" : undefined}
-      style={{ flex: "none", color: "var(--mantine-color-dark-2)" }}
+      color={inflow ? "var(--mensal-color-inflow)" : undefined}
+      style={{ flex: "none", color: "var(--mantine-color-dimmed)" }}
       aria-hidden="true"
     />
   );
@@ -677,7 +681,7 @@ function DirectionIcon({ inflow }: { inflow: boolean }) {
 
 // DESIGN.md badge-pill: surface-card; overdue alone stands out in accent-rose.
 const quietBadge = { variant: "default" } as const;
-const overdueBadge = { variant: "light", color: "red.5" } as const;
+const overdueBadge = { variant: "overdue" } as const;
 
 // Overdue needs no badge of its own: its group says it.
 function statusLabel(item: PeriodItem, period: string) {

@@ -198,7 +198,7 @@ export function ConfirmStatusChange({
       {shown && copy && (
         <Stack gap="md">
           <Text>
-            <Text span fw={600} c="white">
+            <Text span fw={600} c="bright">
               {shown.item.description}
             </Text>{" "}
             {copy.text}

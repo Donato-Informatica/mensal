@@ -52,7 +52,7 @@ export function UndoToast({
           onBlur={() => setHeld(false)}
         >
           <Text className={classes.text} fz="sm">
-            <Text span fw={600} c="white">
+            <Text span fw={600} c="bright">
               {request.item.description}
             </Text>{" "}
             {outcome(request)}

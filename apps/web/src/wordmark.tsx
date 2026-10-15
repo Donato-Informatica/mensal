@@ -11,7 +11,7 @@ export function Wordmark({
   return (
     <Group gap="xs" wrap="nowrap" {...props}>
       <img src="/logo.svg" alt="" width={markSize} height={markSize} />
-      <Text fw={700} fz="lg" c="yellow">
+      <Text fw={700} fz="lg" c="var(--mensal-color-wordmark)">
         Mensal
       </Text>
     </Group>

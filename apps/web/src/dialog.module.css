@@ -1,7 +1,7 @@
 /* DESIGN.md, Dialogs: canvas-coloured, so a Panel Edge border, not a shadow,
    sets it apart from the dimmed page behind it. */
 .content {
-  border: 1px solid var(--mantine-color-dark-4);
+  border: 1px solid var(--mensal-color-hairline-strong);
   box-shadow: none;
 }
 
@@ -10,9 +10,9 @@
   padding-bottom: var(--mantine-spacing-sm);
 }
 
-/* The figure step (20px / 700), in white: the act the dialog asks for. */
+/* The figure step (20px / 700), in ink: the act the dialog asks for. */
 .title {
-  color: var(--mantine-color-white);
+  color: var(--mantine-color-bright);
   font-size: 20px;
   font-weight: 700;
   line-height: 1.4;

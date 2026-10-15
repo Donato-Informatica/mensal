@@ -28,11 +28,22 @@ export function CardScreen({
             w={{ base: 80, sm: 160 }}
             h={{ base: 80, sm: 160 }}
           />
-          <Text fw={700} fz={{ base: 24, sm: 32 }} lh={1.2} lts={-1} c="yellow">
+          <Text
+            fw={700}
+            fz={{ base: 24, sm: 32 }}
+            lh={1.2}
+            lts={-1}
+            c="var(--mensal-color-wordmark)"
+          >
             Mensal
           </Text>
         </Stack>
-        <Paper bg="dark.6" withBorder p="xl" radius="lg">
+        <Paper
+          bg="var(--mensal-color-surface-card)"
+          withBorder
+          p="xl"
+          radius="lg"
+        >
           <Stack gap="lg">
             <Stack gap={4}>
               <Title order={1}>{title}</Title>

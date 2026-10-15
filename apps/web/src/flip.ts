@@ -3,7 +3,7 @@ import { useLayoutEffect, useRef } from "react";
 const DURATION = 280;
 // Exponential ease-out: lands quickly, settles softly.
 const EASING = "cubic-bezier(0.16, 1, 0.3, 1)";
-const SURFACE = "var(--mantine-color-dark-6)";
+const SURFACE = "var(--mensal-color-surface-card)";
 
 type Seen = { top: number; group: string };
 
