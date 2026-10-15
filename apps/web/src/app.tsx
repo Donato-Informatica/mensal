@@ -9,7 +9,7 @@ import { useState } from "react";
 import type { ApiClient } from "./api-client.ts";
 import type { AuthClient } from "./auth-client.ts";
 import { createAppRouter } from "./router.tsx";
-import { theme } from "./theme.ts";
+import { cssVariablesResolver, theme } from "./theme.ts";
 
 export function App({
   authClient,
@@ -23,7 +23,11 @@ export function App({
     createAppRouter({ authClient, api, queryClient })
   );
   return (
-    <MantineProvider theme={theme} forceColorScheme="dark">
+    <MantineProvider
+      theme={theme}
+      cssVariablesResolver={cssVariablesResolver}
+      forceColorScheme="dark"
+    >
       <DatesProvider settings={{ locale: "pt-br" }}>
         <QueryClientProvider client={queryClient}>
           <RouterProvider router={router} />

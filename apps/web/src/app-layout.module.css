@@ -40,12 +40,15 @@
   z-index: var(--mantine-z-index-app);
 }
 
-/* Room below the last row, so the floating action never covers it. */
+/*
+ * Room below the last row, so the floating action never covers it. Its height
+ * is --mensal-primary-action-height (theme.ts), which the button also takes.
+ */
 .main {
   padding-top: var(--mantine-spacing-xl);
   padding-bottom: calc(
-    44px + var(--mantine-spacing-md) + var(--mantine-spacing-xl) +
-      env(safe-area-inset-bottom, 0px)
+    var(--mensal-primary-action-height) + var(--mantine-spacing-md) +
+      var(--mantine-spacing-xl) + env(safe-area-inset-bottom, 0px)
   );
 }
 

@@ -1,9 +1,15 @@
-/* Bottom-centre on the canvas, clear of the phone's home indicator. */
+/*
+ * Bottom-centre on the canvas, clear of the phone's home indicator. On phones it
+ * sits just above the floating primary action (app-layout.module.css), not over it.
+ */
 .toast {
   position: fixed;
   z-index: 300;
   inset-inline: var(--mantine-spacing-md);
-  bottom: max(var(--mantine-spacing-md), env(safe-area-inset-bottom));
+  bottom: calc(
+    var(--mantine-spacing-md) + env(safe-area-inset-bottom, 0px) +
+      var(--mensal-primary-action-height) + var(--mantine-spacing-sm)
+  );
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -23,6 +29,13 @@
 .text {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+/* The action is back in the header: the toast takes the bottom edge again. */
+@media (min-width: 48em) {
+  .toast {
+    bottom: max(var(--mantine-spacing-md), env(safe-area-inset-bottom));
+  }
 }
 
 @keyframes rise {

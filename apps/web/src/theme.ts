@@ -3,6 +3,7 @@ import {
   PasswordInput,
   TextInput,
   Title,
+  type CSSVariablesResolver,
   type MantineColorsTuple,
 } from "@mantine/core";
 
@@ -90,4 +91,12 @@ export const theme = createTheme({
       },
     }),
   },
+});
+
+// One source for the floating primary action's height on phones (DESIGN.md,
+// Buttons): the button takes it, and the page and the undo toast leave room for it.
+export const cssVariablesResolver: CSSVariablesResolver = () => ({
+  variables: { "--mensal-primary-action-height": "44px" },
+  light: {},
+  dark: {},
 });

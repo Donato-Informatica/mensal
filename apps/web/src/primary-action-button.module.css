@@ -1,0 +1,14 @@
+/*
+ * Phone first: floating, it takes the shared --mensal-primary-action-height
+ * (theme.ts) that the page and the undo toast leave room for. From 48em, back in
+ * the header, it is Mantine's 36px.
+ */
+.button {
+  --button-height: var(--mensal-primary-action-height);
+}
+
+@media (min-width: 48em) {
+  .button {
+    --button-height: var(--button-height-sm);
+  }
+}
