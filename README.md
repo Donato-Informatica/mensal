@@ -31,6 +31,18 @@ npm run -w @mensal/web dev     # :5173 — open this one
 
 Sign-up is open, but the API rejects unapproved users. Approve a user by setting `users.approved = true` directly in the database (e.g. via Adminer at http://localhost:8080). Password-reset links are printed to the API log.
 
+### Demo data (optional)
+
+To explore the app with example data, seed the local database (run it after `migrate`):
+
+```sh
+npm run seed
+```
+
+Then sign in at http://localhost:5173 as `demo@mensal.local` / `demo-password-local`. The demo user is already approved.
+
+The seed creates recurrences (salary, rent, internet, an ended subscription, …) and occurrences in every state (settled, pending, overdue, skipped, one-off), with dates relative to the current month. It is meant for local development only: it refuses to run against a non-local database host or when `NODE_ENV=production`. Running it again resets the demo user's data to this baseline; other users are never touched.
+
 ## Checks
 
 ```sh
