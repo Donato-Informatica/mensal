@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
@@ -16,6 +16,13 @@ afterEach(() => {
 
 function openApp(path: string) {
   openAppWith(api, path);
+}
+
+async function confirmSignOut() {
+  await userEvent.click(await screen.findByRole("button", { name: "Sair" }));
+  const dialog = await screen.findByRole("dialog", { name: "Sair da conta" });
+  await userEvent.click(within(dialog).getByRole("button", { name: "Sair" }));
+  return dialog;
 }
 
 async function signIn(email: string, password: string) {
@@ -114,7 +121,7 @@ describe("awaiting approval", () => {
   it("lets the user sign out", async () => {
     openApp("/aguardando-aprovacao");
 
-    await userEvent.click(await screen.findByRole("button", { name: "Sair" }));
+    await confirmSignOut();
 
     expect(
       await screen.findByRole("heading", { name: "Entrar" })
@@ -146,12 +153,25 @@ describe("approved", () => {
   it("lets the user sign out", async () => {
     openApp("/");
 
-    await userEvent.click(await screen.findByRole("button", { name: "Sair" }));
+    await confirmSignOut();
 
     expect(
       await screen.findByRole("heading", { name: "Entrar" })
     ).toBeInTheDocument();
     expect(window.location.pathname).toBe("/entrar");
+  });
+
+  it("stays signed in when sign-out is cancelled", async () => {
+    openApp("/");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Sair" }));
+    const dialog = await screen.findByRole("dialog", { name: "Sair da conta" });
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Cancelar" })
+    );
+
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    expect(window.location.pathname).toBe("/");
   });
 
   // On phones it floats at the bottom right, on wider screens it sits in the
@@ -187,13 +207,13 @@ describe("when things go wrong", () => {
     });
     api.signIn("ana@example.com");
     openApp("/");
-    const signOut = await screen.findByRole("button", { name: "Sair" });
+    await screen.findByRole("button", { name: "Sair" });
 
     api.breakDown();
-    await userEvent.click(signOut);
+    const dialog = await confirmSignOut();
 
     expect(
-      await screen.findByText("Algo deu errado. Tente novamente.")
+      await within(dialog).findByText("Algo deu errado. Tente novamente.")
     ).toBeInTheDocument();
     expect(window.location.pathname).toBe("/");
   });
