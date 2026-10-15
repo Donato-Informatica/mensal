@@ -1,0 +1,43 @@
+/* DESIGN.md, Dialogs: canvas-coloured, so a Panel Edge border, not a shadow,
+   sets it apart from the dimmed page behind it. */
+.content {
+  border: 1px solid var(--mantine-color-dark-4);
+  box-shadow: none;
+}
+
+/* The body follows the title closely: it is what the title asks about. */
+.header {
+  padding-bottom: var(--mantine-spacing-sm);
+}
+
+/* The figure step (20px / 700), in white: the act the dialog asks for. */
+.title {
+  color: var(--mantine-color-white);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* Cancelar, then the act, right-aligned. */
+.actions {
+  justify-content: flex-end;
+}
+
+/* Phone width: the close button and every button in the dialog reach the 44px
+   touch minimum, and a confirmation's actions share the row so either is in
+   reach of a thumb. */
+@media (max-width: 36em) {
+  .close {
+    --cb-size: 44px;
+    --cb-icon-size: 22px;
+    margin-inline-end: -8px;
+  }
+
+  .body :global(.mantine-Button-root) {
+    --button-height: 44px;
+  }
+
+  .actions > * {
+    flex: 1;
+  }
+}

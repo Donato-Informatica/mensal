@@ -32,7 +32,7 @@ export function NewRecurrenceButton() {
   return (
     <>
       <PrimaryActionButton onClick={open}>Nova recorrência</PrimaryActionButton>
-      <Modal opened={opened} onClose={close} title="Nova recorrência" centered>
+      <Modal opened={opened} onClose={close} title="Nova recorrência">
         <NewRecurrenceForm onCreated={close} />
       </Modal>
     </>

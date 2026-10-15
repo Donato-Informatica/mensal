@@ -1,8 +1,9 @@
-import { Alert, Button, Group, Stack, Text } from "@mantine/core";
+import { Alert, Button, Stack, Text } from "@mantine/core";
 import type { Recurrence } from "@mensal/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { ApiError, errorMessage } from "./api-error.ts";
+import { DialogActions } from "./dialog-actions.tsx";
 import { invalidatePeriods } from "./period-query.ts";
 import { invalidateRecurrenceLists } from "./recurrence-query.ts";
 
@@ -46,14 +47,14 @@ export function ConfirmRecurrenceDeletion({
         <Alert color="gray" variant="light">
           {errorMessage(remove.error)}
         </Alert>
-        <Group justify="flex-end" gap="sm">
+        <DialogActions>
           <Button variant="default" onClick={onCancel}>
             Cancelar
           </Button>
           <Button onClick={onEndInstead} data-autofocus>
             Encerrar recorrência
           </Button>
-        </Group>
+        </DialogActions>
       </Stack>
     );
   }
@@ -71,7 +72,7 @@ export function ConfirmRecurrenceDeletion({
         </Text>{" "}
         será excluída. Isso não pode ser desfeito.
       </Text>
-      <Group justify="flex-end" gap="sm">
+      <DialogActions>
         <Button variant="default" onClick={onCancel} data-autofocus>
           Cancelar
         </Button>
@@ -82,7 +83,7 @@ export function ConfirmRecurrenceDeletion({
         >
           Excluir
         </Button>
-      </Group>
+      </DialogActions>
     </Stack>
   );
 }

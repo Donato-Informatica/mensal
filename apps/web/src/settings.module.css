@@ -1,0 +1,32 @@
+/* Each preference is a ruled row, like a ledger's: its label, then its switch
+   at the row's end. The whole row is the switch's label, so all of it toggles. */
+.row {
+  padding-block: var(--mantine-spacing-sm);
+}
+
+.row:first-child {
+  padding-top: 0;
+}
+
+.row:last-child {
+  padding-bottom: 0;
+}
+
+.row + .row {
+  border-top: 1px solid var(--mantine-color-dark-5);
+}
+
+.body {
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-lg);
+}
+
+.labelWrapper {
+  flex: 1;
+}
+
+.label {
+  padding-inline: 0;
+  cursor: pointer;
+}

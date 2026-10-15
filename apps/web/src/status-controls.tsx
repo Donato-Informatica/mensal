@@ -1,7 +1,6 @@
 import {
   Button,
   Checkbox,
-  Group,
   Menu,
   Modal,
   NumberInput,
@@ -18,6 +17,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useState } from "react";
+import { DialogActions } from "./dialog-actions.tsx";
 import { formatAmount, formatPeriodInline } from "./format.ts";
 import classes from "./touch.module.css";
 import { invalidatePeriods, updatePeriods } from "./period-query.ts";
@@ -194,12 +194,7 @@ export function ConfirmStatusChange({
   if (request !== null && request !== shown) setShown(request);
   const copy = shown && confirmationCopy(shown);
   return (
-    <Modal
-      opened={request !== null}
-      onClose={onCancel}
-      title={copy?.title}
-      centered
-    >
+    <Modal opened={request !== null} onClose={onCancel} title={copy?.title}>
       {shown && copy && (
         <Stack gap="md">
           <Text>
@@ -208,14 +203,14 @@ export function ConfirmStatusChange({
             </Text>{" "}
             {copy.text}
           </Text>
-          <Group justify="flex-end" gap="sm">
+          <DialogActions>
             <Button variant="default" onClick={onCancel}>
               Cancelar
             </Button>
             <Button onClick={() => onConfirm(shown)} data-autofocus>
               {copy.action}
             </Button>
-          </Group>
+          </DialogActions>
         </Stack>
       )}
     </Modal>

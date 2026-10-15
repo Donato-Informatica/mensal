@@ -2,7 +2,6 @@ import {
   ActionIcon,
   Alert,
   Button,
-  Group,
   Menu,
   Modal,
   Stack,
@@ -15,6 +14,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { errorMessage } from "./api-error.ts";
+import { DialogActions } from "./dialog-actions.tsx";
 import { invalidatePeriods } from "./period-query.ts";
 import classes from "./touch.module.css";
 
@@ -52,7 +52,7 @@ export function OneOffActions({
           </Menu.Item>
         </Menu.Dropdown>
       </Menu>
-      <Modal opened={opened} onClose={close} title="Excluir conta" centered>
+      <Modal opened={opened} onClose={close} title="Excluir conta">
         <ConfirmDeletion item={item} onCancel={close} onDeleted={close} />
       </Modal>
     </>
@@ -91,7 +91,7 @@ function ConfirmDeletion({
         </Text>{" "}
         será excluída. Isso não pode ser desfeito.
       </Text>
-      <Group justify="flex-end" gap="sm">
+      <DialogActions>
         <Button variant="default" onClick={onCancel} data-autofocus>
           Cancelar
         </Button>
@@ -102,7 +102,7 @@ function ConfirmDeletion({
         >
           Excluir
         </Button>
-      </Group>
+      </DialogActions>
     </Stack>
   );
 }

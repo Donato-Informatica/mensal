@@ -29,7 +29,7 @@ export function NewOneOffButton({ period }: { period: string }) {
   return (
     <>
       <PrimaryActionButton onClick={open}>Nova avulsa</PrimaryActionButton>
-      <Modal opened={opened} onClose={close} title="Nova conta avulsa" centered>
+      <Modal opened={opened} onClose={close} title="Nova conta avulsa">
         <NewOneOffForm period={period} onCreated={close} />
       </Modal>
     </>
@@ -80,7 +80,7 @@ function NewOneOffForm({
       }}
     >
       <Stack gap="md">
-        <Text fz="sm" c="dimmed" mt={-8}>
+        <Text fz="sm" c="dimmed">
           Em {formatPeriod(period)}
         </Text>
         {create.error && (

@@ -1,7 +1,8 @@
-import { Box, Button, Modal, Stack, Switch } from "@mantine/core";
+import { Box, Button, Modal, Switch } from "@mantine/core";
 import { useDisclosure, useLocalStorage } from "@mantine/hooks";
 import { IconSettings } from "@tabler/icons-react";
 import headerButton from "./header-button.module.css";
+import classes from "./settings.module.css";
 
 /** Per-device display preferences, kept in the browser. */
 export function useShowSummary() {
@@ -41,31 +42,44 @@ export function SettingsButton() {
           Configurações
         </Box>
       </Button>
-      <Modal opened={opened} onClose={close} title="Configurações" centered>
+      <Modal opened={opened} onClose={close} title="Configurações">
         <SettingsForm />
       </Modal>
     </>
   );
 }
 
+const switchProps = {
+  labelPosition: "left",
+  size: "md",
+  classNames: {
+    root: classes.row,
+    body: classes.body,
+    labelWrapper: classes.labelWrapper,
+    label: classes.label,
+  },
+} as const;
+
 function SettingsForm() {
   const [showSummary, setShowSummary] = useShowSummary();
   const [confirmStatusChanges, setConfirmStatusChanges] =
     useConfirmStatusChanges();
   return (
-    <Stack gap="md">
+    <Box>
       <Switch
+        {...switchProps}
         label="Mostrar resumo de entradas e saídas"
         checked={showSummary}
         onChange={(event) => setShowSummary(event.currentTarget.checked)}
       />
       <Switch
+        {...switchProps}
         label="Confirmar antes de liquidar, pular ou voltar uma conta para pendente"
         checked={confirmStatusChanges}
         onChange={(event) =>
           setConfirmStatusChanges(event.currentTarget.checked)
         }
       />
-    </Stack>
+    </Box>
   );
 }

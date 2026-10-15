@@ -41,12 +41,7 @@ export function EditRecurrenceButton({
       >
         {children}
       </UnstyledButton>
-      <Modal
-        opened={opened}
-        onClose={close}
-        title="Editar recorrência"
-        centered
-      >
+      <Modal opened={opened} onClose={close} title="Editar recorrência">
         <EditRecurrenceForm recurrence={recurrence} onSaved={close} />
       </Modal>
     </>

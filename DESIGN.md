@@ -263,7 +263,7 @@ Monochrome on black, with one highlighter and two signal colours that carry mean
 
 ## Elevation & Depth
 
-Flat. Depth is tonal: `{colors.surface-card}` panels sit on the `{colors.canvas}` page, edged by a 1px `{colors.hairline-strong}` border. No resting surface casts a shadow. Layering is interruption: dialogs, menus and popovers open over the page, and dialogs dim it with Mantine's overlay. Their default Mantine shadow is tolerated, not part of the language. The one exception is the screen's primary action on phones, which floats at the bottom right, flat and shadowless: yellow on the canvas is enough.
+Flat. Depth is tonal: `{colors.surface-card}` panels sit on the `{colors.canvas}` page, edged by a 1px `{colors.hairline-strong}` border. No resting surface casts a shadow. Layering is interruption: dialogs, menus and popovers open over the page, and dialogs dim it with Mantine's overlay. Dialogs drop Mantine's shadow for a Panel Edge border, since a canvas-coloured dialog over a dimmed canvas has no edge otherwise; the default shadow on menus and popovers is tolerated, not part of the language. The one exception is the screen's primary action on phones, which floats at the bottom right, flat and shadowless: yellow on the canvas is enough.
 
 **The Flat Ledger Rule.** If a surface needs to stand out, give it Panel Black and a Panel Edge border. Never a shadow, a glow or a gradient.
 
@@ -309,7 +309,7 @@ Panel Black fill, Panel Edge border, 8px corners, 36px tall, labels above the fi
 
 ### Dialogs, menus and popovers
 
-- **Dialog:** centred, on the canvas colour. The title names the act ("Liquidar conta", "Excluir conta"). The body is one sentence with the entity in white 600. Buttons sit right-aligned: Cancelar (default) then the act (primary, or danger). Errors appear as a light rose alert at the top of the dialog body.
+- **Dialog:** centred, on the canvas colour, edged by a 1px Panel Edge border and no shadow, padded 20px over a page dimmed to 75%. The title names the act ("Liquidar conta", "Excluir conta") in the figure step, 20px / 700 white. The body is one sentence with the entity in white 600. Buttons sit right-aligned: Cancelar (default) then the act (primary, or danger); on phones they share the row at 44px, and the close button grows to 44px. Settings are ruled rows, label first and switch at the row's end. Errors appear as a light rose alert at the top of the dialog body.
 - **Menu:** opened from the row's ⋯ action icon. Items are plain text and destructive items are rose.
 - **Popover:** anchored to the control that opened it, with an arrow and focus trapped inside. It asks for one thing only.
 

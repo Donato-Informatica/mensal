@@ -51,7 +51,7 @@ export function EditOccurrenceButton({
       >
         {children}
       </UnstyledButton>
-      <Modal opened={opened} onClose={close} title="Editar conta" centered>
+      <Modal opened={opened} onClose={close} title="Editar conta">
         <EditOccurrenceForm item={item} onSaved={close} />
       </Modal>
     </>

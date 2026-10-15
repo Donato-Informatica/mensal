@@ -72,7 +72,7 @@ export function RecurrenceActions({
           </Menu.Item>
         </Menu.Dropdown>
       </Menu>
-      <Modal opened={opened} onClose={close} title={titles[action]} centered>
+      <Modal opened={opened} onClose={close} title={titles[action]}>
         <LoadedRecurrence id={recurrenceId}>
           {(recurrence) =>
             action === "edit" ? (

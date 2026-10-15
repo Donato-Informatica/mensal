@@ -1,11 +1,13 @@
 import {
   createTheme,
+  Modal,
   PasswordInput,
   TextInput,
   Title,
   type CSSVariablesResolver,
   type MantineColorsTuple,
 } from "@mantine/core";
+import dialog from "./dialog.module.css";
 
 // DESIGN.md: near-black canvas, one electric yellow, Inter throughout.
 const yellow: MantineColorsTuple = [
@@ -84,6 +86,23 @@ export const theme = createTheme({
     TextInput: TextInput.extend({ defaultProps: { withAsterisk: false } }),
     PasswordInput: PasswordInput.extend({
       defaultProps: { withAsterisk: false },
+    }),
+    // DESIGN.md, Dialogs: centred, padded like a summary block, the page
+    // dimmed enough behind them that the dialog is all there is to read.
+    Modal: Modal.extend({
+      defaultProps: {
+        centered: true,
+        padding: "lg",
+        overlayProps: { backgroundOpacity: 0.75 },
+        closeButtonProps: { "aria-label": "Fechar" },
+      },
+      classNames: {
+        content: dialog.content,
+        header: dialog.header,
+        title: dialog.title,
+        close: dialog.close,
+        body: dialog.body,
+      },
     }),
     Title: Title.extend({
       styles: {
