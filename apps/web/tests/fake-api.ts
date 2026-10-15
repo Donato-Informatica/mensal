@@ -19,15 +19,24 @@ import {
   type Recurrence,
 } from "@mensal/shared";
 
+import type { Preference } from "../src/session.ts";
+
+type Preferences = Record<Preference, boolean>;
+
+/** A new account's preferences (PRD §3.5): all on. */
+const defaultPreferences: Preferences = {
+  showSummary: true,
+  confirmStatusChanges: true,
+};
+
 interface Account {
   id: string;
   name: string;
   email: string;
   password: string;
   approved: boolean;
-  /** Preferences (PRD §3.5), as Better-Auth keeps them on the user. */
-  showSummary: boolean;
-  confirmStatusChanges: boolean;
+  /** As Better-Auth keeps them, on the user. */
+  preferences: Preferences;
   recurrences: Recurrence[];
   occurrences: Occurrence[];
 }
@@ -46,7 +55,11 @@ export function fakeApi() {
   /** The reset screen each logged link leads to, by email. */
   const resetLinks = new Map<string, string>();
   let down = false;
-  let stalled: PromiseWithResolvers<void> | undefined;
+  /**
+   * While stalled, the requests held unanswered, in the order they came; each
+   * is let through, as a 500 when `fail`, by `resume` or `answer`.
+   */
+  let held: ((fail: boolean) => void)[] | undefined;
 
   function json(status: number, body: unknown) {
     return new Response(JSON.stringify(body), {
@@ -55,22 +68,18 @@ export function fakeApi() {
     });
   }
 
-  function sessionOf({
-    id,
-    name,
-    email,
-    approved,
-    showSummary,
-    confirmStatusChanges,
-  }: Account) {
+  function serverError() {
+    return json(500, { message: "Internal Server Error" });
+  }
+
+  function sessionOf({ id, name, email, approved, preferences }: Account) {
     return {
       user: {
         id,
         name,
         email,
         approved,
-        showSummary,
-        confirmStatusChanges,
+        ...preferences,
         emailVerified: false,
       },
       session: { id: `session-${id}`, userId: id },
@@ -84,9 +93,9 @@ export function fakeApi() {
    */
   function updateUser(body: Record<string, unknown>): Response {
     if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
-    for (const field of ["showSummary", "confirmStatusChanges"] as const) {
-      const value = body[field];
-      if (typeof value === "boolean") signedIn[field] = value;
+    for (const preference of Object.keys(defaultPreferences) as Preference[]) {
+      const value = body[preference];
+      if (typeof value === "boolean") signedIn.preferences[preference] = value;
     }
     return json(200, { status: true });
   }
@@ -390,8 +399,12 @@ export function fakeApi() {
       input: RequestInfo | URL,
       init?: RequestInit
     ): Promise<Response> => {
-      if (stalled) await stalled.promise;
-      if (down) return json(500, { message: "Internal Server Error" });
+      if (held) {
+        const { promise, resolve } = Promise.withResolvers<boolean>();
+        held.push(resolve);
+        if (await promise) return serverError();
+      }
+      if (down) return serverError();
       const request = new Request(input, init);
       const { pathname, searchParams } = new URL(request.url);
       if (request.method === "GET" && pathname === "/api/v1/recurrences") {
@@ -445,22 +458,22 @@ export function fakeApi() {
     },
 
     addAccount({
+      name,
+      email,
+      password,
       approved = false,
-      showSummary = true,
-      confirmStatusChanges = true,
-      ...account
+      ...preferences
     }: Pick<Account, "name" | "email" | "password"> &
-      Partial<
-        Pick<Account, "approved" | "showSummary" | "confirmStatusChanges">
-      >): Account {
+      Partial<Pick<Account, "approved"> & Preferences>): Account {
       const created = {
         id: `user-${accounts.size + 1}`,
+        name,
+        email,
+        password,
         approved,
-        showSummary,
-        confirmStatusChanges,
+        preferences: { ...defaultPreferences, ...preferences },
         recurrences: [],
         occurrences: [],
-        ...account,
       };
       accounts.set(created.email, created);
       return created;
@@ -501,19 +514,13 @@ export function fakeApi() {
     },
 
     /** Changes the account's preferences, as the user does on another device. */
-    setPreferences(
-      email: string,
-      preferences: Partial<
-        Pick<Account, "showSummary" | "confirmStatusChanges">
-      >
-    ) {
-      Object.assign(accounts.get(email)!, preferences);
+    setPreferences(email: string, preferences: Partial<Preferences>) {
+      Object.assign(accounts.get(email)!.preferences, preferences);
     },
 
     /** The account's preferences, as the database holds them. */
-    preferencesOf(email: string) {
-      const { showSummary, confirmStatusChanges } = accounts.get(email)!;
-      return { showSummary, confirmStatusChanges };
+    preferencesOf(email: string): Preferences {
+      return { ...accounts.get(email)!.preferences };
     },
 
     /** The account's recurrences, as the database holds them. */
@@ -560,12 +567,26 @@ export function fakeApi() {
 
     /** Holds every request unanswered until `resume` is called. */
     stall() {
-      stalled = Promise.withResolvers();
+      held = [];
     },
 
+    /** Lets every request still held through, in the order they came. */
     resume() {
-      stalled?.resolve();
-      stalled = undefined;
+      held?.forEach((release) => release(false));
+      held = undefined;
+    },
+
+    /** How many requests came since `stall`, answered or not. */
+    heldCount(): number {
+      return held?.length ?? 0;
+    },
+
+    /**
+     * Lets the `nth` request held since `stall` through (0 is the first), on
+     * its own, so requests can be answered out of order; `fail` answers 500.
+     */
+    answer(nth: number, { fail = false }: { fail?: boolean } = {}) {
+      held![nth]!(fail);
     },
   };
   return api;

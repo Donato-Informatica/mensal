@@ -51,6 +51,7 @@ import { NewOneOffButton } from "./new-one-off.tsx";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
 import { periodQuery } from "./period-query.ts";
 import { RecurrenceActions } from "./recurrence-actions.tsx";
+import type { SaveFailure } from "./session.ts";
 import { useConfirmStatusChanges, useShowSummary } from "./settings.tsx";
 import {
   ConfirmStatusChange,
@@ -71,7 +72,7 @@ export function Month({ period }: { period: string }) {
   const { data } = useSuspenseQuery(periodQuery(api, period));
   // Another month is on its way: this one stays up, dimmed, until it lands.
   const loading = useRouterState({ select: (state) => state.isLoading });
-  const [showSummary, setShowSummary, saveShowSummary] = useShowSummary();
+  const [showSummary, setShowSummary, summaryFailure] = useShowSummary();
   const [confirmStatusChanges] = useConfirmStatusChanges();
   const [confirming, setConfirming] = useState<StatusChangeRequest | null>(
     null
@@ -114,11 +115,7 @@ export function Month({ period }: { period: string }) {
               summary={data.summary}
               onClose={() => setShowSummary(false)}
               // Closing it came back refused: the bar is back, saying so.
-              closeFailure={
-                saveShowSummary.isError && saveShowSummary.variables === false
-                  ? saveShowSummary.error
-                  : undefined
-              }
+              closeFailure={summaryFailure}
               excluded={data.items.some(
                 (item) => item.amount === null || item.status === "SKIPPED"
               )}
@@ -251,7 +248,7 @@ function Summary({
   /** Hides the summary; it comes back from the settings. */
   onClose: () => void;
   /** Why hiding the summary could not be saved, if it could not; retried by `onClose`. */
-  closeFailure: unknown;
+  closeFailure: SaveFailure | undefined;
   /** Whether the month holds a skipped or "A definir" item the totals leave out. */
   excluded: boolean;
 }) {
@@ -297,24 +294,12 @@ function Summary({
           O Previsto não conta contas “A definir” nem puladas.
         </Text>
       )}
-      {closeFailure !== undefined && (
-        <Box role="alert" className={classes.failure}>
-          <Text className={classes.failureText} fz="sm">
-            <Text span fw={600} c="red.4">
-              Alteração não salva.
-            </Text>{" "}
-            {errorMessage(closeFailure)}
-          </Text>
-          <Button
-            variant="subtle"
-            color="red.4"
-            size="xs"
-            h={{ base: 44, sm: 30 }}
-            onClick={onClose}
-          >
-            Tentar de novo
-          </Button>
-        </Box>
+      {closeFailure && (
+        <FailureNotice
+          error={closeFailure.error}
+          onRetry={onClose}
+          onDismiss={closeFailure.dismiss}
+        />
       )}
     </Stack>
   );
@@ -575,37 +560,60 @@ function Row({
         </Box>
       </Box>
       {failure && (
-        <Box role="alert" className={classes.failure}>
-          <Text className={classes.failureText} fz="sm">
-            <Text span fw={600} c="red.4">
-              Alteração não salva.
-            </Text>{" "}
-            {errorMessage(failure.error)}
-          </Text>
-          <Group gap={4} wrap="nowrap">
-            <Button
-              variant="subtle"
-              color="red.4"
-              size="xs"
-              h={{ base: 44, sm: 30 }}
-              onClick={() => onRetry(failure.request)}
-              aria-label={`Tentar de novo: ${item.description}`}
-            >
-              Tentar de novo
-            </Button>
-            <Button
-              variant="subtle"
-              color="gray"
-              size="xs"
-              h={{ base: 44, sm: 30 }}
-              onClick={onDismissFailure}
-              aria-label={`Fechar aviso de ${item.description}`}
-            >
-              Fechar
-            </Button>
-          </Group>
-        </Box>
+        <FailureNotice
+          error={failure.error}
+          subject={item.description}
+          onRetry={() => onRetry(failure.request)}
+          onDismiss={onDismissFailure}
+        />
       )}
+    </Box>
+  );
+}
+
+/** Why a change could not be saved, with a retry and a way to dismiss it. */
+function FailureNotice({
+  error,
+  subject,
+  onRetry,
+  onDismiss,
+}: {
+  error: unknown;
+  /** What the change was to, naming the buttons where several notices may show. */
+  subject?: string;
+  onRetry: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <Box role="alert" className={classes.failure}>
+      <Text className={classes.failureText} fz="sm">
+        <Text span fw={600} c="red.4">
+          Alteração não salva.
+        </Text>{" "}
+        {errorMessage(error)}
+      </Text>
+      <Group gap={4} wrap="nowrap">
+        <Button
+          variant="subtle"
+          color="red.4"
+          size="xs"
+          h={{ base: 44, sm: 30 }}
+          onClick={onRetry}
+          aria-label={subject && `Tentar de novo: ${subject}`}
+        >
+          Tentar de novo
+        </Button>
+        <Button
+          variant="subtle"
+          color="gray"
+          size="xs"
+          h={{ base: 44, sm: 30 }}
+          onClick={onDismiss}
+          aria-label={subject && `Fechar aviso de ${subject}`}
+        >
+          Fechar
+        </Button>
+      </Group>
     </Box>
   );
 }

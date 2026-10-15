@@ -1,8 +1,8 @@
 import { cleanup, screen, waitFor, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
-import { openApp } from "./open-app.tsx";
+import { openApp, settle } from "./open-app.tsx";
 
 const email = "ana@example.com";
 let api: FakeApi;
@@ -19,6 +19,16 @@ beforeEach(() => {
 afterEach(() => {
   localStorage.clear();
 });
+
+/** Opens the settings and finds the summary's switch. */
+async function openSummarySwitch(user: UserEvent) {
+  await user.click(
+    await screen.findByRole("button", { name: "Configurações" })
+  );
+  return screen.findByRole("switch", {
+    name: "Mostrar resumo de entradas e saídas",
+  });
+}
 
 describe("settings", () => {
   it("toggles the month's summary cards from the header", async () => {
@@ -171,6 +181,54 @@ describe("settings", () => {
       })
     );
     expect(within(dialog).queryByRole("alert")).toBeNull();
+  });
+
+  it("ends on what the account holds when quick changes all fail", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    const summarySwitch = await openSummarySwitch(user);
+    api.stall();
+    await user.click(summarySwitch); // Off…
+    await user.click(summarySwitch); // …and on again.
+    await waitFor(() => expect(api.heldCount()).toBe(2));
+
+    api.answer(0, { fail: true });
+    api.answer(1, { fail: true });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Alteração não salva."
+    );
+    await settle();
+    expect(summarySwitch).toBeChecked();
+    expect(api.preferencesOf(email)).toMatchObject({ showSummary: true });
+  });
+
+  it("keeps the latest change when an earlier one fails after it", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    const summarySwitch = await openSummarySwitch(user);
+    api.stall();
+    await user.click(summarySwitch); // Off…
+    await user.click(summarySwitch); // …on…
+    await user.click(summarySwitch); // …and off again.
+    await waitFor(() => expect(api.heldCount()).toBe(3));
+
+    api.answer(2);
+    await waitFor(() =>
+      expect(api.preferencesOf(email)).toMatchObject({ showSummary: false })
+    );
+    api.answer(0, { fail: true });
+
+    await settle();
+    expect(summarySwitch).not.toBeChecked();
+    expect(screen.queryByRole("alert")).toBeNull();
+
+    api.answer(1, { fail: true });
+
+    await settle();
+    expect(summarySwitch).not.toBeChecked();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(api.preferencesOf(email)).toMatchObject({ showSummary: false });
   });
 
   it("ignores what an older version kept in the browser", async () => {

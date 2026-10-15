@@ -1,5 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { request, signUp, startApi, type TestApi } from "./api.ts";
+import {
+  cookieFrom,
+  newEmail,
+  password,
+  request,
+  signUp,
+  startApi,
+  type TestApi,
+} from "./api.ts";
 
 let api: TestApi;
 beforeAll(async () => {
@@ -46,6 +54,17 @@ describe("preferences (PRD §3.5)", () => {
       cookie,
       body: { approved: true },
     });
+
+    expect((await sessionUser(cookie)).approved).toBe(false);
+    const me = await request(api, "/api/v1/me", { cookie });
+    expect(me.status).toBe(403);
+  });
+
+  it("leave approval out of reach at sign-up too", async () => {
+    const response = await request(api, "/api/auth/sign-up/email", {
+      body: { name: "Test User", email: newEmail(), password, approved: true },
+    });
+    const cookie = cookieFrom(response);
 
     expect((await sessionUser(cookie)).approved).toBe(false);
     const me = await request(api, "/api/v1/me", { cookie });

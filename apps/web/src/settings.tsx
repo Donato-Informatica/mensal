@@ -61,19 +61,19 @@ const switchProps = {
 } as const;
 
 function SettingsForm() {
-  const [showSummary, setShowSummary, summarySave] = useShowSummary();
-  const [confirmStatusChanges, setConfirmStatusChanges, confirmSave] =
+  const [showSummary, setShowSummary, summaryFailure] = useShowSummary();
+  const [confirmStatusChanges, setConfirmStatusChanges, confirmFailure] =
     useConfirmStatusChanges();
   // The Alert reports the latest change only: starting one forgets the other.
-  const error = summarySave.error ?? confirmSave.error;
+  const failure = summaryFailure ?? confirmFailure;
   return (
     <Box>
-      {error && (
+      {failure && (
         <Alert color="red" variant="light" mb="md">
           <Text span fw={600}>
             Alteração não salva.
           </Text>{" "}
-          {errorMessage(error)}
+          {errorMessage(failure.error)}
         </Alert>
       )}
       <Switch
@@ -81,7 +81,7 @@ function SettingsForm() {
         label="Mostrar resumo de entradas e saídas"
         checked={showSummary}
         onChange={(event) => {
-          confirmSave.reset();
+          confirmFailure?.dismiss();
           setShowSummary(event.currentTarget.checked);
         }}
       />
@@ -90,7 +90,7 @@ function SettingsForm() {
         label="Confirmar antes de liquidar, pular ou voltar uma conta para pendente"
         checked={confirmStatusChanges}
         onChange={(event) => {
-          summarySave.reset();
+          summaryFailure?.dismiss();
           setConfirmStatusChanges(event.currentTarget.checked);
         }}
       />

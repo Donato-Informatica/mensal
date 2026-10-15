@@ -1,5 +1,6 @@
 import {
   queryOptions,
+  type QueryClient,
   useMutation,
   useQueryClient,
   useSuspenseQuery,
@@ -24,27 +25,72 @@ export function sessionQuery(authClient: AuthClient) {
   });
 }
 
-/** The session, for screens behind a route guard (which has already loaded it). */
+/**
+ * The signed-in user's session, for screens whose route guard lets in only
+ * signed-in users (and has already loaded it).
+ */
 export function useSession() {
   const { authClient } = useRouteContext({ from: rootRouteId });
-  return useSuspenseQuery(sessionQuery(authClient)).data;
+  const session = useSuspenseQuery(sessionQuery(authClient)).data;
+  if (!session) throw new Error("useSession needs a signed-in user");
+  return session;
 }
 
 /** A preference (PRD §3.5), kept on the account's Better-Auth user (ADR-0002). */
 export type Preference = "showSummary" | "confirmStatusChanges";
 
+/** Why the newest save of a preference failed; `dismiss` forgets it. */
+export interface SaveFailure {
+  error: unknown;
+  dismiss: () => void;
+}
+
+/** One save of a preference: the value sent, numbered in the order started. */
+interface Save {
+  to: boolean;
+  id: number;
+}
+
+/**
+ * What every screen's saves of one preference share: the newest one's number,
+ * and the value the account holds as far as the app has heard.
+ */
+interface Saves {
+  newest: number;
+  saved: boolean;
+}
+
+const savesByClient = new WeakMap<
+  QueryClient,
+  Partial<Record<Preference, Saves>>
+>();
+
+function savesOf(
+  queryClient: QueryClient,
+  preference: Preference,
+  value: boolean
+): Saves {
+  const byPreference = savesByClient.get(queryClient) ?? {};
+  savesByClient.set(queryClient, byPreference);
+  return (byPreference[preference] ??= { newest: 0, saved: value });
+}
+
 /**
  * A preference of the signed-in user and a setter that saves it to the
- * account. The change shows at once; a failed save restores the old value.
- * The third item is the save itself, for screens that report its failure.
+ * account. The change shows at once. Quick changes can be answered in any
+ * order: only the newest one decides, so a failure of one that a newer change
+ * replaced is neither rolled back nor reported. The third item is the newest
+ * save's failure, for screens that report it.
  */
 export function usePreference(preference: Preference) {
   const { authClient } = useRouteContext({ from: rootRouteId });
   const queryClient = useQueryClient();
   const { queryKey } = sessionQuery(authClient);
-  const value = useSession()?.user[preference] ?? true;
+  const mutationKey = ["preference", preference];
+  const value = useSession().user[preference];
+  const saves = savesOf(queryClient, preference, value);
 
-  function patch(to: boolean) {
+  function show(to: boolean) {
     queryClient.setQueryData(
       queryKey,
       (session) =>
@@ -53,22 +99,37 @@ export function usePreference(preference: Preference) {
   }
 
   const save = useMutation({
-    mutationFn: async (to: boolean) =>
+    mutationKey,
+    mutationFn: async ({ to }: Save) =>
       unwrap(await authClient.updateUser({ [preference]: to })),
-    onMutate: async (to) => {
+    onMutate: async ({ to }) => {
       // A refetch already on its way would land the old value over this one.
       await queryClient.cancelQueries({ queryKey });
-      const from = queryClient.getQueryData(queryKey)?.user[preference];
-      patch(to);
-      return { from };
+      show(to);
     },
-    // On success the cache already holds the new value: writing the response
-    // over it could undo a quicker, later toggle.
-    onError: (_error, _to, context) => {
-      if (context?.from !== undefined) patch(context.from);
+    // The cache already shows the newest value: writing the response over it
+    // could undo a quicker, later change.
+    onSuccess: (_data, { to }) => {
+      saves.saved = to;
+    },
+    // A newer save decides what shows; with none, back to what the account holds.
+    onError: (_error, { id }) => {
+      if (id === saves.newest) show(saves.saved);
     },
   });
-  return [value, save.mutate, save] as const;
+
+  function setValue(to: boolean) {
+    // With no save on its way, what shows is what the account holds.
+    if (queryClient.isMutating({ mutationKey }) === 0) saves.saved = value;
+    saves.newest += 1;
+    save.mutate({ to, id: saves.newest });
+  }
+
+  const failure: SaveFailure | undefined =
+    save.isError && save.variables.id === saves.newest
+      ? { error: save.error, dismiss: save.reset }
+      : undefined;
+  return [value, setValue, failure] as const;
 }
 
 /**

@@ -2,7 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
-import { openApp } from "./open-app.tsx";
+import { openApp, settle } from "./open-app.tsx";
 
 const email = "ana@example.com";
 let api: FakeApi;
@@ -217,6 +217,45 @@ describe("hiding the summary", () => {
     );
     expect(screen.queryByRole("alert")).toBeNull();
     expect(api.preferencesOf(email)).toMatchObject({ showSummary: false });
+  });
+
+  it("keeps the summary once the failure is dismissed", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    const close = await screen.findByRole("button", { name: "Ocultar resumo" });
+    api.breakDown();
+    await user.click(close);
+    const alert = await screen.findByRole("alert");
+
+    await user.click(within(alert).getByRole("button", { name: "Fechar" }));
+
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("region", { name: "Entradas" })).toBeVisible();
+    expect(api.preferencesOf(email)).toMatchObject({ showSummary: true });
+  });
+
+  it("says nothing of a hiding that a later change replaced", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    const close = await screen.findByRole("button", { name: "Ocultar resumo" });
+    api.stall();
+    await user.click(close);
+    // Before it is answered, the summary is turned back on in the settings.
+    await user.click(screen.getByRole("button", { name: "Configurações" }));
+    await user.click(
+      await screen.findByRole("switch", {
+        name: "Mostrar resumo de entradas e saídas",
+      })
+    );
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(api.heldCount()).toBe(2));
+
+    api.answer(0, { fail: true });
+    api.answer(1);
+
+    await settle();
+    expect(screen.getByRole("region", { name: "Entradas" })).toBeVisible();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });
 
