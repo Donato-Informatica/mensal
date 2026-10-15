@@ -6,10 +6,14 @@
 
 **Blocked by:** 02 (Preferences travel with the account)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] A failed save after closing the summary bar brings the bar back with the inline failure line and "Tentar de novo".
 - [x] "Tentar de novo" resends the save; on success the bar closes and the failure line goes away.
 - [x] The failure styling matches the occurrence rows' failure block.
 - [x] Web test covering the failure and the retry (the fake API can make `update-user` fail, as in 03).
 - [x] `npm run check` green.
+
+## Comments
+
+- Resolved on branch `preferences` (2026-10-15) in 81d3a28; code-review fixes in 8998246.

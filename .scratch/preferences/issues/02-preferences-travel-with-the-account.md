@@ -6,7 +6,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] `showSummary` and `confirmStatusChanges` are Better-Auth `user.additionalFields`: `type: "boolean"`, `required: true`, `defaultValue: true`, `input: true`. `approved` is unchanged (`input: false`).
 - [x] Both columns land in one migration: Better-Auth schema regenerated with `npm run -w @mensal/api auth:generate` (no `--adapter`), then `npm run -w @mensal/database generate`. `migrations/` is never hand-edited.
@@ -19,3 +19,7 @@
 - [x] Web tests that seed `localStorage` (settle, groups, settings) seed the fake user's preferences instead.
 - [x] Web test: a preference changed in Configurações survives a reload (a new `openApp()` against the same fake API).
 - [x] `npm run check` green.
+
+## Comments
+
+- Resolved on branch `preferences` (2026-10-15) in 4c0236c; code-review fixes in 8998246.

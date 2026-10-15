@@ -6,10 +6,14 @@
 
 **Blocked by:** 02 (Preferences travel with the account)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [x] A failed save in the modal flips the switch back and shows the `Alert` above the switches with "Alteração não salva." and the error's message.
 - [x] A later successful save clears the `Alert`.
 - [x] The fake API can make `update-user` fail, without mocking anything but the network.
 - [x] Web test covering the failure state above.
 - [x] `npm run check` green.
+
+## Comments
+
+- Resolved on branch `preferences` (2026-10-15) in b21f885; code-review fixes in 8998246.
