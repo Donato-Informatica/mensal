@@ -14,6 +14,11 @@ A choice a user makes about how the product behaves for them, shared by every de
 _UI (pt-BR)_: Configurações
 _Avoid_: setting, config, option
 
+**Theme**:
+The preference that sets the product's colours: dark (the default), light, or automatic, which follows the device's own setting. In code, `colorScheme`: `dark`, `light` or `auto`.
+_UI (pt-BR)_: Tema (Escuro, Claro, Automático)
+_Avoid_: appearance, mode, skin
+
 ## Time
 
 **Period**:
