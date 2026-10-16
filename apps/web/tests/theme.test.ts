@@ -5,8 +5,7 @@ import {
 } from "@mantine/core";
 import { describe, expect, it } from "vitest";
 import { cssVariablesResolver, theme } from "../src/theme.ts";
-
-type Scheme = "light" | "dark";
+import type { Scheme } from "./device-theme.ts";
 
 /**
  * The colour a CSS variable ends up as in `scheme`: Mantine's own variables

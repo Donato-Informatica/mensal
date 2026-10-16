@@ -78,6 +78,19 @@ const red: MantineColorsTuple = [
   "#7f1d1d",
 ];
 
+/** DESIGN.md's light scheme, the `light-*` tokens that are not Mantine's own. */
+const paper = {
+  ink: "#0a0a0a", // light-ink
+  body: "#333333", // light-body
+  muted: "#666666", // light-muted
+  mutedSoft: "#a3a3a3", // light-muted-soft
+  hairline: "#e5e5e5", // light-hairline
+  hairlineStrong: "#d4d4d4", // light-hairline-strong
+  canvas: "#f5f5f5", // light-canvas
+  surfaceCard: "#ffffff", // light-surface-card
+  primaryDisabled: "#f2f4c8", // light-primary-disabled
+} as const;
+
 /**
  * Mantine's light scheme draws its surfaces, borders and quiet text from
  * gray[0–9], a blue-tinted grey. On paper, DESIGN.md's greys are neutral, so
@@ -85,14 +98,14 @@ const red: MantineColorsTuple = [
  */
 const paperGray: MantineColorsTuple = [
   "#fafafa",
-  "#f5f5f5", // light-canvas
-  "#e5e5e5", // light-hairline
-  "#d4d4d4", // light-hairline-strong (Mantine's panel borders)
-  "#d4d4d4", // light-hairline-strong (Mantine's input borders)
-  "#a3a3a3", // light-muted-soft
-  "#666666", // light-muted
+  paper.canvas,
+  paper.hairline,
+  paper.hairlineStrong, // Mantine's panel borders
+  paper.hairlineStrong, // Mantine's input borders
+  paper.mutedSoft,
+  paper.muted,
   "#4d4d4d",
-  "#333333", // light-body
+  paper.body,
   "#1a1a1a",
 ];
 
@@ -207,7 +220,7 @@ export const theme = createTheme({
  * Each scheme's canvas (DESIGN.md: canvas, light-canvas), also the colour of
  * the browser's own chrome. `index.html` repeats them for first paint.
  */
-export const canvas = { dark: dark[7], light: "#f5f5f5" } as const;
+export const canvas = { dark: dark[7], light: paper.canvas } as const;
 
 const paperGrayVariables = Object.fromEntries(
   paperGray.map((shade, index) => [`--mantine-color-gray-${index}`, shade])
@@ -252,11 +265,11 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
   },
   light: {
     ...paperGrayVariables,
-    "--mantine-color-body": canvas.light,
-    "--mantine-color-text": "#333333", // light-body
-    "--mantine-color-bright": "#0a0a0a", // light-ink
-    "--mantine-color-dimmed": "#666666", // light-muted
-    "--mantine-color-placeholder": "#a3a3a3", // light-muted-soft
+    "--mantine-color-body": paper.canvas,
+    "--mantine-color-text": paper.body,
+    "--mantine-color-bright": paper.ink,
+    "--mantine-color-dimmed": paper.muted,
+    "--mantine-color-placeholder": paper.mutedSoft,
     "--mantine-color-anchor": "var(--mantine-color-bright)",
     "--mantine-color-default": "var(--mensal-color-surface-card)",
     "--mantine-color-default-hover": "var(--mantine-color-body)",
@@ -270,9 +283,9 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     "--mantine-color-red-filled-hover": "var(--mantine-color-red-7)",
     // A subtle primary button (Desfazer) is ink, yellow only as its hover fill.
     "--mantine-color-yellow-light-color": "var(--mantine-color-bright)",
-    "--mensal-color-surface-card": "#ffffff", // light-surface-card
-    "--mensal-color-hairline": "#e5e5e5", // light-hairline
-    "--mensal-color-hairline-strong": "#d4d4d4", // light-hairline-strong
+    "--mensal-color-surface-card": paper.surfaceCard,
+    "--mensal-color-hairline": paper.hairline,
+    "--mensal-color-hairline-strong": paper.hairlineStrong,
     "--mensal-color-inflow": "var(--mantine-color-green-7)",
     "--mensal-color-rose": "var(--mantine-color-red-6)",
     "--mensal-color-rose-text": "var(--mantine-color-red-6)",
@@ -286,7 +299,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     "--mensal-color-needs-you-fill": "var(--mantine-primary-color-filled)",
     "--mensal-color-needs-you-edge": "var(--mantine-color-bright)",
     "--mensal-color-filled-control-edge": "var(--mantine-color-bright)",
-    "--mensal-color-primary-disabled": "#f2f4c8", // light-primary-disabled
+    "--mensal-color-primary-disabled": paper.primaryDisabled,
     "--mensal-color-on-primary-disabled": "var(--mantine-color-dimmed)",
     // Mantine's track is the canvas, which a dialog is too.
     "--mensal-color-segment-track": "var(--mensal-color-hairline)",
