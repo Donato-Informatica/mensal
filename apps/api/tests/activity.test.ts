@@ -229,3 +229,172 @@ describe("the activity log (PRD §8.7)", () => {
     expect(activityOf(userId)).toEqual([]);
   });
 });
+
+const rent = {
+  direction: "OUTFLOW",
+  description: "Aluguel",
+  defaultAmount: 220000,
+  dueDay: 10,
+  startPeriod: "2026-10-01",
+  endPeriod: null,
+  notes: "",
+};
+
+describe("the activity log of recurrences (PRD §8.7)", () => {
+  it("logs a recurrence created", async () => {
+    const { cookie, userId } = await approvedUser();
+
+    const response = await request(api, "/api/v1/recurrences", {
+      cookie,
+      body: rent,
+    });
+
+    const { id } = await response.json();
+    expect(activityOf(userId)).toEqual([
+      { at, user: userId, action: "recurrence.create", kind: "recurrence", id },
+    ]);
+  });
+
+  it("logs the names of the fields an edit changes, never their values", async () => {
+    const { cookie, userId } = await approvedUser();
+    const recurrence = await insertRecurrence(api.db, {
+      userId,
+      description: "Aluguel",
+      defaultAmount: 220000,
+    });
+
+    await request(api, `/api/v1/recurrences/${recurrence.id}`, {
+      cookie,
+      method: "PATCH",
+      body: { description: "Aluguel", defaultAmount: 235000, notes: "IGP-M" },
+    });
+
+    expect(activityOf(userId)).toEqual([
+      {
+        at,
+        user: userId,
+        action: "recurrence.edit",
+        kind: "recurrence",
+        id: recurrence.id,
+        fields: ["defaultAmount", "notes"],
+      },
+    ]);
+  });
+
+  it("logs a recurrence deleted", async () => {
+    const { cookie, userId } = await approvedUser();
+    const recurrence = await insertRecurrence(api.db, { userId });
+
+    const response = await request(
+      api,
+      `/api/v1/recurrences/${recurrence.id}`,
+      { cookie, method: "DELETE" }
+    );
+
+    expect(response.status).toBe(204);
+    expect(activityOf(userId)).toEqual([
+      {
+        at,
+        user: userId,
+        action: "recurrence.delete",
+        kind: "recurrence",
+        id: recurrence.id,
+      },
+    ]);
+  });
+
+  it("logs a recurrence ended as an edit of its endPeriod", async () => {
+    const { cookie, userId } = await approvedUser();
+    const recurrence = await insertRecurrence(api.db, { userId });
+
+    await request(api, `/api/v1/recurrences/${recurrence.id}`, {
+      cookie,
+      method: "PATCH",
+      body: { endPeriod: "2026-12-01" },
+    });
+
+    expect(activityOf(userId)).toEqual([
+      {
+        at,
+        user: userId,
+        action: "recurrence.edit",
+        kind: "recurrence",
+        id: recurrence.id,
+        fields: ["endPeriod"],
+      },
+    ]);
+  });
+
+  it("logs nothing for an edit that changes nothing", async () => {
+    const { cookie, userId } = await approvedUser();
+    const recurrence = await insertRecurrence(api.db, {
+      userId,
+      description: "Aluguel",
+      endPeriod: null,
+    });
+
+    const responses = await Promise.all([
+      request(api, `/api/v1/recurrences/${recurrence.id}`, {
+        cookie,
+        method: "PATCH",
+        body: { description: "Aluguel", endPeriod: null },
+      }),
+      request(api, `/api/v1/recurrences/${recurrence.id}`, {
+        cookie,
+        method: "PATCH",
+        body: {},
+      }),
+    ]);
+
+    expect(responses.map((response) => response.status)).toEqual([200, 200]);
+    expect(activityOf(userId)).toEqual([]);
+  });
+
+  it("logs nothing for a refused write", async () => {
+    const { cookie, userId } = await approvedUser();
+    const kept = await insertRecurrence(api.db, { userId });
+    await insertOccurrence(api.db, {
+      userId,
+      recurrenceId: kept.id,
+      period: "2026-10-01",
+    });
+
+    const responses = await Promise.all([
+      request(api, `/api/v1/recurrences/${kept.id}`, {
+        cookie,
+        method: "DELETE",
+      }),
+      request(api, "/api/v1/recurrences", {
+        cookie,
+        body: { ...rent, startPeriod: "2026-09-01" },
+      }),
+      request(api, `/api/v1/recurrences/${kept.id}`, {
+        cookie,
+        method: "PATCH",
+        body: { endPeriod: "2025-12-01" },
+      }),
+    ]);
+
+    expect(
+      await Promise.all(responses.map((response) => response.json()))
+    ).toEqual([
+      { code: "RECURRENCE_HAS_OCCURRENCES" },
+      { code: "START_PERIOD_IN_PAST" },
+      { code: "END_PERIOD_BEFORE_START" },
+    ]);
+    expect(activityOf(userId)).toEqual([]);
+  });
+
+  it("logs nothing for a read", async () => {
+    const { cookie, userId } = await approvedUser();
+    const recurrence = await insertRecurrence(api.db, { userId });
+
+    const responses = await Promise.all([
+      request(api, "/api/v1/recurrences", { cookie }),
+      request(api, `/api/v1/recurrences/${recurrence.id}`, { cookie }),
+    ]);
+
+    expect(responses.map((response) => response.status)).toEqual([200, 200]);
+    expect(activityOf(userId)).toEqual([]);
+  });
+});

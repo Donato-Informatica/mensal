@@ -50,7 +50,7 @@ export function createApp({
   });
   v1.use("/occurrences", occurrencesRouter({ db, now, record }));
   v1.use("/periods", periodsRouter({ db, now }));
-  v1.use("/recurrences", recurrencesRouter({ db, now }));
+  v1.use("/recurrences", recurrencesRouter({ db, now, record }));
   app.use("/api/v1", v1);
 
   app.use(errorHandler(log));
