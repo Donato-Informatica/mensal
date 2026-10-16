@@ -79,6 +79,33 @@ describe("theme colours", () => {
     );
   });
 
+  it("spends the highlighter on a disabled primary button on paper only", () => {
+    // At night, as Mantine draws every disabled control (unchanged from main).
+    expect(resolvedColour("--mensal-color-primary-disabled", "dark")).toBe(
+      "#1a1a1a"
+    );
+    expect(resolvedColour("--mensal-color-on-primary-disabled", "dark")).toBe(
+      "#5a5a5a"
+    );
+    expect(resolvedColour("--mensal-color-primary-disabled", "light")).toBe(
+      "#f2f4c8"
+    );
+    expect(resolvedColour("--mensal-color-on-primary-disabled", "light")).toBe(
+      "#666666"
+    );
+  });
+
+  it("sets a segmented control's track apart from the dialog it sits in", () => {
+    // At night, Mantine's own track (unchanged from main).
+    expect(resolvedColour("--mensal-color-segment-track", "dark")).toBe(
+      "#060606"
+    );
+    // On paper, a dialog is the canvas, #f5f5f5: the track is a hairline.
+    expect(resolvedColour("--mensal-color-segment-track", "light")).toBe(
+      "#e5e5e5"
+    );
+  });
+
   it("lets yellow mark lines and text only in the dark scheme", () => {
     for (const role of [
       "--mensal-color-highlight",

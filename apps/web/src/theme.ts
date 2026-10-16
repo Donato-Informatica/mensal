@@ -1,11 +1,14 @@
 import {
+  Button,
   Checkbox,
   createTheme,
   defaultVariantColorsResolver,
   Input,
   Loader,
+  Menu,
   Modal,
   PasswordInput,
+  Popover,
   rem,
   SegmentedControl,
   Switch,
@@ -149,6 +152,16 @@ export const theme = createTheme({
     }),
     // Forms here ask only for what they need, so every field is required and
     // an asterisk on each would be noise.
+    // A filled primary button takes the Spent Highlighter when disabled.
+    Button: Button.extend({
+      classNames: (
+        theme,
+        { variant = "filled", color = theme.primaryColor }
+      ) =>
+        variant === "filled" && color === theme.primaryColor
+          ? { root: controls.primaryButton ?? "" }
+          : {},
+    }),
     TextInput: TextInput.extend({ defaultProps: { withAsterisk: false } }),
     PasswordInput: PasswordInput.extend({
       defaultProps: { withAsterisk: false },
@@ -159,8 +172,12 @@ export const theme = createTheme({
       classNames: { input: controls.switchInput, track: controls.switchTrack },
     }),
     SegmentedControl: SegmentedControl.extend({
-      classNames: { label: controls.segment },
+      classNames: { root: controls.segmentTrack, label: controls.segment },
     }),
+    // DESIGN.md: menus and popovers (a date picker's too) are edged in Panel
+    // Edge.
+    Menu: Menu.extend({ classNames: { dropdown: controls.dropdown } }),
+    Popover: Popover.extend({ classNames: { dropdown: controls.dropdown } }),
     // DESIGN.md, Dialogs: centred, padded like a summary block, the page
     // dimmed enough behind them that the dialog is all there is to read.
     Modal: Modal.extend({
@@ -227,6 +244,10 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     "--mensal-color-needs-you-edge": "var(--mantine-color-yellow-9)",
     // The fill's own colour: no edge shows at night.
     "--mensal-color-filled-control-edge": "var(--mantine-primary-color-filled)",
+    // Mantine's own, as every disabled control and segmented track at night.
+    "--mensal-color-primary-disabled": "var(--mantine-color-disabled)",
+    "--mensal-color-on-primary-disabled": "var(--mantine-color-disabled-color)",
+    "--mensal-color-segment-track": "var(--mantine-color-dark-8)",
     "--mensal-shadow-interruption": "0 8px 24px rgb(0 0 0 / 0.5)",
   },
   light: {
@@ -265,6 +286,10 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     "--mensal-color-needs-you-fill": "var(--mantine-primary-color-filled)",
     "--mensal-color-needs-you-edge": "var(--mantine-color-bright)",
     "--mensal-color-filled-control-edge": "var(--mantine-color-bright)",
+    "--mensal-color-primary-disabled": "#f2f4c8", // light-primary-disabled
+    "--mensal-color-on-primary-disabled": "var(--mantine-color-dimmed)",
+    // Mantine's track is the canvas, which a dialog is too.
+    "--mensal-color-segment-track": "var(--mensal-color-hairline)",
     // Still an interruption over the page, but a softer one on paper.
     "--mensal-shadow-interruption": "0 8px 24px rgb(0 0 0 / 0.12)",
   },

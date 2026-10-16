@@ -30,3 +30,19 @@
 .switchInput:checked:not(:disabled) + .switchTrack {
   box-shadow: inset 0 0 0 1px var(--mensal-color-filled-control-edge);
 }
+
+/* A disabled primary button is the Spent Highlighter: Mantine's disabled colours, by role. */
+.primaryButton {
+  --mantine-color-disabled: var(--mensal-color-primary-disabled);
+  --mantine-color-disabled-color: var(--mensal-color-on-primary-disabled);
+}
+
+/* A segmented control's track, by role: Mantine's would vanish into a dialog on paper. */
+.segmentTrack {
+  background-color: var(--mensal-color-segment-track);
+}
+
+/* Menus and popovers are edged in Panel Edge (DESIGN.md), not Mantine's lighter grey. */
+.dropdown {
+  --popover-border-color: var(--mensal-color-hairline-strong);
+}
