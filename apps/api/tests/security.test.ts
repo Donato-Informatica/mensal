@@ -63,8 +63,9 @@ describe("error responses", () => {
       log: (message) => logged.push(message),
     });
     try {
-      const { cookie, email } = await signUp(broken);
-      await approve(broken, email);
+      // Signed up on the working API: the broken clock would fail sign-up too.
+      const { cookie, email } = await signUp(api);
+      await approve(api, email);
 
       const response = await request(broken, "/api/v1/periods/2026-10", {
         cookie,

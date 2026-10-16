@@ -45,6 +45,8 @@ export async function startApi({
     baseURL: url,
     secret: "integration-tests-secret-0123456789abcdef",
     rateLimit,
+    activity,
+    ...(now && { now }),
     ...(log && { log }),
   });
   server.on(

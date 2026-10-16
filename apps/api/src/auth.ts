@@ -2,6 +2,8 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { schema, type Database } from "@mensal/database";
 import { ColorSchemeSchema, defaultColorScheme } from "@mensal/shared";
 import { betterAuth } from "better-auth";
+import { createAuthMiddleware, isAPIError } from "better-auth/api";
+import { consoleActivity, stamping, type Activity } from "./activity.ts";
 import type { Log } from "./log.ts";
 
 export interface AuthOptions {
@@ -13,6 +15,10 @@ export interface AuthOptions {
   log?: Log;
   /** Better-Auth's per-IP rate limiter on `/api/auth`; on by default. */
   rateLimit?: boolean;
+  /** The clock that stamps activity events; the system clock by default. */
+  now?: () => Date;
+  /** Where sign-ups and sign-ins are logged (PRD §8.7); the console by default. */
+  activity?: Activity;
 }
 
 /**
@@ -20,7 +26,8 @@ export interface AuthOptions {
  * SameSite=Lax cookies, and password-reset links written to the log for the
  * administrator to forward by hand (PRD §8.2). The anonymous endpoints are
  * rate limited per client IP, read from the proxy's `X-Forwarded-For`
- * (PRD §8.6).
+ * (PRD §8.6). Sign-ups, sign-ins and failed sign-ins go to the activity log
+ * (PRD §8.7).
  */
 export function createAuth({
   db,
@@ -28,7 +35,10 @@ export function createAuth({
   secret,
   log = console.log,
   rateLimit = true,
+  now = () => new Date(),
+  activity = consoleActivity,
 }: AuthOptions) {
+  const record = stamping(activity, now);
   return betterAuth({
     baseURL,
     secret,
@@ -91,7 +101,34 @@ export function createAuth({
       // shared bucket, so the proxy must overwrite the header (ticket 02).
       ipAddress: { ipAddressHeaders: ["x-forwarded-for"] },
     },
+    hooks: {
+      after: createAuthMiddleware(async (ctx) => {
+        if (ctx.path === "/sign-in/email" && isAPIError(ctx.context.returned)) {
+          const { email } = (ctx.body ?? {}) as { email?: unknown };
+          record({
+            action: "user.sign-in-failed",
+            email: typeof email === "string" ? email : "",
+            ip: ctx.headers?.get("x-forwarded-for") ?? null,
+          });
+          return;
+        }
+        const action = accountActions[ctx.path];
+        const user = ctx.context.newSession?.user.id;
+        if (action && user) record({ user, action });
+      }),
+    },
   });
 }
 
 export type Auth = ReturnType<typeof createAuth>;
+
+/**
+ * The endpoints whose new session the activity log reports. Others that also
+ * set a session cookie (a session refresh, update-user) log nothing.
+ */
+const accountActions: Record<string, SessionAction | undefined> = {
+  "/sign-up/email": "user.sign-up",
+  "/sign-in/email": "user.sign-in",
+};
+
+type SessionAction = "user.sign-up" | "user.sign-in";

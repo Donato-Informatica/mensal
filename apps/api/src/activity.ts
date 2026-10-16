@@ -5,7 +5,7 @@ import type { OccurrenceEdit, OccurrenceStatus } from "@mensal/shared";
  * activity log. Only ids and field names: never the user's email or name, nor
  * an item's description, amount or dates, which are their financial data.
  */
-export type ActivityEvent = OccurrenceEvent;
+export type ActivityEvent = OccurrenceEvent | AccountEvent;
 
 /** Where activity events go: the console unless a caller redirects them. */
 export type Activity = (event: ActivityEvent) => void;
@@ -53,3 +53,18 @@ type OccurrenceEvent =
   | (ItemEvent<"occurrence", "status"> &
       Materializing & { status: OccurrenceStatus })
   | ItemEvent<"occurrence", "delete">;
+
+/**
+ * Signing up or in, by the user's id. A failed sign-in has no user: it names
+ * the attempted email and the client's address instead, to spot credential
+ * stuffing.
+ */
+type AccountEvent =
+  | (Stamp & { action: "user.sign-up" | "user.sign-in" })
+  | {
+      at: string;
+      action: "user.sign-in-failed";
+      email: string;
+      /** From `X-Forwarded-For` (PRD §8.6); null when the proxy sent none. */
+      ip: string | null;
+    };

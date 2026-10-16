@@ -31,9 +31,17 @@ function changeStatus(cookie: string, id: string, body: unknown) {
   });
 }
 
-/** The activity of `userId`, in the order it was logged. */
+/**
+ * What `userId` did to their items, in the order it was logged; account events
+ * such as their sign-up are covered by account-activity.test.ts.
+ */
 function activityOf(userId: string) {
-  return events.filter((event) => "user" in event && event.user === userId);
+  return events.filter(
+    (event) =>
+      "user" in event &&
+      event.user === userId &&
+      !event.action.startsWith("user.")
+  );
 }
 
 const oneOff = {
