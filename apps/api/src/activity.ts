@@ -1,11 +1,15 @@
-import type { OccurrenceEdit, OccurrenceStatus } from "@mensal/shared";
+import type {
+  OccurrenceEdit,
+  OccurrenceStatus,
+  RecurrenceEdit,
+} from "@mensal/shared";
 
 /**
  * Who did what to which item, and when (PRD §8.7): one line of the operator's
  * activity log. Only ids and field names: never the user's email or name, nor
  * an item's description, amount or dates, which are their financial data.
  */
-export type ActivityEvent = OccurrenceEvent | AccountEvent;
+export type ActivityEvent = OccurrenceEvent | RecurrenceEvent | AccountEvent;
 
 /** Where activity events go: the console unless a caller redirects them. */
 export type Activity = (event: ActivityEvent) => void;
@@ -53,6 +57,11 @@ type OccurrenceEvent =
   | (ItemEvent<"occurrence", "status"> &
       Materializing & { status: OccurrenceStatus })
   | ItemEvent<"occurrence", "delete">;
+
+type RecurrenceEvent =
+  | ItemEvent<"recurrence", "create">
+  | (ItemEvent<"recurrence", "edit"> & { fields: (keyof RecurrenceEdit)[] })
+  | ItemEvent<"recurrence", "delete">;
 
 /**
  * Signing up or in, by the user's id. A failed sign-in has no user: it names
