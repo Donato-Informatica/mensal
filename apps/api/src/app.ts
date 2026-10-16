@@ -2,6 +2,7 @@ import type { Database } from "@mensal/database";
 import { toNodeHandler } from "better-auth/node";
 import express from "express";
 import helmet from "helmet";
+import { consoleActivity, stamping, type Activity } from "./activity.ts";
 import type { Auth } from "./auth.ts";
 import { errorHandler } from "./error-handler.ts";
 import { healthRouter } from "./health.ts";
@@ -18,6 +19,8 @@ export interface AppOptions {
   now?: () => Date;
   /** Where unexpected errors are written; the console by default. */
   log?: Log;
+  /** Where the activity log goes (PRD §8.7); the console by default. */
+  activity?: Activity;
 }
 
 export function createApp({
@@ -25,7 +28,9 @@ export function createApp({
   db,
   now = () => new Date(),
   log = console.error,
+  activity = consoleActivity,
 }: AppOptions) {
+  const record = stamping(activity, now);
   const app = express();
 
   // Security headers on every response, and no X-Powered-By (PRD §8.6).
@@ -43,7 +48,7 @@ export function createApp({
   v1.get("/me", (_req, res) => {
     res.json({ userId: res.locals.userId });
   });
-  v1.use("/occurrences", occurrencesRouter({ db, now }));
+  v1.use("/occurrences", occurrencesRouter({ db, now, record }));
   v1.use("/periods", periodsRouter({ db, now }));
   v1.use("/recurrences", recurrencesRouter({ db, now }));
   app.use("/api/v1", v1);

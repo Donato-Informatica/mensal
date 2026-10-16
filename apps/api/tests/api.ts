@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { createDatabase, type Database } from "@mensal/database";
+import type { Activity } from "../src/activity.ts";
 import { createApp } from "../src/app.ts";
 import { createAuth } from "../src/auth.ts";
 import type { Log } from "../src/log.ts";
@@ -17,11 +18,17 @@ export interface TestApi {
 export async function startApi({
   now,
   log,
+  activity = () => {},
   rateLimit = false,
 }: {
   now?: () => Date;
   /** Where the API's own log lines go, instead of the console. */
   log?: Log;
+  /**
+   * Where activity events go. Nowhere by default, so the suite's writes do
+   * not flood the test output.
+   */
+  activity?: Activity;
   /**
    * Turns Better-Auth's rate limiter on. Off by default: every test request
    * comes from one address, so the suite's many sign-ups would trip it.
@@ -42,7 +49,13 @@ export async function startApi({
   });
   server.on(
     "request",
-    createApp({ auth, db, ...(now && { now }), ...(log && { log }) })
+    createApp({
+      auth,
+      db,
+      activity,
+      ...(now && { now }),
+      ...(log && { log }),
+    })
   );
   return {
     url,

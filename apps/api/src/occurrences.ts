@@ -12,6 +12,7 @@ import {
 } from "@mensal/shared";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { Router, type Response } from "express";
+import type { UnstampedEvent } from "./activity.ts";
 import { invalidInput } from "./invalid-input.ts";
 import { Refusal } from "./refusal.ts";
 import { UUID } from "./uuid.ts";
@@ -31,37 +32,46 @@ type OccurrenceChanges = {
 export function occurrencesRouter({
   db,
   now,
+  record,
 }: {
   db: Database;
   now: () => Date;
+  /** Logs a write once it has succeeded (PRD §8.7). */
+  record: (event: UnstampedEvent) => void;
 }) {
   const router = Router();
 
   /**
    * Answers with the user's occurrence `id` once the fields `change` returns
    * are set, all in one transaction: a Refusal it throws rolls everything
-   * back, the materialization of a virtual occurrence included.
+   * back, the materialization of a virtual occurrence included. Once it
+   * commits, the change is logged as `describe` tells, unless it changed
+   * nothing.
    */
-  async function changeOccurrence(
+  async function changeOccurrence<Changes extends OccurrenceChanges>(
     res: Response,
     id: string,
-    change: (occurrence: PersistedOccurrence) => OccurrenceChanges
+    change: (occurrence: PersistedOccurrence) => Changes,
+    describe: (
+      changed: PersistedOccurrence,
+      fields: ChangedField<Changes>[]
+    ) => UnstampedEvent
   ) {
     try {
-      const changed = await db.transaction(async (tx) => {
+      const { changed, fields } = await db.transaction(async (tx) => {
         const occurrence = await occurrenceToChange(tx, res.locals.userId, id);
         const values = change(occurrence);
-        // Nothing to set: the occurrence as it is, if only just materialized.
-        if (Object.values(values).every((value) => value === undefined)) {
-          return occurrence;
-        }
+        const fields = changedFields(occurrence, values);
+        // Nothing changes: the occurrence as it is, if only just materialized.
+        if (fields.length === 0) return { changed: occurrence, fields };
         const [updated] = await tx
           .update(occurrences)
           .set(values)
           .where(eq(occurrences.id, occurrence.id))
           .returning();
-        return updated;
+        return { changed: updated!, fields };
       });
+      if (fields.length > 0) record(describe(changed, fields));
       res.json(changed);
     } catch (error) {
       if (!(error instanceof Refusal)) throw error;
@@ -80,6 +90,12 @@ export function occurrencesRouter({
       .insert(occurrences)
       .values({ ...input.data, userId: res.locals.userId, status: "PENDING" })
       .returning();
+    record({
+      user: res.locals.userId,
+      action: "occurrence.create",
+      kind: "occurrence",
+      id: occurrence!.id,
+    });
     res.status(201).json(occurrence);
   });
 
@@ -90,13 +106,25 @@ export function occurrencesRouter({
       res.status(400).json(invalidInput(input.error));
       return;
     }
-    await changeOccurrence(res, req.params.id, (occurrence) => {
-      const changed = applyStatusChange(occurrence, input.data, today(now()));
-      if (changed.status === "SETTLED" && changed.amount === null) {
-        throw new Refusal(400, "AMOUNT_REQUIRED_TO_SETTLE");
-      }
-      return changed;
-    });
+    await changeOccurrence(
+      res,
+      req.params.id,
+      (occurrence) => {
+        const changed = applyStatusChange(occurrence, input.data, today(now()));
+        if (changed.status === "SETTLED" && changed.amount === null) {
+          throw new Refusal(400, "AMOUNT_REQUIRED_TO_SETTLE");
+        }
+        return changed;
+      },
+      (changed) => ({
+        user: res.locals.userId,
+        action: "occurrence.status",
+        kind: "occurrence",
+        id: changed.id,
+        ...materializedFrom(req.params.id),
+        status: changed.status,
+      })
+    );
   });
 
   // The editable fields (PRD §5.8).
@@ -106,11 +134,23 @@ export function occurrencesRouter({
       res.status(400).json(invalidInput(input.error));
       return;
     }
-    await changeOccurrence(res, req.params.id, (occurrence) => {
-      const refusal = editRefusal(occurrence, input.data);
-      if (refusal) throw new Refusal(400, refusal);
-      return input.data;
-    });
+    await changeOccurrence(
+      res,
+      req.params.id,
+      (occurrence) => {
+        const refusal = editRefusal(occurrence, input.data);
+        if (refusal) throw new Refusal(400, refusal);
+        return input.data;
+      },
+      (changed, fields) => ({
+        user: res.locals.userId,
+        action: "occurrence.edit",
+        kind: "occurrence",
+        id: changed.id,
+        ...materializedFrom(req.params.id),
+        fields,
+      })
+    );
   });
 
   // Only a one-off occurrence is deleted, for good; one of a recurrence is
@@ -131,6 +171,12 @@ export function occurrencesRouter({
           .returning({ id: occurrences.id })
       : [];
     if (deleted.length > 0) {
+      record({
+        user: userId,
+        action: "occurrence.delete",
+        kind: "occurrence",
+        id,
+      });
       res.status(204).end();
     } else if (await occurrenceExists(db, userId, id)) {
       res.status(409).json({ code: "ONLY_ONE_OFF_DELETABLE" });
@@ -166,6 +212,25 @@ async function occurrenceToChange(tx: Transaction, userId: string, id: string) {
     .for("update");
   if (!occurrence) throw new Refusal(404, "OCCURRENCE_NOT_FOUND");
   return occurrence;
+}
+
+/** A field a change of type `Changes` may set. */
+type ChangedField<Changes> = keyof Changes & keyof PersistedOccurrence;
+
+/** The fields `values` sets to something other than what `occurrence` has. */
+function changedFields<Changes extends OccurrenceChanges>(
+  occurrence: PersistedOccurrence,
+  values: Changes
+) {
+  return (Object.keys(values) as ChangedField<Changes>[]).filter((field) => {
+    const value: unknown = values[field];
+    return value !== undefined && value !== occurrence[field];
+  });
+}
+
+/** The virtual id a write was sent to, which it materialized (ADR-0001). */
+function materializedFrom(id: string): { from?: string } {
+  return parseVirtualId(id) ? { from: id } : {};
 }
 
 /** Whether the user has an occurrence `id`, persisted or virtual. */
