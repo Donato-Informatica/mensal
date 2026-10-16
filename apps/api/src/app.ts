@@ -2,7 +2,11 @@ import type { Database } from "@mensal/database";
 import { toNodeHandler } from "better-auth/node";
 import express from "express";
 import helmet from "helmet";
-import { consoleActivity, stamping, type Activity } from "./activity.ts";
+import {
+  activityRecorder,
+  consoleActivity,
+  type Activity,
+} from "./activity.ts";
 import type { Auth } from "./auth.ts";
 import { errorHandler } from "./error-handler.ts";
 import { healthRouter } from "./health.ts";
@@ -30,7 +34,7 @@ export function createApp({
   log = console.error,
   activity = consoleActivity,
 }: AppOptions) {
-  const record = stamping(activity, now, log);
+  const record = activityRecorder(activity, now, log);
   const app = express();
 
   // Security headers on every response, and no X-Powered-By (PRD §8.6).

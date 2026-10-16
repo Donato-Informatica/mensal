@@ -9,10 +9,13 @@ import {
   parseVirtualId,
   StatusChangeSchema,
   today,
+  type OccurrenceEdit,
+  type OccurrenceStatus,
 } from "@mensal/shared";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { Router, type Response } from "express";
-import type { UnstampedEvent } from "./activity.ts";
+import type { RecordActivity } from "./activity.ts";
+import { changedFields } from "./changed-fields.ts";
 import { invalidInput } from "./invalid-input.ts";
 import { Refusal } from "./refusal.ts";
 import { UUID } from "./uuid.ts";
@@ -28,6 +31,11 @@ type OccurrenceChanges = {
   [Field in keyof PersistedOccurrence]?: PersistedOccurrence[Field] | undefined;
 };
 
+/** What the activity log tells of a change, besides who and which occurrence. */
+type ChangeDetail =
+  | { action: "occurrence.edit"; fields: (keyof OccurrenceEdit)[] }
+  | { action: "occurrence.status"; status: OccurrenceStatus };
+
 /** `/occurrences`: the user's occurrences (PRD §6.3). */
 export function occurrencesRouter({
   db,
@@ -36,8 +44,7 @@ export function occurrencesRouter({
 }: {
   db: Database;
   now: () => Date;
-  /** Logs a write once it has succeeded (PRD §8.7). */
-  record: (event: UnstampedEvent) => void;
+  record: RecordActivity;
 }) {
   const router = Router();
 
@@ -52,33 +59,38 @@ export function occurrencesRouter({
     res: Response,
     id: string,
     change: (occurrence: PersistedOccurrence) => Changes,
-    describe: (
-      changed: PersistedOccurrence,
-      fields: ChangedField<Changes>[]
-    ) => UnstampedEvent
+    describe: (changes: Changes, fields: (keyof Changes)[]) => ChangeDetail
   ) {
+    const { userId } = res.locals;
     try {
-      const { changed, fields, from } = await db.transaction(async (tx) => {
+      const { changed, logged } = await db.transaction(async (tx) => {
         const { occurrence, materialized } = await occurrenceToChange(
           tx,
-          res.locals.userId,
+          userId,
           id
         );
-        const from = materialized ? { from: id } : {};
-        const values = change(occurrence);
-        const fields = changedFields(occurrence, values);
+        const changes = change(occurrence);
+        const fields = changedFields(occurrence, changes);
         if (fields.length === 0) {
           if (materialized) throw new Unchanged(asVirtual(id, occurrence));
-          return { changed: occurrence, fields, from };
+          return { changed: occurrence };
         }
         const [updated] = await tx
           .update(occurrences)
-          .set(values)
+          .set(changes)
           .where(eq(occurrences.id, occurrence.id))
           .returning();
-        return { changed: updated!, fields, from };
+        return {
+          changed: updated,
+          logged: {
+            user: userId,
+            id: occurrence.id,
+            ...(materialized && { from: id }),
+            ...describe(changes, fields),
+          },
+        };
       });
-      if (fields.length > 0) record({ ...describe(changed, fields), ...from });
+      if (logged) record(logged);
       res.json(changed);
     } catch (error) {
       if (error instanceof Unchanged) {
@@ -101,12 +113,13 @@ export function occurrencesRouter({
       .insert(occurrences)
       .values({ ...input.data, userId: res.locals.userId, status: "PENDING" })
       .returning();
-    record({
-      user: res.locals.userId,
-      action: "occurrence.create",
-      kind: "occurrence",
-      id: occurrence!.id,
-    });
+    if (occurrence) {
+      record({
+        user: res.locals.userId,
+        action: "occurrence.create",
+        id: occurrence.id,
+      });
+    }
     res.status(201).json(occurrence);
   });
 
@@ -127,13 +140,7 @@ export function occurrencesRouter({
         }
         return changed;
       },
-      (changed) => ({
-        user: res.locals.userId,
-        action: "occurrence.status",
-        kind: "occurrence",
-        id: changed.id,
-        status: changed.status,
-      })
+      ({ status }) => ({ action: "occurrence.status", status })
     );
   });
 
@@ -152,13 +159,7 @@ export function occurrencesRouter({
         if (refusal) throw new Refusal(400, refusal);
         return input.data;
       },
-      (changed, fields) => ({
-        user: res.locals.userId,
-        action: "occurrence.edit",
-        kind: "occurrence",
-        id: changed.id,
-        fields,
-      })
+      (_, fields) => ({ action: "occurrence.edit", fields })
     );
   });
 
@@ -180,12 +181,7 @@ export function occurrencesRouter({
           .returning({ id: occurrences.id })
       : [];
     if (deleted.length > 0) {
-      record({
-        user: userId,
-        action: "occurrence.delete",
-        kind: "occurrence",
-        id,
-      });
+      record({ user: userId, action: "occurrence.delete", id });
       res.status(204).end();
     } else if (await occurrenceExists(db, userId, id)) {
       res.status(409).json({ code: "ONLY_ONE_OFF_DELETABLE" });
@@ -263,20 +259,6 @@ function asVirtual(
     settledAt,
     notes,
   };
-}
-
-/** A field a change of type `Changes` may set. */
-type ChangedField<Changes> = keyof Changes & keyof PersistedOccurrence;
-
-/** The fields `values` sets to something other than what `occurrence` has. */
-function changedFields<Changes extends OccurrenceChanges>(
-  occurrence: PersistedOccurrence,
-  values: Changes
-) {
-  return (Object.keys(values) as ChangedField<Changes>[]).filter((field) => {
-    const value: unknown = values[field];
-    return value !== undefined && value !== occurrence[field];
-  });
 }
 
 /** Whether the user has an occurrence `id`, persisted or virtual. */

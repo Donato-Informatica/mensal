@@ -4,11 +4,11 @@ import {
   NewRecurrenceSchema,
   RecurrenceEditSchema,
   RecurrenceListQuerySchema,
-  type RecurrenceEdit,
 } from "@mensal/shared";
 import { and, asc, eq, gte, isNull, or } from "drizzle-orm";
 import { Router } from "express";
-import type { UnstampedEvent } from "./activity.ts";
+import type { RecordActivity } from "./activity.ts";
+import { changedFields } from "./changed-fields.ts";
 import { invalidInput } from "./invalid-input.ts";
 import { Refusal } from "./refusal.ts";
 import { UUID } from "./uuid.ts";
@@ -21,8 +21,7 @@ export function recurrencesRouter({
 }: {
   db: Database;
   now: () => Date;
-  /** Logs a write once it has succeeded (PRD §8.7). */
-  record: (event: UnstampedEvent) => void;
+  record: RecordActivity;
 }) {
   const router = Router();
   const { occurrences, recurrences } = schema;
@@ -76,12 +75,13 @@ export function recurrencesRouter({
       .insert(recurrences)
       .values({ ...input.data, userId: res.locals.userId })
       .returning();
-    record({
-      user: res.locals.userId,
-      action: "recurrence.create",
-      kind: "recurrence",
-      id: recurrence!.id,
-    });
+    if (recurrence) {
+      record({
+        user: res.locals.userId,
+        action: "recurrence.create",
+        id: recurrence.id,
+      });
+    }
     res.status(201).json(recurrence);
   });
 
@@ -123,7 +123,6 @@ export function recurrencesRouter({
     record({
       user: res.locals.userId,
       action: "recurrence.edit",
-      kind: "recurrence",
       id: recurrence.id,
       fields,
     });
@@ -163,12 +162,7 @@ export function recurrencesRouter({
         if (persisted) throw new Refusal(409, "RECURRENCE_HAS_OCCURRENCES");
         await tx.delete(recurrences).where(mine);
       });
-      record({
-        user: userId,
-        action: "recurrence.delete",
-        kind: "recurrence",
-        id,
-      });
+      record({ user: userId, action: "recurrence.delete", id });
       res.status(204).end();
     } catch (error) {
       if (!(error instanceof Refusal)) throw error;
@@ -187,14 +181,4 @@ export function recurrencesRouter({
   }
 
   return router;
-}
-
-/** The fields `edit` sets to something other than what `recurrence` has. */
-function changedFields(
-  recurrence: typeof schema.recurrences.$inferSelect,
-  edit: RecurrenceEdit
-) {
-  return (Object.keys(edit) as (keyof RecurrenceEdit)[]).filter(
-    (field) => edit[field] !== undefined && edit[field] !== recurrence[field]
-  );
 }

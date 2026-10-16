@@ -3,7 +3,13 @@ import { schema, type Database } from "@mensal/database";
 import { ColorSchemeSchema, defaultColorScheme } from "@mensal/shared";
 import { betterAuth } from "better-auth";
 import { createAuthMiddleware, getIP, isAPIError } from "better-auth/api";
-import { consoleActivity, stamping, type Activity } from "./activity.ts";
+import {
+  activityRecorder,
+  consoleActivity,
+  type Activity,
+  type RecordActivity,
+  type SessionAction,
+} from "./activity.ts";
 import type { Log } from "./log.ts";
 
 export interface AuthOptions {
@@ -41,7 +47,7 @@ export function createAuth({
   now = () => new Date(),
   activity = consoleActivity,
 }: AuthOptions) {
-  const record = stamping(activity, now, log);
+  const record: RecordActivity = activityRecorder(activity, now, log);
   return betterAuth({
     baseURL,
     secret,
@@ -106,22 +112,20 @@ export function createAuth({
     },
     hooks: {
       after: createAuthMiddleware(async (ctx) => {
-        if (
-          ctx.path === "/sign-in/email" &&
-          isInvalidCredentials(ctx.context.returned)
-        ) {
+        const action = sessionActions[ctx.path];
+        if (!action) return;
+        const user = ctx.context.newSession?.user.id;
+        if (user) {
+          record({ user, action });
+        } else if (isInvalidCredentials(ctx.context.returned)) {
+          // Only sign-in answers so, and only to a valid email.
           record({
             action: "user.sign-in-failed",
-            // Only a valid email gets this far.
             email: (ctx.body as { email: string }).email,
             // The client as the rate limiter tells it (PRD §8.6).
             ip: ctx.headers ? getIP(ctx.headers, ctx.context.options) : null,
           });
-          return;
         }
-        const action = accountActions[ctx.path];
-        const user = ctx.context.newSession?.user.id;
-        if (action && user) record({ user, action });
       }),
     },
   });
@@ -133,12 +137,10 @@ export type Auth = ReturnType<typeof createAuth>;
  * The endpoints whose new session the activity log reports. Others that also
  * set a session cookie (a session refresh, update-user) log nothing.
  */
-const accountActions: Record<string, SessionAction | undefined> = {
+const sessionActions: Record<string, SessionAction | undefined> = {
   "/sign-up/email": "user.sign-up",
   "/sign-in/email": "user.sign-in",
 };
-
-type SessionAction = "user.sign-up" | "user.sign-in";
 
 /** Better-Auth's answer to a wrong email or password, and nothing else. */
 function isInvalidCredentials(returned: unknown) {
