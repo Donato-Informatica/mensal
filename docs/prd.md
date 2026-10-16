@@ -376,8 +376,18 @@ A minimal baseline against opportunistic internet traffic (scanners, credential 
 - **Errors are JSON:** a final error handler answers malformed JSON with `400 INVALID_INPUT` (`fields: []`), an oversized body with `413 PAYLOAD_TOO_LARGE`, and anything else with `500 INTERNAL_ERROR`, logging the error server-side and returning no detail.
 - **Boot check:** in production the API refuses to start when `BETTER_AUTH_SECRET` is the `.env.example` value or shorter than 32 characters, or when `BETTER_AUTH_URL` is not `https://`.
 - **Deliberately unchanged:** the 100 kB JSON body limit; no CORS package (same origin, §8.4); no CSRF tokens on `/api/v1` (`SameSite=Lax` keeps the session cookie off cross-site writes, and Better-Auth checks the origin on `/api/auth`); password-reset links in the server log (§8.2).
-- **Out of scope for the MVP:** 2FA, account lockout, audit logs, a password policy beyond Better-Auth's 8–128 characters, dependency auditing in the gate.
+- **Out of scope for the MVP:** 2FA, account lockout, durable audit logs (the activity log of §8.7 is operational only), a password policy beyond Better-Auth's 8–128 characters, dependency auditing in the gate.
 - **At the proxy (M4):** the static frontend's own headers (CSP, `frame-ancestors`) are set where the HTML is served, not by the API. The proxy must overwrite any client-sent `X-Forwarded-For`, and the API port is not published on the VPS; behind Cloudflare the client IP would come from `cf-connecting-ip` instead.
+
+### 8.7 Observability
+
+A minimal activity log for the operator: who did what to which item, and when. It is operational, not an audit trail: written to stdout only (Coolify keeps the container logs), never stored in the database, never shown to users.
+
+- **One JSON line per event**, e.g. `{"at":"2026-10-16T14:03:00.000Z","user":"…","action":"occurrence.status","kind":"occurrence","id":"…","from":"virtual_…","status":"SETTLED"}`. `at` is UTC ISO from the app's clock.
+- **Who:** the user id only, never email or name. The exception is a failed sign-in, which has no user: it carries the attempted `email` and the client `ip` (from `x-forwarded-for`, §8.6).
+- **What item:** its kind and id only. No descriptions, amounts or dates: they are the user's financial data. An edit lists the changed field _names_ in `fields`, never their values. A write that materializes a virtual occurrence (ADR-0001) carries the virtual id in `from` and the persisted uuid in `id`.
+- **Actions:** `occurrence.create` (one-off), `occurrence.edit`, `occurrence.status` (with the new `status`), `occurrence.delete`, `recurrence.create`, `recurrence.edit` (ending one shows `endPeriod` in `fields`), `recurrence.delete`, `user.sign-up`, `user.sign-in`, `user.sign-in-failed`. Only successful writes are logged; reads, no-op edits and refused requests are not (unexpected errors already reach the error handler, §8.6).
+- **Sink:** an injectable `activity` option on the app and on Better-Auth, writing to the console by default. No log provider in the MVP; adding one later replaces the default sink. The free-text operator log (errors, healthcheck, reset links) is unchanged.
 
 ---
 
