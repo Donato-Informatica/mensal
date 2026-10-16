@@ -58,20 +58,25 @@ export function occurrencesRouter({
     ) => UnstampedEvent
   ) {
     try {
-      const { changed, fields } = await db.transaction(async (tx) => {
-        const occurrence = await occurrenceToChange(tx, res.locals.userId, id);
+      const { changed, fields, from } = await db.transaction(async (tx) => {
+        const { occurrence, materialized } = await occurrenceToChange(
+          tx,
+          res.locals.userId,
+          id
+        );
+        const from = materialized ? { from: id } : {};
         const values = change(occurrence);
         const fields = changedFields(occurrence, values);
         // Nothing changes: the occurrence as it is, if only just materialized.
-        if (fields.length === 0) return { changed: occurrence, fields };
+        if (fields.length === 0) return { changed: occurrence, fields, from };
         const [updated] = await tx
           .update(occurrences)
           .set(values)
           .where(eq(occurrences.id, occurrence.id))
           .returning();
-        return { changed: updated!, fields };
+        return { changed: updated!, fields, from };
       });
-      if (fields.length > 0) record(describe(changed, fields));
+      if (fields.length > 0) record({ ...describe(changed, fields), ...from });
       res.json(changed);
     } catch (error) {
       if (!(error instanceof Refusal)) throw error;
@@ -121,7 +126,6 @@ export function occurrencesRouter({
         action: "occurrence.status",
         kind: "occurrence",
         id: changed.id,
-        ...materializedFrom(req.params.id),
         status: changed.status,
       })
     );
@@ -147,7 +151,6 @@ export function occurrencesRouter({
         action: "occurrence.edit",
         kind: "occurrence",
         id: changed.id,
-        ...materializedFrom(req.params.id),
         fields,
       })
     );
@@ -194,7 +197,7 @@ export function occurrencesRouter({
  */
 async function occurrenceToChange(tx: Transaction, userId: string, id: string) {
   const virtual = parseVirtualId(id);
-  if (virtual) await materialize(tx, userId, virtual);
+  const materialized = virtual ? await materialize(tx, userId, virtual) : false;
   const [occurrence] = await tx
     .select()
     .from(occurrences)
@@ -211,7 +214,7 @@ async function occurrenceToChange(tx: Transaction, userId: string, id: string) {
     )
     .for("update");
   if (!occurrence) throw new Refusal(404, "OCCURRENCE_NOT_FOUND");
-  return occurrence;
+  return { occurrence, materialized };
 }
 
 /** A field a change of type `Changes` may set. */
@@ -226,11 +229,6 @@ function changedFields<Changes extends OccurrenceChanges>(
     const value: unknown = values[field];
     return value !== undefined && value !== occurrence[field];
   });
-}
-
-/** The virtual id a write was sent to, which it materialized (ADR-0001). */
-function materializedFrom(id: string): { from?: string } {
-  return parseVirtualId(id) ? { from: id } : {};
 }
 
 /** Whether the user has an occurrence `id`, persisted or virtual. */
@@ -271,8 +269,9 @@ async function occurrenceExists(db: Database, userId: string, id: string) {
 
 /**
  * Inserts the occurrence of the user's recurrence in `period`, a snapshot of
- * the recurrence as it is now, unless it is already persisted. Idempotent: the
- * unique index on (user, recurrence, period) keeps a second insert out.
+ * the recurrence as it is now, unless it is already persisted; whether it
+ * inserted it. Idempotent: the unique index on (user, recurrence, period)
+ * keeps a second insert out.
  */
 async function materialize(
   tx: Transaction,
@@ -285,8 +284,8 @@ async function materialize(
     .where(
       and(eq(recurrences.id, recurrenceId), eq(recurrences.userId, userId))
     );
-  if (!recurrence || !isInEffect(recurrence, period)) return;
-  await tx
+  if (!recurrence || !isInEffect(recurrence, period)) return false;
+  const inserted = await tx
     .insert(occurrences)
     .values({
       userId,
@@ -305,5 +304,7 @@ async function materialize(
         occurrences.period,
       ],
       where: sql`${occurrences.recurrenceId} IS NOT NULL`,
-    });
+    })
+    .returning({ id: occurrences.id });
+  return inserted.length > 0;
 }

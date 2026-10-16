@@ -116,7 +116,7 @@ describe("the activity log (PRD §8.7)", () => {
     ]);
   });
 
-  it("logs the persisted id and the virtual one it came from, when a write materializes it", async () => {
+  it("logs the persisted id and the virtual one it came from, when a status change materializes it", async () => {
     const { cookie, userId } = await approvedUser();
     const rent = await insertRecurrence(api.db, { userId });
     const virtualId = `virtual_${rent.id}_2026-10-01`;
@@ -124,13 +124,8 @@ describe("the activity log (PRD §8.7)", () => {
     const settled = await changeStatus(cookie, virtualId, {
       status: "SETTLED",
     });
-    const { id } = await settled.json();
-    await request(api, `/api/v1/occurrences/${virtualId}`, {
-      cookie,
-      method: "PATCH",
-      body: { notes: "Pago no Pix" },
-    });
 
+    const { id } = await settled.json();
     expect(id).not.toBe(virtualId);
     expect(activityOf(userId)).toEqual([
       {
@@ -142,6 +137,23 @@ describe("the activity log (PRD §8.7)", () => {
         from: virtualId,
         status: "SETTLED",
       },
+    ]);
+  });
+
+  it("logs the persisted id and the virtual one it came from, when an edit materializes it", async () => {
+    const { cookie, userId } = await approvedUser();
+    const rent = await insertRecurrence(api.db, { userId });
+    const virtualId = `virtual_${rent.id}_2026-10-01`;
+
+    const edited = await request(api, `/api/v1/occurrences/${virtualId}`, {
+      cookie,
+      method: "PATCH",
+      body: { notes: "Pago no Pix" },
+    });
+
+    const { id } = await edited.json();
+    expect(id).not.toBe(virtualId);
+    expect(activityOf(userId)).toEqual([
       {
         at,
         user: userId,
@@ -152,6 +164,31 @@ describe("the activity log (PRD §8.7)", () => {
         fields: ["notes"],
       },
     ]);
+  });
+
+  it("logs no virtual id for a later write sent to the virtual id of an occurrence already materialized", async () => {
+    const { cookie, userId } = await approvedUser();
+    const rent = await insertRecurrence(api.db, { userId });
+    const virtualId = `virtual_${rent.id}_2026-10-01`;
+    const settled = await changeStatus(cookie, virtualId, {
+      status: "SETTLED",
+    });
+    const { id } = await settled.json();
+
+    await request(api, `/api/v1/occurrences/${virtualId}`, {
+      cookie,
+      method: "PATCH",
+      body: { notes: "Pago no Pix" },
+    });
+
+    expect(activityOf(userId).at(-1)).toEqual({
+      at,
+      user: userId,
+      action: "occurrence.edit",
+      kind: "occurrence",
+      id,
+      fields: ["notes"],
+    });
   });
 
   it("logs a one-off occurrence deleted", async () => {
@@ -238,7 +275,7 @@ describe("the activity log (PRD §8.7)", () => {
   });
 });
 
-const rent = {
+const rentInput = {
   direction: "OUTFLOW",
   description: "Aluguel",
   defaultAmount: 220000,
@@ -254,7 +291,7 @@ describe("the activity log of recurrences (PRD §8.7)", () => {
 
     const response = await request(api, "/api/v1/recurrences", {
       cookie,
-      body: rent,
+      body: rentInput,
     });
 
     const { id } = await response.json();
@@ -374,7 +411,7 @@ describe("the activity log of recurrences (PRD §8.7)", () => {
       }),
       request(api, "/api/v1/recurrences", {
         cookie,
-        body: { ...rent, startPeriod: "2026-09-01" },
+        body: { ...rentInput, startPeriod: "2026-09-01" },
       }),
       request(api, `/api/v1/recurrences/${kept.id}`, {
         cookie,
