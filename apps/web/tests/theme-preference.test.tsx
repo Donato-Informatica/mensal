@@ -1,49 +1,9 @@
-import { act, cleanup, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { appliedScheme, deviceTheme } from "./device-theme.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
-
-type Scheme = "light" | "dark";
-
-/**
- * The device's own theme, as `prefers-color-scheme` reports it through
- * `matchMedia`, which jsdom lacks; `change` switches it as the OS would.
- */
-function deviceTheme(initial: Scheme) {
-  const darkQuery = "(prefers-color-scheme: dark)";
-  let current = initial;
-  const listeners = new Set<EventListener>();
-  vi.stubGlobal(
-    "matchMedia",
-    (query: string): MediaQueryList =>
-      ({
-        get matches() {
-          return query === darkQuery && current === "dark";
-        },
-        media: query,
-        onchange: null,
-        addListener: () => {},
-        removeListener: () => {},
-        addEventListener: (_type: string, listener: EventListener) => {
-          if (query === darkQuery) listeners.add(listener);
-        },
-        removeEventListener: (_type: string, listener: EventListener) => {
-          listeners.delete(listener);
-        },
-        dispatchEvent: () => false,
-      }) satisfies MediaQueryList
-  );
-  return {
-    change(to: Scheme) {
-      current = to;
-      const event = Object.assign(new Event("change"), {
-        matches: to === "dark",
-      });
-      act(() => listeners.forEach((listener) => listener(event)));
-    },
-  };
-}
 
 const email = "ana@example.com";
 let api: FakeApi;
@@ -63,11 +23,6 @@ afterEach(() => {
   localStorage.clear();
   document.documentElement.removeAttribute("data-mantine-color-scheme");
 });
-
-/** The scheme the page is painted in, as Mantine marks it on `<html>`. */
-function appliedScheme() {
-  return document.documentElement.getAttribute("data-mantine-color-scheme");
-}
 
 /** Opens the settings and finds the theme's control. */
 async function openTheme(user: UserEvent) {
