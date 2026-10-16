@@ -34,7 +34,7 @@ Three vitest projects (`vitest.config.ts`):
 
 ### Issue tracker
 
-Issues live as local markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+Issues live in GitHub Issues on `ebdonato/mensal` (via the `gh` CLI). See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
