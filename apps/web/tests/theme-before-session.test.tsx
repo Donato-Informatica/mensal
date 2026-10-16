@@ -1,4 +1,4 @@
-import { cleanup, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ColorScheme } from "@mensal/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -158,6 +158,38 @@ describe("the theme before the session is known (PRD §3.5)", () => {
     await screen.findByRole("button", { name: "Mês anterior" });
     await waitFor(() => expect(appliedScheme()).toBe("dark"));
     expect(cachedOnDevice()).toBe("dark");
+  });
+
+  it("keeps the account's theme when another tab changes the device's copy", async () => {
+    signedIn({ colorScheme: "dark" });
+    openApp(api, "/");
+    await screen.findByRole("button", { name: "Mês anterior" });
+    await waitFor(() => expect(appliedScheme()).toBe("dark"));
+    const painting = new MutationObserver(() => {});
+    painting.observe(document.documentElement, {
+      attributeFilter: ["data-mantine-color-scheme"],
+      attributeOldValue: true,
+    });
+
+    // Another tab, signed in to another account, applies its own theme.
+    act(() => {
+      localStorage.setItem(colorSchemeCacheKey, "light");
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: colorSchemeCacheKey,
+          newValue: "light",
+          storageArea: localStorage,
+        })
+      );
+    });
+
+    // Not even for a moment.
+    const painted = [
+      ...painting.takeRecords().map((record) => record.oldValue),
+      appliedScheme(),
+    ];
+    painting.disconnect();
+    expect(painted).not.toContain("light");
   });
 
   it("keeps the last theme on sign-in after signing out, until the next account's loads", async () => {

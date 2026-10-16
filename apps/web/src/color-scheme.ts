@@ -1,5 +1,6 @@
 import {
   localStorageColorSchemeManager,
+  type MantineColorSchemeManager,
   useComputedColorScheme,
   useMantineColorScheme,
 } from "@mantine/core";
@@ -22,9 +23,14 @@ export const colorSchemeCacheKey = "mensal-color-scheme";
  * the account. A missing or unknown value paints Escuro (Mantine falls back to
  * `defaultColorScheme`).
  */
-export const colorSchemeCache = localStorageColorSchemeManager({
-  key: colorSchemeCacheKey,
-});
+export const colorSchemeCache: MantineColorSchemeManager = {
+  ...localStorageColorSchemeManager({ key: colorSchemeCacheKey }),
+  // Mantine's manager would also apply what another tab writes. A signed-in
+  // tab shows only its account's theme, and picks another device's or tab's
+  // change up on refocus, with the session.
+  subscribe: () => {},
+  unsubscribe: () => {},
+};
 
 /**
  * Paints the app in the signed-in account's theme (PRD §3.5) once the session
