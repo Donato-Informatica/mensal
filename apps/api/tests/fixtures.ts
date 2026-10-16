@@ -3,7 +3,7 @@ import { schema, type Database } from "@mensal/database";
 type NewRecurrence = typeof schema.recurrences.$inferInsert;
 type NewOccurrence = typeof schema.occurrences.$inferInsert;
 
-/** A recurrence seeded straight into the database, as through Adminer. */
+/** A recurrence seeded straight into the database, as through Drizzle Studio. */
 export async function insertRecurrence(
   db: Database,
   values: Pick<NewRecurrence, "userId"> & Partial<NewRecurrence>
@@ -22,7 +22,7 @@ export async function insertRecurrence(
   return recurrence!;
 }
 
-/** An occurrence seeded straight into the database, as through Adminer. */
+/** An occurrence seeded straight into the database, as through Drizzle Studio. */
 export async function insertOccurrence(
   db: Database,
   values: Pick<NewOccurrence, "userId"> & Partial<NewOccurrence>

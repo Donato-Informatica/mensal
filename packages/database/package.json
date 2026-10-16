@@ -9,7 +9,8 @@
   "scripts": {
     "typecheck": "tsc",
     "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate"
+    "migrate": "drizzle-kit migrate",
+    "studio": "drizzle-kit studio"
   },
   "devDependencies": {
     "@types/pg": "^8.23.1"

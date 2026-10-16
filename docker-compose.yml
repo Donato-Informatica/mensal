@@ -16,12 +16,5 @@ services:
       timeout: 5s
       retries: 15
 
-  adminer:
-    image: adminer
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-
 volumes:
   postgres-data:

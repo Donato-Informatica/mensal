@@ -20,7 +20,7 @@ Prerequisites: Node >= 24, Docker.
 ```sh
 npm install
 
-docker compose up -d          # Postgres on :5432, Adminer on :8080
+docker compose up -d          # Postgres on :5432
 
 cp apps/api/.env.example apps/api/.env
 # set BETTER_AUTH_SECRET to a long random string: openssl rand -base64 32
@@ -31,7 +31,7 @@ npm run -w @mensal/api dev     # :3000
 npm run -w @mensal/web dev     # :5173 — open this one
 ```
 
-Sign-up is open, but the API rejects unapproved users. Approve a user by setting `users.approved = true` directly in the database (e.g. via Adminer at http://localhost:8080). Password-reset links are printed to the API log.
+Sign-up is open, but the API rejects unapproved users. Approve a user by setting `users.approved = true` directly in the database (e.g. via Drizzle Studio: `npm run studio`, http://localhost:4983). Password-reset links are printed to the API log.
 
 ### Demo data (optional)
 

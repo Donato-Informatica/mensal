@@ -11,7 +11,7 @@ Mensal: forecast and settle a person's monthly cash flow. npm-workspaces monorep
 
 - `npm run check` — the full gate: `format:check`, `lint`, `lint:boundaries`, `typecheck`, `test`. The pre-commit hook runs the same suite (prettier on staged files instead of `format:check`).
 - Single test file: `npx vitest run <path>`. Single suite: `npx vitest run --project unit|api|web`. Only `*.test.{ts,tsx}` under a workspace's `tests/` folder are ever picked up; tests anywhere else silently never run.
-- Local stack: `docker compose up -d` first (Postgres 17, Adminer on :8080; fresh databases need `npm run -w @mensal/database migrate`). Then `npm run -w @mensal/api dev` (:3000, needs `apps/api/.env` copied from `.env.example`) and `npm run -w @mensal/web dev` (:5173, proxies `/api` to :3000 — same origin, no CORS).
+- Local stack: `docker compose up -d` first (Postgres 17; fresh databases need `npm run -w @mensal/database migrate`; browse/edit data with `npm run studio` → Drizzle Studio on :4983). Then `npm run -w @mensal/api dev` (:3000, needs `apps/api/.env` copied from `.env.example`) and `npm run -w @mensal/web dev` (:5173, proxies `/api` to :3000 — same origin, no CORS).
 - Demo data: `npm run seed` (local database only; refuses non-local hosts) recreates `demo@mensal.local` / `demo-password-local` with example recurrences and occurrences. Re-running resets that user.
 
 ## Testing

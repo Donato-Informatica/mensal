@@ -520,7 +520,7 @@ export function fakeApi() {
       return resetLinks.get(email);
     },
 
-    /** Seeds a recurrence for the account, as through Adminer. */
+    /** Seeds a recurrence for the account, as through Drizzle Studio. */
     addRecurrence(email: string, overrides: Partial<Recurrence> = {}) {
       const account = accounts.get(email)!;
       const recurrence: Recurrence = {
@@ -562,7 +562,7 @@ export function fakeApi() {
       return accounts.get(email)!.occurrences;
     },
 
-    /** Seeds an occurrence for the account, as through Adminer. */
+    /** Seeds an occurrence for the account, as through Drizzle Studio. */
     addOccurrence(email: string, overrides: Partial<Occurrence> = {}) {
       const account = accounts.get(email)!;
       const occurrence: Occurrence = {

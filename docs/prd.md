@@ -331,7 +331,7 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 │   └── database/          # Drizzle schema (app + Better-Auth), drizzle-kit migrations, connection
 ├── eslint.config.js       # Single flat config for every workspace
 ├── .prettierrc            # Single Prettier config for every workspace
-├── docker-compose.yml     # Local Postgres 17 + Adminer
+├── docker-compose.yml     # Local Postgres 17
 ├── Dockerfile             # API image: copies only api, shared and database workspaces
 └── package.json           # Lint/format devDependencies live here
 ```
