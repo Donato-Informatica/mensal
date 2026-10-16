@@ -64,10 +64,14 @@ describe("theme preference (PRD §3.5)", () => {
     const user = userEvent.setup();
     openApp(api, "/");
     const theme = await openTheme(user);
-    api.breakDown();
+    api.stall();
 
     await user.click(within(theme).getByRole("radio", { name: "Claro" }));
 
+    // Applied at once, before the account has answered.
+    await waitFor(() => expect(appliedScheme()).toBe("light"));
+    api.breakDown();
+    api.resume();
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Alteração não salva."
     );
