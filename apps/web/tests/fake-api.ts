@@ -3,6 +3,7 @@ import {
   clampDueDate,
   ColorSchemeSchema,
   currentPeriod,
+  defaultColorScheme,
   editRefusal,
   isActive,
   isInEffect,
@@ -20,13 +21,13 @@ import {
   type Recurrence,
 } from "@mensal/shared";
 
-import type { Preferences } from "../src/session.ts";
+import type { Preference, Preferences } from "../src/session.ts";
 
 /** A new account's preferences (PRD §3.5): all on, in the dark theme. */
 const defaultPreferences: Preferences = {
   showSummary: true,
   confirmStatusChanges: true,
-  colorScheme: "dark",
+  colorScheme: defaultColorScheme,
 };
 
 interface Account {
@@ -87,28 +88,38 @@ export function fakeApi() {
   }
 
   /**
+   * The theme a request to Better-Auth carries, checked as the API's
+   * validator does: absent, or dark, light or auto. Anything else is
+   * `rejected`, with the 400 to answer, and nothing changes.
+   */
+  function colorSchemeIn(body: Record<string, unknown>) {
+    const parsed = ColorSchemeSchema.optional().safeParse(body.colorScheme);
+    return parsed.success
+      ? { colorScheme: parsed.data, rejected: undefined }
+      : {
+          colorScheme: undefined,
+          rejected: json(400, {
+            code: "VALIDATION_ERROR",
+            message: "Invalid option",
+          }),
+        };
+  }
+
+  /**
    * POST /api/auth/update-user: the user's own preferences. Anything else,
    * such as `approved`, is ignored, as Better-Auth does for fields that are
-   * not `input`. A theme other than dark, light or auto is rejected, as the
-   * API's validator does, and nothing changes.
+   * not `input`.
    */
   function updateUser(body: Record<string, unknown>): Response {
     if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
-    const { showSummary, confirmStatusChanges } = body;
-    const colorScheme = ColorSchemeSchema.optional().safeParse(
-      body.colorScheme
-    );
-    if (!colorScheme.success) {
-      return json(400, { code: "VALIDATION_ERROR", message: "Invalid option" });
+    const { rejected } = colorSchemeIn(body);
+    if (rejected) return rejected;
+    for (const preference of Object.keys(defaultPreferences) as Preference[]) {
+      const value = body[preference];
+      if (typeof value === typeof defaultPreferences[preference]) {
+        Object.assign(signedIn.preferences, { [preference]: value });
+      }
     }
-    const { preferences } = signedIn;
-    if (typeof showSummary === "boolean") {
-      preferences.showSummary = showSummary;
-    }
-    if (typeof confirmStatusChanges === "boolean") {
-      preferences.confirmStatusChanges = confirmStatusChanges;
-    }
-    if (colorScheme.data) preferences.colorScheme = colorScheme.data;
     return json(200, { status: true });
   }
 
@@ -359,30 +370,21 @@ export function fakeApi() {
     },
     // Better-Auth takes an `input` preference at sign-up too, so a theme sent
     // here would land on the new account.
-    "POST /api/auth/sign-up/email": ({
-      name,
-      email,
-      password,
-      colorScheme,
-    }) => {
+    "POST /api/auth/sign-up/email": (body) => {
+      const { name, email, password } = body;
       if (accounts.has(email ?? "")) {
         return json(422, {
           code: "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL",
           message: "User already exists. Use another email.",
         });
       }
-      const scheme = ColorSchemeSchema.optional().safeParse(colorScheme);
-      if (!scheme.success) {
-        return json(400, {
-          code: "VALIDATION_ERROR",
-          message: "Invalid option",
-        });
-      }
+      const { colorScheme, rejected } = colorSchemeIn(body);
+      if (rejected) return rejected;
       signedIn = api.addAccount({
         name: name ?? "",
         email: email ?? "",
         password: password ?? "",
-        ...(scheme.data && { colorScheme: scheme.data }),
+        ...(colorScheme && { colorScheme }),
       });
       return json(200, sessionOf(signedIn));
     },

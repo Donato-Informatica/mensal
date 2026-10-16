@@ -1,6 +1,6 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { schema, type Database } from "@mensal/database";
-import { ColorSchemeSchema } from "@mensal/shared";
+import { ColorSchemeSchema, defaultColorScheme } from "@mensal/shared";
 import { betterAuth } from "better-auth";
 import type { Log } from "./log.ts";
 
@@ -78,7 +78,7 @@ export function createAuth({
         colorScheme: {
           type: "string",
           required: true,
-          defaultValue: "dark",
+          defaultValue: defaultColorScheme,
           input: true,
           validator: { input: ColorSchemeSchema },
         },

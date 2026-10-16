@@ -29,6 +29,9 @@ const NotesInputSchema = z
 export const ColorSchemeSchema = z.enum(["dark", "light", "auto"]);
 export type ColorScheme = z.infer<typeof ColorSchemeSchema>;
 
+/** A new account's theme: Escuro, so nothing changes until the user opts in. */
+export const defaultColorScheme: ColorScheme = "dark";
+
 export const DirectionSchema = z.enum(["INFLOW", "OUTFLOW"]);
 export type Direction = z.infer<typeof DirectionSchema>;
 

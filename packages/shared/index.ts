@@ -1,6 +1,7 @@
 export { clampDueDate } from "./lib/due-date.ts";
 export {
   ColorSchemeSchema,
+  defaultColorScheme,
   DirectionSchema,
   NewOneOffSchema,
   NewRecurrenceSchema,
