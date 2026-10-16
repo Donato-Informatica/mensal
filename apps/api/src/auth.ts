@@ -2,7 +2,7 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { schema, type Database } from "@mensal/database";
 import { ColorSchemeSchema, defaultColorScheme } from "@mensal/shared";
 import { betterAuth } from "better-auth";
-import { createAuthMiddleware, isAPIError } from "better-auth/api";
+import { createAuthMiddleware, getIP, isAPIError } from "better-auth/api";
 import { consoleActivity, stamping, type Activity } from "./activity.ts";
 import type { Log } from "./log.ts";
 
@@ -103,12 +103,16 @@ export function createAuth({
     },
     hooks: {
       after: createAuthMiddleware(async (ctx) => {
-        if (ctx.path === "/sign-in/email" && isAPIError(ctx.context.returned)) {
-          const { email } = (ctx.body ?? {}) as { email?: unknown };
+        if (
+          ctx.path === "/sign-in/email" &&
+          isInvalidCredentials(ctx.context.returned)
+        ) {
           record({
             action: "user.sign-in-failed",
-            email: typeof email === "string" ? email : "",
-            ip: ctx.headers?.get("x-forwarded-for") ?? null,
+            // Only a valid email gets this far.
+            email: (ctx.body as { email: string }).email,
+            // The client as the rate limiter tells it (PRD §8.6).
+            ip: ctx.headers ? getIP(ctx.headers, ctx.context.options) : null,
           });
           return;
         }
@@ -132,3 +136,10 @@ const accountActions: Record<string, SessionAction | undefined> = {
 };
 
 type SessionAction = "user.sign-up" | "user.sign-in";
+
+/** Better-Auth's answer to a wrong email or password, and nothing else. */
+function isInvalidCredentials(returned: unknown) {
+  return (
+    isAPIError(returned) && returned.body?.code === "INVALID_EMAIL_OR_PASSWORD"
+  );
+}

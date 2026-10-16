@@ -74,6 +74,9 @@ type AccountEvent =
       at: string;
       action: "user.sign-in-failed";
       email: string;
-      /** From `X-Forwarded-For` (PRD §8.6); null when the proxy sent none. */
+      /**
+       * From `X-Forwarded-For`, read as the rate limiter reads it (PRD §8.6);
+       * null when it names no single trustworthy address.
+       */
       ip: string | null;
     };

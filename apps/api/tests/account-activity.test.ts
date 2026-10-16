@@ -74,6 +74,41 @@ describe("account events in the activity log (PRD §8.7)", () => {
     ]);
   });
 
+  it("logs an unknown email as a failed sign-in too", async () => {
+    const email = newEmail();
+
+    const logged = await loggedBy(() =>
+      request(api, "/api/auth/sign-in/email", {
+        body: { email, password },
+        ip: "203.0.113.7",
+      })
+    );
+
+    expect(logged).toEqual([
+      { at, action: "user.sign-in-failed", email, ip: "203.0.113.7" },
+    ]);
+  });
+
+  it("logs nothing for a sign-in refused before any credential is checked", async () => {
+    const statuses: number[] = [];
+
+    const logged = await loggedBy(async () => {
+      for (const body of [
+        { email: "not an email", password },
+        { password },
+        { email: newEmail() },
+      ]) {
+        const response = await request(api, "/api/auth/sign-in/email", {
+          body,
+        });
+        statuses.push(response.status);
+      }
+    });
+
+    expect(statuses).toEqual([400, 400, 400]);
+    expect(logged).toEqual([]);
+  });
+
   it("logs nothing for the other auth endpoints", async () => {
     const { cookie, email } = await signUp(api);
 
