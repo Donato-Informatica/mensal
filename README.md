@@ -1,5 +1,7 @@
 # mensal
 
+<img src="apps/web/public/logo.svg" alt="mensal logo" width="96" height="96">
+
 Minimalist monthly cash-flow tracker: forecast and settle a person's monthly income and expenses. Recurrences project their occurrences at read time (virtual occurrences, [ADR-0001](docs/adr/0001-virtual-occurrences.md)); the first mutation materializes one. See [docs/prd.md](docs/prd.md) for the spec and [GLOSSARY.md](GLOSSARY.md) for domain vocabulary.
 
 ## Layout
@@ -46,7 +48,16 @@ The seed creates recurrences (salary, rent, internet, an ended subscription, …
 ## Checks
 
 ```sh
-npm run check   # format, lint, boundaries, typecheck, tests
+npm run check   # format:check, lint, lint:boundaries, typecheck, test
 ```
 
-Tests need the Docker Postgres up (the `api` project runs against a real `mensal_test` database).
+Tests need the Docker Postgres up (the `api` project runs against a real `mensal_test` database). Vitest runs three projects: `unit`, `api` (the real Express app against Postgres, no mocks) and `web` (the app in jsdom, with only the network faked). Run one file with `npx vitest run <path>` or one project with `npx vitest run --project <name>` — only `*.test.*` files under a workspace's `tests/` folder are picked up.
+
+A pre-commit hook runs the same suite (Prettier on staged files instead of `format:check`).
+
+## Contributing
+
+- `docs/prd.md` is the spec; code and comments cite it as "PRD §x.y". [GLOSSARY.md](GLOSSARY.md) fixes the domain vocabulary (with its pt-BR UI strings), [DESIGN.md](DESIGN.md) is the UI theme source, [PRODUCT.md](PRODUCT.md) the product intent, and [docs/adr/](docs/adr/) the architecture decisions.
+- Migrations and the Better-Auth schema are generated (`npm run -w @mensal/database generate`, `npm run -w @mensal/api auth:generate`) — never hand-edit `packages/database/migrations/` or `packages/database/lib/schema/auth.ts`.
+- `packages/*` are deep modules: import only a package's entry points, never paths into it ([packages/README.md](packages/README.md)). `npm run lint:boundaries` enforces this.
+- Working conventions for agents (issue tracker as local markdown, triage labels, domain docs) are in [docs/agents/](docs/agents/).
