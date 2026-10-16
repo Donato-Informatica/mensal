@@ -10,15 +10,16 @@ import { openApp } from "./open-app.tsx";
 
 /**
  * Loads `index.html`'s head as the browser does before the app's bundle: its
- * `<meta>`s, then its inline script.
+ * `<meta>`s, then its inline script unless scripts do not run.
  */
-function firstPaint() {
+function firstPaint({ scripts = true } = {}) {
   const page = new DOMParser().parseFromString(indexHtml, "text/html");
   document.head.replaceChildren(
     ...[...page.head.querySelectorAll("meta")].map((meta) =>
       document.importNode(meta, true)
     )
   );
+  if (!scripts) return;
   const inline = [...page.head.querySelectorAll("script:not([src])")];
   for (const script of inline) new Function(script.textContent)();
 }
@@ -85,6 +86,15 @@ describe("first paint, before the app loads (PRD §3.5)", () => {
     firstPaint();
 
     expect(appliedScheme()).toBe("dark");
+    expect(meta("color-scheme")).toBe("dark");
+    expect(meta("theme-color")).toBe("#0a0a0a");
+  });
+
+  it("tells the browser Escuro where scripts do not run", () => {
+    cacheOnDevice("light");
+
+    firstPaint({ scripts: false });
+
     expect(meta("color-scheme")).toBe("dark");
     expect(meta("theme-color")).toBe("#0a0a0a");
   });
