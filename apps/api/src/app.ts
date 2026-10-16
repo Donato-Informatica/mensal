@@ -4,6 +4,7 @@ import express from "express";
 import helmet from "helmet";
 import type { Auth } from "./auth.ts";
 import { errorHandler } from "./error-handler.ts";
+import { healthRouter } from "./health.ts";
 import type { Log } from "./log.ts";
 import { occurrencesRouter } from "./occurrences.ts";
 import { periodsRouter } from "./periods.ts";
@@ -32,6 +33,9 @@ export function createApp({
 
   // Better-Auth reads the raw body, so it goes before any body parser.
   app.all("/api/auth/*splat", toNodeHandler(auth));
+
+  // Unauthenticated, for the deployment healthcheck (PRD §8.4).
+  app.use("/api/health", healthRouter({ db, log }));
 
   const v1 = express.Router();
   v1.use(requireApprovedUser(auth));

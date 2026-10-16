@@ -357,6 +357,7 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 ### 8.4 Deployment
 
 - Coolify on a VPS hosts the static frontend, the API container and Postgres.
+- **Healthcheck:** Coolify's healthcheck targets `GET /api/health`: unauthenticated, `200 {"status":"ok"}` while Postgres answers `SELECT 1`, `503 {"status":"unavailable"}` otherwise (cause logged, never returned).
 - **Same origin:** the proxy serves the static frontend at `/` and forwards `/api` to Express. No CORS.
 - **Backups:** daily Postgres backups through Coolify to S3-compatible storage outside the VPS (e.g. Backblaze B2, Cloudflare R2), with 30-day retention.
 
