@@ -1,9 +1,20 @@
-import { Alert, Box, Button, Modal, Switch, Text } from "@mantine/core";
+import {
+  Alert,
+  Box,
+  Button,
+  Group,
+  Modal,
+  SegmentedControl,
+  Switch,
+  Text,
+} from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import type { ColorScheme } from "@mensal/shared";
 import { IconSettings } from "@tabler/icons-react";
+import { useId } from "react";
 import { errorMessage } from "./api-error.ts";
 import headerButton from "./header-button.module.css";
-import { usePreference } from "./session.ts";
+import { usePreference, type Preference } from "./session.ts";
 import classes from "./settings.module.css";
 
 /**
@@ -20,6 +31,11 @@ export function useShowSummary() {
  */
 export function useConfirmStatusChanges() {
   return usePreference("confirmStatusChanges");
+}
+
+/** The app's theme (Tema): a preference of the account (PRD §3.5). */
+function useColorSchemePreference() {
+  return usePreference("colorScheme");
 }
 
 /** Header button that opens the settings modal. */
@@ -60,12 +76,31 @@ const switchProps = {
   },
 } as const;
 
+const colorSchemes: { value: ColorScheme; label: string }[] = [
+  { value: "dark", label: "Escuro" },
+  { value: "light", label: "Claro" },
+  { value: "auto", label: "Automático" },
+];
+
 function SettingsForm() {
+  const themeLabel = useId();
+  const [colorScheme, setColorScheme, themeFailure] =
+    useColorSchemePreference();
   const [showSummary, setShowSummary, summaryFailure] = useShowSummary();
   const [confirmStatusChanges, setConfirmStatusChanges, confirmFailure] =
     useConfirmStatusChanges();
-  // The Alert reports the latest change only: starting one forgets the other.
-  const failure = summaryFailure ?? confirmFailure;
+  const failures: Record<Preference, typeof themeFailure> = {
+    colorScheme: themeFailure,
+    showSummary: summaryFailure,
+    confirmStatusChanges: confirmFailure,
+  };
+  // The Alert reports the latest change only: starting one forgets the others.
+  const failure = themeFailure ?? summaryFailure ?? confirmFailure;
+  function forgetOtherFailures(changing: Preference) {
+    for (const [preference, other] of Object.entries(failures)) {
+      if (preference !== changing) other?.dismiss();
+    }
+  }
   return (
     <Box>
       {failure && (
@@ -76,12 +111,31 @@ function SettingsForm() {
           {errorMessage(failure.error)}
         </Alert>
       )}
+      <Group
+        className={classes.row}
+        justify="space-between"
+        wrap="nowrap"
+        gap="lg"
+      >
+        <Text id={themeLabel} fz="md">
+          Tema
+        </Text>
+        <SegmentedControl
+          aria-labelledby={themeLabel}
+          data={colorSchemes}
+          value={colorScheme}
+          onChange={(to) => {
+            forgetOtherFailures("colorScheme");
+            setColorScheme(to);
+          }}
+        />
+      </Group>
       <Switch
         {...switchProps}
         label="Mostrar resumo de entradas e saídas"
         checked={showSummary}
         onChange={(event) => {
-          confirmFailure?.dismiss();
+          forgetOtherFailures("showSummary");
           setShowSummary(event.currentTarget.checked);
         }}
       />
@@ -90,7 +144,7 @@ function SettingsForm() {
         label="Confirmar antes de liquidar, pular ou voltar uma conta para pendente"
         checked={confirmStatusChanges}
         onChange={(event) => {
-          summaryFailure?.dismiss();
+          forgetOtherFailures("confirmStatusChanges");
           setConfirmStatusChanges(event.currentTarget.checked);
         }}
       />

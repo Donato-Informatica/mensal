@@ -26,7 +26,8 @@ export function App({
     <MantineProvider
       theme={theme}
       cssVariablesResolver={cssVariablesResolver}
-      forceColorScheme="dark"
+      // Until the account's own theme is known (PRD §3.5).
+      defaultColorScheme="dark"
     >
       <DatesProvider settings={{ locale: "pt-br" }}>
         <QueryClientProvider client={queryClient}>

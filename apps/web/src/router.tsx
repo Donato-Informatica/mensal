@@ -11,6 +11,7 @@ import { redirectFor, type Access } from "./access.ts";
 import type { ApiClient } from "./api-client.ts";
 import type { AuthClient } from "./auth-client.ts";
 import { AwaitingApproval } from "./awaiting-approval.tsx";
+import { useAccountColorScheme } from "./color-scheme.ts";
 import { ForgotPassword } from "./forgot-password.tsx";
 import { Month } from "./month.tsx";
 import { periodQuery } from "./period-query.ts";
@@ -29,7 +30,10 @@ interface RouterContext {
 }
 
 const root = createRootRouteWithContext<RouterContext>()({
-  component: Outlet,
+  component: function Root() {
+    useAccountColorScheme();
+    return <Outlet />;
+  },
 });
 
 /** A layout route that only lets in `area` visitors, sending the rest home. */

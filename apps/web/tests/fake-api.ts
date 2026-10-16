@@ -1,6 +1,7 @@
 import {
   applyStatusChange,
   clampDueDate,
+  ColorSchemeSchema,
   currentPeriod,
   editRefusal,
   isActive,
@@ -19,14 +20,13 @@ import {
   type Recurrence,
 } from "@mensal/shared";
 
-import type { Preference } from "../src/session.ts";
+import type { Preferences } from "../src/session.ts";
 
-type Preferences = Record<Preference, boolean>;
-
-/** A new account's preferences (PRD §3.5): all on. */
+/** A new account's preferences (PRD §3.5): all on, in the dark theme. */
 const defaultPreferences: Preferences = {
   showSummary: true,
   confirmStatusChanges: true,
+  colorScheme: "dark",
 };
 
 interface Account {
@@ -89,14 +89,26 @@ export function fakeApi() {
   /**
    * POST /api/auth/update-user: the user's own preferences. Anything else,
    * such as `approved`, is ignored, as Better-Auth does for fields that are
-   * not `input`.
+   * not `input`. A theme other than dark, light or auto is rejected, as the
+   * API's validator does, and nothing changes.
    */
   function updateUser(body: Record<string, unknown>): Response {
     if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
-    for (const preference of Object.keys(defaultPreferences) as Preference[]) {
-      const value = body[preference];
-      if (typeof value === "boolean") signedIn.preferences[preference] = value;
+    const { showSummary, confirmStatusChanges } = body;
+    const colorScheme = ColorSchemeSchema.optional().safeParse(
+      body.colorScheme
+    );
+    if (!colorScheme.success) {
+      return json(400, { code: "VALIDATION_ERROR", message: "Invalid option" });
     }
+    const { preferences } = signedIn;
+    if (typeof showSummary === "boolean") {
+      preferences.showSummary = showSummary;
+    }
+    if (typeof confirmStatusChanges === "boolean") {
+      preferences.confirmStatusChanges = confirmStatusChanges;
+    }
+    if (colorScheme.data) preferences.colorScheme = colorScheme.data;
     return json(200, { status: true });
   }
 

@@ -10,6 +10,7 @@ import {
   useNavigate,
   useRouteContext,
 } from "@tanstack/react-router";
+import type { ColorScheme } from "@mensal/shared";
 import { unwrap, type AuthResult } from "./api-error.ts";
 import type { AuthClient } from "./auth-client.ts";
 
@@ -36,8 +37,15 @@ export function useSession() {
   return session;
 }
 
-/** A preference (PRD §3.5), kept on the account's Better-Auth user (ADR-0002). */
-export type Preference = "showSummary" | "confirmStatusChanges";
+/** The preferences (PRD §3.5), kept on the account's Better-Auth user (ADR-0002). */
+export interface Preferences {
+  showSummary: boolean;
+  confirmStatusChanges: boolean;
+  colorScheme: ColorScheme;
+}
+
+/** A preference, by name. */
+export type Preference = keyof Preferences;
 
 /** Why the newest save of a preference failed; `dismiss` forgets it. */
 export interface SaveFailure {
@@ -46,8 +54,8 @@ export interface SaveFailure {
 }
 
 /** One save of a preference: the value sent, numbered in the order started. */
-interface Save {
-  to: boolean;
+interface Save<P extends Preference> {
+  to: Preferences[P];
   id: number;
 }
 
@@ -55,24 +63,29 @@ interface Save {
  * What every screen's saves of one preference share: the newest one's number,
  * and the value the account holds as far as the app has heard.
  */
-interface Saves {
+interface Saves<P extends Preference> {
   newest: number;
-  saved: boolean;
+  saved: Preferences[P];
 }
 
-const savesByClient = new WeakMap<
-  QueryClient,
-  Partial<Record<Preference, Saves>>
->();
+type SavesByPreference = { [P in Preference]?: Saves<P> };
 
-function savesOf(
+const savesByClient = new WeakMap<QueryClient, SavesByPreference>();
+
+function savesOf<P extends Preference>(
   queryClient: QueryClient,
-  preference: Preference,
-  value: boolean
-): Saves {
-  const byPreference = savesByClient.get(queryClient) ?? {};
+  preference: P,
+  value: Preferences[P]
+): Saves<P> {
+  const byPreference: SavesByPreference = savesByClient.get(queryClient) ?? {};
   savesByClient.set(queryClient, byPreference);
-  return (byPreference[preference] ??= { newest: 0, saved: value });
+  const saves: Saves<P> = byPreference[preference] ?? {
+    newest: 0,
+    saved: value,
+  };
+  // TypeScript cannot tie a generic key to its own entry's type on a write.
+  byPreference[preference] = saves as SavesByPreference[P];
+  return saves;
 }
 
 /**
@@ -82,15 +95,16 @@ function savesOf(
  * replaced is neither rolled back nor reported. The third item is the newest
  * save's failure, for screens that report it.
  */
-export function usePreference(preference: Preference) {
+export function usePreference<P extends Preference>(preference: P) {
   const { authClient } = useRouteContext({ from: rootRouteId });
   const queryClient = useQueryClient();
   const { queryKey } = sessionQuery(authClient);
   const mutationKey = ["preference", preference];
-  const value = useSession().user[preference];
+  const preferences: Preferences = useSession().user;
+  const value = preferences[preference];
   const saves = savesOf(queryClient, preference, value);
 
-  function show(to: boolean) {
+  function show(to: Preferences[P]) {
     queryClient.setQueryData(
       queryKey,
       (session) =>
@@ -100,7 +114,7 @@ export function usePreference(preference: Preference) {
 
   const save = useMutation({
     mutationKey,
-    mutationFn: async ({ to }: Save) =>
+    mutationFn: async ({ to }: Save<P>) =>
       unwrap(await authClient.updateUser({ [preference]: to })),
     onMutate: async ({ to }) => {
       // A refetch already on its way would land the old value over this one.
@@ -118,7 +132,7 @@ export function usePreference(preference: Preference) {
     },
   });
 
-  function setValue(to: boolean) {
+  function setValue(to: Preferences[P]) {
     // With no save on its way, what shows is what the account holds.
     if (queryClient.isMutating({ mutationKey }) === 0) saves.saved = value;
     saves.newest += 1;

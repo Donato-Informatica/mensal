@@ -112,6 +112,7 @@ describe("settings", () => {
       expect(api.preferencesOf(email)).toEqual({
         showSummary: false,
         confirmStatusChanges: false,
+        colorScheme: "dark",
       })
     );
   });
