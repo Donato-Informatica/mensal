@@ -30,7 +30,7 @@ export function createApp({
   log = console.error,
   activity = consoleActivity,
 }: AppOptions) {
-  const record = stamping(activity, now);
+  const record = stamping(activity, now, log);
   const app = express();
 
   // Security headers on every response, and no X-Powered-By (PRD §8.6).

@@ -11,7 +11,10 @@ export interface AuthOptions {
   /** Public origin the API is served from, e.g. `https://mensal.example`. */
   baseURL: string;
   secret: string;
-  /** Where the password-reset links are written; the console by default. */
+  /**
+   * Where the password-reset links, and any failure of the activity log, are
+   * written; the console by default.
+   */
   log?: Log;
   /** Better-Auth's per-IP rate limiter on `/api/auth`; on by default. */
   rateLimit?: boolean;
@@ -38,7 +41,7 @@ export function createAuth({
   now = () => new Date(),
   activity = consoleActivity,
 }: AuthOptions) {
-  const record = stamping(activity, now);
+  const record = stamping(activity, now, log);
   return betterAuth({
     baseURL,
     secret,

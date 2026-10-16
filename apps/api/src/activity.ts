@@ -3,6 +3,7 @@ import type {
   OccurrenceStatus,
   RecurrenceEdit,
 } from "@mensal/shared";
+import type { Log } from "./log.ts";
 
 /**
  * Who did what to which item, and when (PRD §8.7): one line of the operator's
@@ -24,10 +25,20 @@ export type UnstampedEvent = Unstamped<ActivityEvent>;
 
 type Unstamped<Event> = Event extends unknown ? Omit<Event, "at"> : never;
 
-/** `activity`, stamping each event with the time `now` reads, in UTC ISO. */
-export function stamping(activity: Activity, now: () => Date) {
+/**
+ * `activity`, stamping each event with the time `now` reads, in UTC ISO. It
+ * never throws: the write it reports has already succeeded, so a failure is
+ * written to `log` instead.
+ */
+export function stamping(activity: Activity, now: () => Date, log: Log) {
   return (event: UnstampedEvent) => {
-    activity({ at: now().toISOString(), ...event });
+    try {
+      activity({ at: now().toISOString(), ...event });
+    } catch (error) {
+      log(
+        `Activity log failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`
+      );
+    }
   };
 }
 

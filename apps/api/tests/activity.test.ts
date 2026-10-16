@@ -288,6 +288,36 @@ describe("the activity log (PRD §8.7)", () => {
   });
 });
 
+describe("a broken activity log (PRD §8.7)", () => {
+  it("fails no write: the error goes to the log, and the answer is the usual one", async () => {
+    const logged: string[] = [];
+    const broken = await startApi({
+      activity: () => {
+        throw new Error("the activity sink is broken");
+      },
+      log: (message) => logged.push(message),
+    });
+    try {
+      const { cookie, email } = await signUp(broken);
+      await approve(broken, email);
+
+      const response = await request(broken, "/api/v1/occurrences", {
+        cookie,
+        body: oneOff,
+      });
+
+      expect(response.status).toBe(201);
+      expect(await response.json()).toMatchObject({ status: "PENDING" });
+      expect(logged).toEqual([
+        expect.stringContaining("the activity sink is broken"),
+        expect.stringContaining("the activity sink is broken"),
+      ]);
+    } finally {
+      await broken.close();
+    }
+  });
+});
+
 const rentInput = {
   direction: "OUTFLOW",
   description: "Aluguel",
