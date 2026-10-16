@@ -14,7 +14,7 @@ import { IconSettings } from "@tabler/icons-react";
 import { useId } from "react";
 import { errorMessage } from "./api-error.ts";
 import headerButton from "./header-button.module.css";
-import { usePreference, type Preference } from "./session.ts";
+import { usePreference, type Preference, type SaveFailure } from "./session.ts";
 import classes from "./settings.module.css";
 
 /**
@@ -31,11 +31,6 @@ export function useShowSummary() {
  */
 export function useConfirmStatusChanges() {
   return usePreference("confirmStatusChanges");
-}
-
-/** The app's theme (Tema): a preference of the account (PRD §3.5). */
-function useColorSchemePreference() {
-  return usePreference("colorScheme");
 }
 
 /** Header button that opens the settings modal. */
@@ -84,18 +79,19 @@ const colorSchemes: { value: ColorScheme; label: string }[] = [
 
 function SettingsForm() {
   const themeLabel = useId();
+  // The app's theme (Tema), a preference of the account (PRD §3.5).
   const [colorScheme, setColorScheme, themeFailure] =
-    useColorSchemePreference();
+    usePreference("colorScheme");
   const [showSummary, setShowSummary, summaryFailure] = useShowSummary();
   const [confirmStatusChanges, setConfirmStatusChanges, confirmFailure] =
     useConfirmStatusChanges();
-  const failures: Record<Preference, typeof themeFailure> = {
+  const failures: Record<Preference, SaveFailure | undefined> = {
     colorScheme: themeFailure,
     showSummary: summaryFailure,
     confirmStatusChanges: confirmFailure,
   };
   // The Alert reports the latest change only: starting one forgets the others.
-  const failure = themeFailure ?? summaryFailure ?? confirmFailure;
+  const failure = Object.values(failures).find(Boolean);
   function forgetOtherFailures(changing: Preference) {
     for (const [preference, other] of Object.entries(failures)) {
       if (preference !== changing) other?.dismiss();

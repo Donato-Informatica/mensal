@@ -427,17 +427,18 @@ function OccurrenceList({
   onStatusChange: (request: StatusChangeRequest) => void;
 }) {
   const id = useId();
+  const needsYouGroup = needsYou(title);
   return (
     <Stack component="section" aria-labelledby={id} gap="sm">
       <Title
         order={2}
         id={id}
         fz="sm"
-        c={needsYou(title) ? "var(--mensal-color-needs-you-label)" : "dimmed"}
+        c={needsYouGroup ? "var(--mensal-color-needs-you-label)" : "dimmed"}
         bg={
-          needsYou(title) ? "var(--mensal-color-needs-you-fill)" : "transparent"
+          needsYouGroup ? "var(--mensal-color-needs-you-fill)" : "transparent"
         }
-        className={needsYou(title) ? classes.needsYouLabel : undefined}
+        className={needsYouGroup ? classes.needsYouLabel : undefined}
         tt="uppercase"
         fw={600}
         lts="1.5px"
@@ -449,7 +450,7 @@ function OccurrenceList({
         withBorder
         radius="lg"
         style={
-          needsYou(title)
+          needsYouGroup
             ? { borderColor: "var(--mensal-color-needs-you-edge)" }
             : undefined
         }
