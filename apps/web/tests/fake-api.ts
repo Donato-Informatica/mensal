@@ -357,17 +357,32 @@ export function fakeApi() {
       signedIn = account;
       return json(200, { redirect: false, ...sessionOf(account) });
     },
-    "POST /api/auth/sign-up/email": ({ name, email, password }) => {
+    // Better-Auth takes an `input` preference at sign-up too, so a theme sent
+    // here would land on the new account.
+    "POST /api/auth/sign-up/email": ({
+      name,
+      email,
+      password,
+      colorScheme,
+    }) => {
       if (accounts.has(email ?? "")) {
         return json(422, {
           code: "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL",
           message: "User already exists. Use another email.",
         });
       }
+      const scheme = ColorSchemeSchema.optional().safeParse(colorScheme);
+      if (!scheme.success) {
+        return json(400, {
+          code: "VALIDATION_ERROR",
+          message: "Invalid option",
+        });
+      }
       signedIn = api.addAccount({
         name: name ?? "",
         email: email ?? "",
         password: password ?? "",
+        ...(scheme.data && { colorScheme: scheme.data }),
       });
       return json(200, sessionOf(signedIn));
     },

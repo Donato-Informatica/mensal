@@ -186,6 +186,12 @@ export const theme = createTheme({
   },
 });
 
+/**
+ * Each scheme's canvas (DESIGN.md: canvas, light-canvas), also the colour of
+ * the browser's own chrome. `index.html` repeats them for first paint.
+ */
+export const canvas = { dark: dark[7], light: "#f5f5f5" } as const;
+
 const paperGrayVariables = Object.fromEntries(
   paperGray.map((shade, index) => [`--mantine-color-gray-${index}`, shade])
 );
@@ -225,7 +231,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
   },
   light: {
     ...paperGrayVariables,
-    "--mantine-color-body": "#f5f5f5", // light-canvas
+    "--mantine-color-body": canvas.light,
     "--mantine-color-text": "#333333", // light-body
     "--mantine-color-bright": "#0a0a0a", // light-ink
     "--mantine-color-dimmed": "#666666", // light-muted

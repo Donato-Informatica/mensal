@@ -8,6 +8,7 @@ import { RouterProvider } from "@tanstack/react-router";
 import { useState } from "react";
 import type { ApiClient } from "./api-client.ts";
 import type { AuthClient } from "./auth-client.ts";
+import { colorSchemeCache } from "./color-scheme.ts";
 import { createAppRouter } from "./router.tsx";
 import { cssVariablesResolver, theme } from "./theme.ts";
 
@@ -26,7 +27,9 @@ export function App({
     <MantineProvider
       theme={theme}
       cssVariablesResolver={cssVariablesResolver}
-      // Until the account's own theme is known (PRD §3.5).
+      // Until the account's own theme is known, the device's last one, or
+      // Escuro without one (PRD §3.5).
+      colorSchemeManager={colorSchemeCache}
       defaultColorScheme="dark"
     >
       <DatesProvider settings={{ locale: "pt-br" }}>
