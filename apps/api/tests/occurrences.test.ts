@@ -293,6 +293,24 @@ describe("PATCH /api/v1/occurrences/:id/status", () => {
     });
   });
 
+  it("leaves a virtual occurrence virtual when its status stays pending", async () => {
+    const { cookie, userId } = await approvedUser();
+    const rent = await insertRecurrence(api.db, { userId });
+    const id = `virtual_${rent.id}_2026-10-01`;
+
+    const response = await changeStatus(cookie, id, { status: "PENDING" });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      id,
+      isVirtual: true,
+      status: "PENDING",
+    });
+    expect(await itemsOf(cookie, "2026-10")).toEqual([
+      expect.objectContaining({ id, isVirtual: true }),
+    ]);
+  });
+
   it.each([
     ["an unknown status", { status: "OVERDUE" }, "status"],
     ["a zero amount", { status: "SETTLED", amount: 0 }, "amount"],
@@ -717,24 +735,42 @@ describe("PATCH /api/v1/occurrences/:id", () => {
     });
   });
 
-  it("materializes a virtual occurrence on an edit that changes nothing", async () => {
-    const { cookie, userId } = await approvedUser();
-    const rent = await insertRecurrence(api.db, { userId });
-    const id = `virtual_${rent.id}_2026-10-01`;
+  it.each([
+    ["sets nothing", {}],
+    ["sets what it already has", { description: "Aluguel", amount: 220000 }],
+  ])(
+    "leaves a virtual occurrence virtual on an edit that %s",
+    async (_, body) => {
+      const { cookie, userId } = await approvedUser();
+      const rent = await insertRecurrence(api.db, {
+        userId,
+        description: "Aluguel",
+        defaultAmount: 220000,
+        dueDay: 10,
+      });
+      const id = `virtual_${rent.id}_2026-10-01`;
 
-    const response = await edit(cookie, id, {});
+      const response = await edit(cookie, id, body);
 
-    expect(response.status).toBe(200);
-    const materialized = await response.json();
-    expect(materialized).toMatchObject({
-      recurrenceId: rent.id,
-      description: "Aluguel",
-      amount: 220000,
-    });
-    expect(await itemsOf(cookie, "2026-10")).toEqual([
-      expect.objectContaining({ id: materialized.id, isVirtual: false }),
-    ]);
-  });
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        id,
+        isVirtual: true,
+        recurrenceId: rent.id,
+        direction: "OUTFLOW",
+        description: "Aluguel",
+        status: "PENDING",
+        amount: 220000,
+        period: "2026-10-01",
+        dueDate: "2026-10-10",
+        settledAt: null,
+        notes: null,
+      });
+      expect(await itemsOf(cookie, "2026-10")).toEqual([
+        expect.objectContaining({ id, isVirtual: true }),
+      ]);
+    }
+  );
 });
 
 const repair = {

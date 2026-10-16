@@ -219,13 +219,26 @@ describe("the activity log (PRD §8.7)", () => {
       description: "Conserto do carro",
     });
 
-    const response = await request(api, `/api/v1/occurrences/${repair.id}`, {
-      cookie,
-      method: "PATCH",
-      body: { description: "Conserto do carro" },
-    });
+    const rent = await insertRecurrence(api.db, { userId });
+    const virtualId = `virtual_${rent.id}_2026-10-01`;
 
-    expect(response.status).toBe(200);
+    const responses = await Promise.all([
+      request(api, `/api/v1/occurrences/${repair.id}`, {
+        cookie,
+        method: "PATCH",
+        body: { description: "Conserto do carro" },
+      }),
+      request(api, `/api/v1/occurrences/${virtualId}`, {
+        cookie,
+        method: "PATCH",
+        body: {},
+      }),
+      changeStatus(cookie, virtualId, { status: "PENDING" }),
+    ]);
+
+    expect(responses.map((response) => response.status)).toEqual([
+      200, 200, 200,
+    ]);
     expect(activityOf(userId)).toEqual([]);
   });
 

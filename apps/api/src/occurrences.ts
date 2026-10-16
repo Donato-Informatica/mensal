@@ -44,9 +44,9 @@ export function occurrencesRouter({
   /**
    * Answers with the user's occurrence `id` once the fields `change` returns
    * are set, all in one transaction: a Refusal it throws rolls everything
-   * back, the materialization of a virtual occurrence included. Once it
-   * commits, the change is logged as `describe` tells, unless it changed
-   * nothing.
+   * back, the materialization of a virtual occurrence included. A change that
+   * sets nothing new is no mutation, so a virtual occurrence stays virtual
+   * (ADR-0001). Once it commits, the change is logged as `describe` tells.
    */
   async function changeOccurrence<Changes extends OccurrenceChanges>(
     res: Response,
@@ -67,8 +67,10 @@ export function occurrencesRouter({
         const from = materialized ? { from: id } : {};
         const values = change(occurrence);
         const fields = changedFields(occurrence, values);
-        // Nothing changes: the occurrence as it is, if only just materialized.
-        if (fields.length === 0) return { changed: occurrence, fields, from };
+        if (fields.length === 0) {
+          if (materialized) throw new Unchanged(asVirtual(id, occurrence));
+          return { changed: occurrence, fields, from };
+        }
         const [updated] = await tx
           .update(occurrences)
           .set(values)
@@ -79,6 +81,10 @@ export function occurrencesRouter({
       if (fields.length > 0) record({ ...describe(changed, fields), ...from });
       res.json(changed);
     } catch (error) {
+      if (error instanceof Unchanged) {
+        res.json(error.virtual);
+        return;
+      }
       if (!(error instanceof Refusal)) throw error;
       res.status(error.status).json({ code: error.code });
     }
@@ -215,6 +221,48 @@ async function occurrenceToChange(tx: Transaction, userId: string, id: string) {
     .for("update");
   if (!occurrence) throw new Refusal(404, "OCCURRENCE_NOT_FOUND");
   return { occurrence, materialized };
+}
+
+/**
+ * Thrown to roll back the materialization of a virtual occurrence that a
+ * write left as it was, answering with it still virtual.
+ */
+class Unchanged extends Error {
+  readonly virtual: ReturnType<typeof asVirtual>;
+  constructor(virtual: ReturnType<typeof asVirtual>) {
+    super("unchanged");
+    this.virtual = virtual;
+  }
+}
+
+/** `occurrence`, just materialized from `id`, as the virtual one it was. */
+function asVirtual(
+  id: string,
+  {
+    recurrenceId,
+    direction,
+    description,
+    status,
+    amount,
+    period,
+    dueDate,
+    settledAt,
+    notes,
+  }: PersistedOccurrence
+) {
+  return {
+    id,
+    isVirtual: true,
+    recurrenceId,
+    direction,
+    description,
+    status,
+    amount,
+    period,
+    dueDate,
+    settledAt,
+    notes,
+  };
 }
 
 /** A field a change of type `Changes` may set. */

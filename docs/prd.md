@@ -208,7 +208,7 @@ Only when $P$ is the current period, the payload also lists every overdue occurr
 
 1. **One occurrence per recurrence per period:** enforced by the partial unique index in 3.2.
 2. **Materialization on first touch:**
-   - Any mutation of a virtual occurrence (status, amount, due date, notes) materializes it.
+   - Any mutation of a virtual occurrence (status, amount, due date, notes) materializes it. A write that changes nothing is no mutation: the occurrence stays virtual and comes back as it is.
    - The API accepts the virtual id on `PATCH /occurrences/:id` and `PATCH /occurrences/:id/status` and performs an idempotent upsert (`INSERT ... ON CONFLICT` on the unique index). It copies `direction`, `description`, `defaultAmount` and the clamped `dueDate` from the recurrence.
 3. **Snapshot on materialization:** editing a recurrence never changes persisted occurrences. A `defaultAmount` change in June leaves May's persisted occurrence untouched.
 4. **Deleting and ending a recurrence:**
