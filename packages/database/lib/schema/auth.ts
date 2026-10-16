@@ -17,6 +17,7 @@ export const users = pgTable("users", {
   confirmStatusChanges: boolean("confirm_status_changes")
     .default(true)
     .notNull(),
+  colorScheme: text("color_scheme").default("dark").notNull(),
 });
 
 export const sessions = pgTable(

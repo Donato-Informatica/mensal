@@ -22,6 +22,13 @@ const NotesInputSchema = z
   .nullable()
   .transform((notes) => notes || null);
 
+/**
+ * The app's theme, a preference of the account (PRD §3.5): Escuro, Claro, or
+ * Automático, which follows the device's own setting.
+ */
+export const ColorSchemeSchema = z.enum(["dark", "light", "auto"]);
+export type ColorScheme = z.infer<typeof ColorSchemeSchema>;
+
 export const DirectionSchema = z.enum(["INFLOW", "OUTFLOW"]);
 export type Direction = z.infer<typeof DirectionSchema>;
 

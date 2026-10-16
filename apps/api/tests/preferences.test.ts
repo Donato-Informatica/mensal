@@ -23,12 +23,13 @@ async function sessionUser(cookie: string) {
 }
 
 describe("preferences (PRD §3.5)", () => {
-  it("are all on for a new user", async () => {
+  it("are all on, in the dark theme, for a new user", async () => {
     const { cookie } = await signUp(api);
 
     expect(await sessionUser(cookie)).toMatchObject({
       showSummary: true,
       confirmStatusChanges: true,
+      colorScheme: "dark",
     });
   });
 
@@ -45,6 +46,42 @@ describe("preferences (PRD §3.5)", () => {
       showSummary: false,
       confirmStatusChanges: false,
     });
+  });
+
+  it.each(["light", "auto", "dark"])(
+    "include the theme, which the user can set to %s",
+    async (colorScheme) => {
+      const { cookie } = await signUp(api);
+      // From another value, so "dark" too is a change.
+      await request(api, "/api/auth/update-user", {
+        cookie,
+        body: { colorScheme: colorScheme === "light" ? "auto" : "light" },
+      });
+
+      const response = await request(api, "/api/auth/update-user", {
+        cookie,
+        body: { colorScheme },
+      });
+
+      expect(response.status).toBe(200);
+      expect((await sessionUser(cookie)).colorScheme).toBe(colorScheme);
+    }
+  );
+
+  it("reject a theme that is not dark, light or auto", async () => {
+    const { cookie } = await signUp(api);
+    await request(api, "/api/auth/update-user", {
+      cookie,
+      body: { colorScheme: "light" },
+    });
+
+    const response = await request(api, "/api/auth/update-user", {
+      cookie,
+      body: { colorScheme: "sepia" },
+    });
+
+    expect(response.status).toBe(400);
+    expect((await sessionUser(cookie)).colorScheme).toBe("light");
   });
 
   it("leave approval out of the user's reach", async () => {
