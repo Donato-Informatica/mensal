@@ -1,0 +1,60 @@
+# Production stack for Coolify (PRD §8.4): Postgres, the API and the web app.
+# In Coolify: new resource -> Docker Compose, compose file `/docker-compose.prod.yml`,
+# then set the domain of the `web` service. Only `web` is public; it serves the
+# static frontend and forwards /api to the API, so the browser sees one origin.
+#
+# Coolify fills the SERVICE_* magic variables: passwords are generated once
+# and kept, SERVICE_URL_WEB is the domain you assign to `web`.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: mensal
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+      POSTGRES_DB: mensal
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mensal -d mensal"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://mensal:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/mensal
+      # Must be the https:// origin of `web` (the API refuses to boot otherwise).
+      BETTER_AUTH_URL: ${SERVICE_URL_WEB}
+      BETTER_AUTH_SECRET: ${SERVICE_PASSWORD_64_AUTH}
+      PORT: 3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000/api/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      - SERVICE_URL_WEB_80
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
