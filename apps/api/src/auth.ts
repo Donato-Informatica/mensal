@@ -109,6 +109,10 @@ export function createAuth({
     plugins: [openAPI({ disableDefaultReference: true })],
     advanced: {
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax" },
+      // Own cookie name: another app on a sibling subdomain can set a
+      // `better-auth.*` cookie for the shared parent domain, and the browser
+      // sends that one first, so the session reads as signed out.
+      cookiePrefix: "mensal",
       // Without `trustedProxies` Better-Auth accepts only a single-value
       // X-Forwarded-For: a chain or a missing header puts every client in one
       // shared bucket, so the proxy must overwrite the header (ticket 02).

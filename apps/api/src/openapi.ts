@@ -314,7 +314,7 @@ export function buildOpenApiSpec() {
         cookieAuth: {
           type: "apiKey",
           in: "cookie",
-          name: "better-auth.session_token",
+          name: "mensal.session_token",
         },
       },
     },
