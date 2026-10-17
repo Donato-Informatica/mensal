@@ -8,6 +8,7 @@ import {
   type Activity,
 } from "./activity.ts";
 import type { Auth } from "./auth.ts";
+import { docsRouter } from "./docs.ts";
 import { errorHandler } from "./error-handler.ts";
 import { healthRouter } from "./health.ts";
 import type { Log } from "./log.ts";
@@ -45,6 +46,9 @@ export function createApp({
 
   // Unauthenticated, for the deployment healthcheck (PRD §8.4).
   app.use("/api/health", healthRouter({ db, log }));
+
+  // Unauthenticated: the API description and its reference UI.
+  app.use("/api", docsRouter({ auth }));
 
   const v1 = express.Router();
   v1.use(requireApprovedUser(auth));

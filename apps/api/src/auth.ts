@@ -3,6 +3,7 @@ import { schema, type Database } from "@mensal/database";
 import { ColorSchemeSchema, defaultColorScheme } from "@mensal/shared";
 import { betterAuth } from "better-auth";
 import { createAuthMiddleware, getIP, isAPIError } from "better-auth/api";
+import { openAPI } from "better-auth/plugins";
 import {
   activityRecorder,
   consoleActivity,
@@ -103,6 +104,9 @@ export function createAuth({
         },
       },
     },
+    // Describes the sign-in routes for /api/openapi.json; its own reference
+    // page loads scripts from a CDN, so it is off.
+    plugins: [openAPI({ disableDefaultReference: true })],
     advanced: {
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax" },
       // Without `trustedProxies` Better-Auth accepts only a single-value

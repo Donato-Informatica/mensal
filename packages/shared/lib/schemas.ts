@@ -179,3 +179,35 @@ export const NewOneOffSchema = z
     { path: ["dueDate"], message: "The due date is outside the period" }
   );
 export type NewOneOff = z.output<typeof NewOneOffSchema>;
+
+/** An occurrence of a period, persisted or virtual (PRD §4). */
+export const PeriodItemSchema = z.object({
+  id: z.string(),
+  isVirtual: z.boolean(),
+  recurrenceId: z.uuid().nullable(),
+  direction: DirectionSchema,
+  description: z.string(),
+  status: OccurrenceStatusSchema,
+  amount: AmountSchema.nullable(),
+  period: PeriodSchema,
+  dueDate: DateSchema.nullable(),
+  settledAt: DateSchema.nullable(),
+  notes: z.string().nullable(),
+  overdue: z.boolean(),
+});
+
+/** Totals in BRL cents per direction; skipped occurrences never count. */
+export const PeriodSummarySchema = z.object({
+  inflowExpected: z.int(),
+  inflowSettled: z.int(),
+  outflowExpected: z.int(),
+  outflowSettled: z.int(),
+});
+
+/** The body of `GET /periods/:yyyy-mm` (PRD §4, §6.2). */
+export const PeriodPayloadSchema = z.object({
+  period: PeriodSchema,
+  summary: PeriodSummarySchema,
+  items: z.array(PeriodItemSchema),
+  overdueFromPreviousPeriods: z.array(PeriodItemSchema),
+});

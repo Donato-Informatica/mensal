@@ -389,6 +389,15 @@ A minimal activity log for the operator: who did what to which item, and when. I
 - **Actions:** `occurrence.create` (one-off), `occurrence.edit`, `occurrence.status` (with the new `status`), `occurrence.delete`, `recurrence.create`, `recurrence.edit` (ending one shows `endPeriod` in `fields`), `recurrence.delete`, `user.sign-up`, `user.sign-in`, `user.sign-in-failed`. Only successful writes are logged; reads, no-op edits and refused requests are not (unexpected errors already reach the error handler, §8.6).
 - **Sink:** an injectable `activity` option on the app and on Better-Auth, writing to the console by default. No log provider in the MVP; adding one later replaces the default sink. The free-text operator log (errors, healthcheck, reset links) is unchanged.
 
+### 8.8 API Documentation
+
+The API describes itself in OpenAPI 3.1, in English, for trying the endpoints and importing them into other tools such as Postman.
+
+- **`GET /api/openapi.json`** is the description: `/api/health`, every `/api/v1` operation and Better-Auth's `/api/auth` routes. Request and response schemas come from the Zod schemas of `@mensal/shared`; each operation lists the error codes of §6 it can answer with.
+- **`GET /api/docs`** is the reference page (Scalar, served from the API's own dependencies, not a CDN), where requests can be sent once signed in; it also downloads the description.
+- Both are unauthenticated and hold no user data, and run under the same Content-Security-Policy as every other route (§8.6). Calling `/api/v1` from the page still needs the session cookie and an approved user (§8.2).
+- A test fails when a route is mounted on `/api/v1` without an entry in the description, and checks real responses against the schemas it declares.
+
 ---
 
 ## 9. MVP Milestones and Acceptance Criteria
