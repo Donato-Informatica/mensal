@@ -1,3 +1,8 @@
+# Impeccable's live session injects a localhost <script> into index.html; it must never ship.
+if git diff --cached -U0 -- apps | grep -q '^+.*impeccable-live'; then
+  echo "Commit rejected: staged changes under apps/ add an impeccable-live block (dev-only). Remove it, e.g. from apps/web/index.html." >&2
+  exit 1
+fi
 npx lint-staged
 npm run lint
 npm run lint:boundaries
