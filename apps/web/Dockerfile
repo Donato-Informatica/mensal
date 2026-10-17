@@ -11,6 +11,7 @@ COPY apps/web/package.json apps/web/
 COPY packages/shared/package.json packages/shared/
 RUN npm ci --ignore-scripts
 
+COPY tsconfig.base.json ./
 COPY apps/web apps/web
 COPY packages/shared packages/shared
 RUN npm run build:web
