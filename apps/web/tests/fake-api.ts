@@ -417,6 +417,24 @@ export function fakeApi() {
       accounts.get(email)!.password = newPassword!;
       return json(200, { status: true });
     },
+    // Other devices are not modelled: there is only ever this one.
+    "POST /api/auth/change-password": ({ currentPassword, newPassword }) => {
+      if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+      if (currentPassword !== signedIn.password) {
+        return json(400, {
+          code: "INVALID_PASSWORD",
+          message: "Invalid password",
+        });
+      }
+      if ((newPassword ?? "").length < 8) {
+        return json(400, {
+          code: "PASSWORD_TOO_SHORT",
+          message: "Password too short",
+        });
+      }
+      signedIn.password = newPassword!;
+      return json(200, { token: null, user: sessionOf(signedIn).user });
+    },
     "POST /api/auth/sign-out": () => {
       signedIn = undefined;
       return json(200, { success: true });
@@ -518,6 +536,11 @@ export function fakeApi() {
      */
     resetLinkFor(email: string): string | undefined {
       return resetLinks.get(email);
+    },
+
+    /** The account's password as it stands, to tell whether it changed. */
+    passwordOf(email: string): string | undefined {
+      return accounts.get(email)?.password;
     },
 
     /** Seeds a recurrence for the account, as through Drizzle Studio. */

@@ -113,4 +113,25 @@ describe("rate limiting on /api/auth", () => {
     expect(statuses).toEqual([401, 401, 401, 401, 401, 429]);
     expect(elsewhere.status).toBe(401);
   });
+
+  it("answers the 6th password change within a minute from one address with 429", async () => {
+    const { cookie } = await signUp(limited);
+    const ip = newIp();
+    const statuses = [];
+    for (let attempt = 0; attempt < 6; attempt++)
+      statuses.push(
+        (
+          await request(limited, "/api/auth/change-password", {
+            cookie,
+            body: {
+              currentPassword: "a wrong guess",
+              newPassword: "whatever123",
+            },
+            ip,
+          })
+        ).status
+      );
+
+    expect(statuses).toEqual([400, 400, 400, 400, 400, 429]);
+  });
 });

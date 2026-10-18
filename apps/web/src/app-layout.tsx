@@ -3,6 +3,7 @@ import { IconCalendarMonth, IconRepeat } from "@tabler/icons-react";
 import { Link, useMatchRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import classes from "./app-layout.module.css";
+import { ChangePasswordLink } from "./change-password-link.tsx";
 import headerButton from "./header-button.module.css";
 import { SettingsButton } from "./settings.tsx";
 import { SignOutButton } from "./sign-out-button.tsx";
@@ -48,6 +49,7 @@ export function AppLayout({
               align="flex-start"
             >
               <SettingsButton />
+              <ChangePasswordLink />
               <SignOutButton
                 variant="subtle"
                 color="gray"

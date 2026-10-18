@@ -88,6 +88,8 @@ export function createAuth({
         "/sign-in/email": { window: 60, max: 5 },
         "/sign-up/email": { window: 3600, max: 3 },
         "/request-password-reset": { window: 3600, max: 3 },
+        // It checks the current password, so a stolen session could guess it.
+        "/change-password": { window: 60, max: 5 },
       },
     },
     user: {
@@ -139,6 +141,14 @@ export function createAuth({
       ipAddress: { ipAddressHeaders: ["x-forwarded-for"] },
     },
     hooks: {
+      // A password change always signs the user's other devices out, whatever
+      // the client asks (PRD §8.2).
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path !== "/change-password") return;
+        return {
+          context: { body: { ...ctx.body, revokeOtherSessions: true } },
+        };
+      }),
       after: createAuthMiddleware(async (ctx) => {
         const action = sessionActions[ctx.path];
         if (!action) return;
