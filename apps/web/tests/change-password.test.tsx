@@ -64,6 +64,14 @@ describe("changing the password", () => {
     ).toBeInTheDocument();
   });
 
+  it("marks its header link as the current page", async () => {
+    openApp(api, "/alterar-senha");
+
+    expect(
+      await screen.findByRole("link", { name: "Alterar senha" })
+    ).toHaveAttribute("aria-current", "page");
+  });
+
   it("says when the current password is wrong", async () => {
     openApp(api, "/alterar-senha");
 
@@ -72,6 +80,9 @@ describe("changing the password", () => {
     expect(
       await screen.findByText("Senha atual incorreta.")
     ).toBeInTheDocument();
+    const current = screen.getByLabelText("Senha atual");
+    expect(current).toBeInvalid();
+    expect(current).toHaveFocus();
   });
 
   it("refuses a confirmation that differs from the new password", async () => {
@@ -86,6 +97,9 @@ describe("changing the password", () => {
     expect(
       await screen.findByText("As senhas não conferem.")
     ).toBeInTheDocument();
+    const confirmation = screen.getByLabelText("Confirmar nova senha");
+    expect(confirmation).toBeInvalid();
+    expect(confirmation).toHaveFocus();
     expect(api.passwordOf(email)).toBe("old-horse");
   });
 });

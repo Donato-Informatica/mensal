@@ -9,9 +9,10 @@ import {
 } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
 import { Link, rootRouteId, useRouteContext } from "@tanstack/react-router";
-import { useState } from "react";
-import { errorMessage, unwrap } from "./api-error.ts";
+import { useRef, useState } from "react";
+import { ApiError, errorMessage, unwrap } from "./api-error.ts";
 import { AppLayout } from "./app-layout.tsx";
+import { useSession } from "./session.ts";
 
 /**
  * Replaces the password, proven with the current one. The API then signs the
@@ -40,8 +41,22 @@ export function ChangePassword() {
   );
 }
 
+/** Whether a failure is the current password not being the account's. */
+function isWrongCurrentPassword(error: unknown) {
+  return error instanceof ApiError && error.code === "INVALID_PASSWORD";
+}
+
+/** Focuses a field with its text selected, so typing replaces it. */
+function retype(input: HTMLInputElement | null) {
+  input?.focus();
+  input?.select();
+}
+
 function ChangePasswordForm() {
   const { authClient } = useRouteContext({ from: rootRouteId });
+  const { email } = useSession().user;
+  const currentPassword = useRef<HTMLInputElement>(null);
+  const confirmation = useRef<HTMLInputElement>(null);
   const [mismatch, setMismatch] = useState(false);
   const change = useMutation({
     mutationFn: async (passwords: {
@@ -54,7 +69,12 @@ function ChangePasswordForm() {
           revokeOtherSessions: true,
         })
       ),
+    onError: (error) => {
+      if (isWrongCurrentPassword(error)) retype(currentPassword.current);
+    },
   });
+  // A wrong current password is that field's error; anything else, the form's.
+  const wrongCurrentPassword = isWrongCurrentPassword(change.error);
 
   if (change.isSuccess) {
     return (
@@ -78,6 +98,7 @@ function ChangePasswordForm() {
         const newPassword = String(form.get("newPassword"));
         if (newPassword !== String(form.get("confirmation"))) {
           setMismatch(true);
+          retype(confirmation.current);
           return;
         }
         change.mutate({
@@ -86,17 +107,32 @@ function ChangePasswordForm() {
         });
       }}
     >
+      {/* Tells password managers whose password this is. */}
+      <input
+        type="email"
+        name="username"
+        autoComplete="username"
+        value={email}
+        readOnly
+        hidden
+      />
       <Stack gap="md">
-        {change.error && (
+        {change.error && !wrongCurrentPassword && (
           <Alert color="red" variant="light">
             {errorMessage(change.error)}
           </Alert>
         )}
         <PasswordInput
+          ref={currentPassword}
           label="Senha atual"
           name="currentPassword"
           autoComplete="current-password"
           required
+          error={wrongCurrentPassword && errorMessage(change.error)}
+          aria-invalid={wrongCurrentPassword}
+          onChange={() => {
+            if (wrongCurrentPassword) change.reset();
+          }}
         />
         <PasswordInput
           label="Nova senha"
@@ -105,13 +141,16 @@ function ChangePasswordForm() {
           autoComplete="new-password"
           minLength={8}
           required
+          onChange={() => setMismatch(false)}
         />
         <PasswordInput
+          ref={confirmation}
           label="Confirmar nova senha"
           name="confirmation"
           autoComplete="new-password"
           required
           error={mismatch && "As senhas não conferem."}
+          aria-invalid={mismatch}
           onChange={() => setMismatch(false)}
         />
         <Button type="submit" loading={change.isPending} fullWidth mt="xs">
