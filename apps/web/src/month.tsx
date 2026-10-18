@@ -6,12 +6,14 @@ import {
   CloseButton,
   Group,
   Paper,
+  Popover,
   SimpleGrid,
   Stack,
   Text,
   Title,
   VisuallyHidden,
 } from "@mantine/core";
+import { MonthPicker } from "@mantine/dates";
 import { useHotkeys } from "@mantine/hooks";
 import {
   currentPeriod,
@@ -28,6 +30,7 @@ import {
   IconArrowDownLeft,
   IconArrowUpRight,
   IconCalendarMonth,
+  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
   IconPencil,
@@ -51,6 +54,8 @@ import classes from "./occurrence-row.module.css";
 import { NewOneOffButton } from "./new-one-off.tsx";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
 import { periodQuery } from "./period-query.ts";
+import { monthPickerProps } from "./pickers.ts";
+import { useDocumentTitle } from "./document-title.ts";
 import { RecurrenceActions } from "./recurrence-actions.tsx";
 import type { SaveFailure } from "./session.ts";
 import { useConfirmStatusChanges, useShowSummary } from "./settings.tsx";
@@ -72,6 +77,7 @@ type Failure = { request: StatusChangeRequest; error: unknown };
 export function Month({ period }: { period: string }) {
   const { api } = useRouteContext({ from: rootRouteId });
   const { data } = useSuspenseQuery(periodQuery(api, period));
+  useDocumentTitle(formatPeriod(period));
   // Another month is on its way: this one stays up, dimmed, until it lands.
   const loading = useRouterState({ select: (state) => state.isLoading });
   const [showSummary, setShowSummary, summaryFailure] = useShowSummary();
@@ -181,6 +187,15 @@ function PeriodNavigator() {
       rememberViewedMonth(queryClient, away ? monthOf(target) : undefined);
     }
   }, [queryClient, onMonthScreen, away, target]);
+  const [picking, setPicking] = useState(false);
+  const jumpTo = (picked: string | null) => {
+    setPicking(false);
+    if (picked === null) return;
+    void navigate({
+      to: "/",
+      search: { mes: picked === currentPeriod() ? undefined : monthOf(picked) },
+    });
+  };
   const move = (months: number) =>
     void navigate({
       to: "/",
@@ -231,9 +246,36 @@ function PeriodNavigator() {
           >
             <IconChevronLeft size={20} aria-hidden="true" />
           </ActionIcon>
-          <Title order={1} ta="center">
-            {formatPeriod(target)}
-          </Title>
+          <Popover opened={picking} onChange={setPicking} withArrow>
+            <Popover.Target>
+              <Title order={1} ta="center">
+                <Button
+                  variant="subtle"
+                  color="gray"
+                  h="auto"
+                  px="xs"
+                  fz="inherit"
+                  fw="inherit"
+                  aria-haspopup="dialog"
+                  title="Escolher mês"
+                  rightSection={
+                    <IconChevronDown size={18} aria-hidden="true" />
+                  }
+                  onClick={() => setPicking((open) => !open)}
+                >
+                  {formatPeriod(target)}
+                </Button>
+              </Title>
+            </Popover.Target>
+            <Popover.Dropdown role="dialog" aria-label="Escolher mês">
+              <MonthPicker
+                value={target}
+                onChange={jumpTo}
+                allowDeselect={false}
+                {...monthPickerProps}
+              />
+            </Popover.Dropdown>
+          </Popover>
           <ActionIcon
             variant="surface"
             size={36}

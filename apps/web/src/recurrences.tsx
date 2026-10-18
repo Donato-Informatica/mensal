@@ -7,6 +7,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { useDocumentTitle } from "./document-title.ts";
 import {
   currentPeriod,
   isActive,
@@ -36,6 +37,7 @@ export function Recurrences({ status }: { status: Status }) {
   const { data } = useSuspenseQuery(recurrencesQuery(api, status));
   const navigate = useNavigate();
   const period = currentPeriod();
+  useDocumentTitle("Recorrências");
 
   return (
     <AppLayout action={<NewRecurrenceButton />}>

@@ -371,3 +371,23 @@ describe("returning to the current month", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("tab title and month picker", () => {
+  it("titles the tab after the month and the recurrences screen", async () => {
+    openApp(api, "/?mes=2026-06");
+    await screen.findByRole("heading", { name: "Junho 2026" });
+    expect(document.title).toBe("Mensal | Junho 2026");
+  });
+
+  it("jumps to a month picked from the popup", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    openApp(api, "/");
+    await user.click(
+      await screen.findByRole("button", { name: /Outubro 2026/ })
+    );
+
+    await user.click(await screen.findByRole("button", { name: "Março 2026" }));
+    await screen.findByRole("heading", { name: "Março 2026" });
+    expect(document.title).toBe("Mensal | Março 2026");
+  });
+});
