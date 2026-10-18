@@ -5,9 +5,17 @@
 #
 # Coolify fills the SERVICE_* magic variables: passwords are generated once
 # and kept, SERVICE_URL_WEB is the domain you assign to `web`.
+#
+# Preview deployments: Coolify renames each service (`api` -> `api-pr-42`) and
+# only aliases the new name, so the bare `postgres` and `api` hostnames used
+# below (DATABASE_URL, apps/web/nginx.conf) would stop resolving. Coolify leaves
+# `hostname` alone and Docker resolves it on the stack's network, so each
+# service pins its own. Coolify reads this file from the application's branch
+# (not the PR's): after changing it, use "Reload Compose File" there.
 services:
   postgres:
     image: postgres:17
+    hostname: postgres
     environment:
       POSTGRES_USER: mensal
       POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
@@ -24,6 +32,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    hostname: api
     environment:
       DATABASE_URL: postgres://mensal:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/mensal
       # Must be the https:// origin of `web` (the API refuses to boot otherwise).
