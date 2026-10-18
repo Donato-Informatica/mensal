@@ -21,6 +21,7 @@
     "lint": "eslint .",
     "lint:boundaries": "depcruise packages apps",
     "typecheck": "tsc && npm run typecheck --workspaces --if-present",
+    "migrate": "npm run -w @mensal/database migrate",
     "seed": "npm run -w @mensal/api seed",
     "studio": "npm run -w @mensal/database studio",
     "test": "vitest run",
