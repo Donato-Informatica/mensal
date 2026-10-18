@@ -1,6 +1,7 @@
 import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { chooseFromAccountMenu } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp, settle } from "./open-app.tsx";
 
@@ -22,9 +23,7 @@ afterEach(() => {
 
 /** Opens the settings and finds the summary's switch. */
 async function openSummarySwitch(user: UserEvent) {
-  await user.click(
-    await screen.findByRole("button", { name: "Configurações" })
-  );
+  await chooseFromAccountMenu("Configurações", user);
   return screen.findByRole("switch", {
     name: "Mostrar resumo de entradas e saídas",
   });
@@ -38,7 +37,7 @@ describe("settings", () => {
       await screen.findByRole("region", { name: "Entradas" })
     ).toBeTruthy();
 
-    await user.click(screen.getByRole("button", { name: "Configurações" }));
+    await chooseFromAccountMenu("Configurações", user);
     await user.click(
       await screen.findByRole("switch", {
         name: "Mostrar resumo de entradas e saídas",
@@ -70,9 +69,7 @@ describe("settings", () => {
   it("keeps a changed preference on every device", async () => {
     const user = userEvent.setup();
     openApp(api, "/");
-    await user.click(
-      await screen.findByRole("button", { name: "Configurações" })
-    );
+    await chooseFromAccountMenu("Configurações", user);
     await user.click(
       await screen.findByRole("switch", {
         name: "Mostrar resumo de entradas e saídas",
@@ -96,9 +93,7 @@ describe("settings", () => {
   it("saves only the preference that changed", async () => {
     const user = userEvent.setup();
     openApp(api, "/");
-    await user.click(
-      await screen.findByRole("button", { name: "Configurações" })
-    );
+    await chooseFromAccountMenu("Configurações", user);
     // Meanwhile another device turns the summary off.
     api.setPreferences(email, { showSummary: false });
 
@@ -120,9 +115,7 @@ describe("settings", () => {
   it("restores a preference that could not be saved", async () => {
     const user = userEvent.setup();
     openApp(api, "/");
-    await user.click(
-      await screen.findByRole("button", { name: "Configurações" })
-    );
+    await chooseFromAccountMenu("Configurações", user);
     const summarySwitch = await screen.findByRole("switch", {
       name: "Mostrar resumo de entradas e saídas",
     });
@@ -137,9 +130,7 @@ describe("settings", () => {
   it("says when a preference could not be saved", async () => {
     const user = userEvent.setup();
     openApp(api, "/");
-    await user.click(
-      await screen.findByRole("button", { name: "Configurações" })
-    );
+    await chooseFromAccountMenu("Configurações", user);
     const dialog = await screen.findByRole("dialog", { name: "Configurações" });
     api.breakDown();
 
@@ -157,9 +148,7 @@ describe("settings", () => {
   it("clears the failure once a later change is saved", async () => {
     const user = userEvent.setup();
     openApp(api, "/");
-    await user.click(
-      await screen.findByRole("button", { name: "Configurações" })
-    );
+    await chooseFromAccountMenu("Configurações", user);
     const dialog = await screen.findByRole("dialog", { name: "Configurações" });
     api.breakDown();
     await user.click(
@@ -246,9 +235,7 @@ describe("settings", () => {
     api.addRecurrence(email, { description: "Aluguel", defaultAmount: 220000 });
     openApp(api, "/");
 
-    await user.click(
-      await screen.findByRole("button", { name: "Configurações" })
-    );
+    await chooseFromAccountMenu("Configurações", user);
     await user.click(
       await screen.findByRole("switch", {
         name: "Confirmar antes de liquidar, pular ou voltar uma conta para pendente",

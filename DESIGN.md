@@ -280,7 +280,7 @@ Every role above has a light counterpart, prefixed `light-`. The page is Paper C
 
 ## Layout
 
-- **Frame:** a header ruled off by a `{colors.hairline}` line, then one centred column, Mantine's `md` container (960px max), with 32px of vertical padding. From 48em the header is one 64px row: lockup, screen tabs, the screen's primary action, Configurações, Sair. On phones it is two rows (lockup with Configurações and Sair, then the screen tabs), the primary action floats at the bottom right, and the column's bottom padding grows to clear it.
+- **Frame:** a header ruled off by a `{colors.hairline}` line, then one centred column, Mantine's `md` container (960px max), with 32px of vertical padding. From 48em the header is one 64px row: lockup and screen tabs on the left; the screen's primary action and the account avatar side by side on the right. On phones it is one row too, the lockup and the screen tab on the left and the account avatar on the right; the screen tab keeps its label, and the primary action floats at the bottom right, and the column's bottom padding grows to clear it.
 - **Rhythm:** sections of a screen are 32px apart (`xl`). A group label sits 12px (`sm`) above its panel. Rows are padded 12px × 20px. Summary blocks pad 20px and the auth card 32px.
 - **Scale:** Mantine's default spacing, 10 / 12 / 16 / 20 / 32px (`xs` to `xl`). Radii and colours are themed; spacing is not.
 - **Period navigator:** sticky at the top of the month screen on the canvas colour, a three-column grid of [empty | ‹ title › | empty]. The centre group is 400px wide at most.
@@ -309,7 +309,7 @@ Gently squared. Buttons, inputs, checkboxes and dialogs use 8px corners (`{round
 - **Primary action** (button-primary-action): the act a screen exists for, "Nova avulsa" on Mês and "Nova recorrência" on Recorrências. A primary pill with a `+` before its label, 44px tall on phones and 36px from 48em. On phones it floats at the bottom right, clear of the edges and the safe area; from 48em it sits in the header. One per screen, flat, never icon-only.
 - **Default:** Panel Black with a Panel Edge border and white text, for secondary acts such as "Cancelar".
 - **Danger:** solid Overdue Rose, only for confirming a deletion. In a destructive dialog, focus starts on "Cancelar".
-- **Subtle:** no fill and near-white text, for header actions (Configurações, Sair).
+- **Subtle:** no fill and near-white text, for header actions.
 - **Focus:** Mantine's 2px focus ring on every control, offset from the edge: yellow in the dark scheme, ink in the light one. It is never removed.
 
 ### Screen tabs (category-tab)
@@ -338,6 +338,7 @@ Panel Black fill, Panel Edge border, 8px corners, 36px tall, labels above the fi
 
 - **Dialog:** centred, on the canvas colour, edged by a 1px Panel Edge border and no shadow, padded 20px over a page dimmed to 75%. The title names the act ("Liquidar conta", "Excluir conta") in the figure step, 20px / 700 white. The body is one sentence with the entity in white 600. Buttons sit right-aligned: Cancelar (default) then the act (primary, or danger); on phones they share the row at 44px, and the close button grows to 44px. Settings are ruled rows, label first and switch at the row's end; the theme (Tema) is the first row, a segmented control (Escuro · Claro · Automático) in place of the switch. Errors appear as a light rose alert at the top of the dialog body.
 - **Menu:** opened from the row's ⋯ action icon. Items are plain text and destructive items are rose.
+- **Account menu:** opened from the header's avatar ("Conta"): the user icon, white on Panel Black with a 1px Panel Edge border, never yellow, 44px on phones and 36px from 48em. The menu opens with the name (white, 500) over the email (Pencil Grey, 14px), both truncated, then Configurações and Alterar senha, a rule, and Sair. Icons sit before the labels and Sair is plain, not rose: signing out loses nothing. Each item opens its dialog.
 - **Popover:** anchored to the control that opened it, with an arrow and focus trapped inside. It asks for one thing only.
 
 ### Lockup

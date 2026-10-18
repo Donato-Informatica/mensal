@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { chooseFromAccountMenu } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
 
@@ -20,9 +21,7 @@ afterEach(() => {
 /** Opens the "Alterar senha" modal from the header of the monthly screen. */
 async function openChangePassword() {
   openApp(api, "/");
-  await userEvent
-    .setup()
-    .click(await screen.findByRole("button", { name: "Alterar senha" }));
+  await chooseFromAccountMenu("Alterar senha");
   return screen.findByRole("dialog", { name: "Alterar senha" });
 }
 
@@ -57,7 +56,7 @@ describe("changing the password", () => {
     // The text one, not the modal's own "Fechar" ×.
     await user.click(within(dialog).getByText("Fechar"));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    await user.click(await screen.findByRole("button", { name: "Sair" }));
+    await chooseFromAccountMenu("Sair", user);
     await user.click(
       within(await screen.findByRole("dialog")).getByRole("button", {
         name: "Sair",
@@ -79,7 +78,7 @@ describe("changing the password", () => {
 
     await user.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    await user.click(screen.getByRole("button", { name: "Alterar senha" }));
+    await chooseFromAccountMenu("Alterar senha", user);
 
     expect(
       within(

@@ -2,6 +2,7 @@ import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { appliedScheme, deviceTheme } from "./device-theme.ts";
+import { chooseFromAccountMenu } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
 
@@ -26,9 +27,7 @@ afterEach(() => {
 
 /** Opens the settings and finds the theme's control. */
 async function openTheme(user: UserEvent) {
-  await user.click(
-    await screen.findByRole("button", { name: "Configurações" })
-  );
+  await chooseFromAccountMenu("Configurações", user);
   const dialog = await screen.findByRole("dialog", { name: "Configurações" });
   return within(dialog).getByRole("radiogroup", { name: "Tema" });
 }

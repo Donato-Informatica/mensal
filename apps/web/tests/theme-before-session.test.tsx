@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import indexHtml from "../index.html?raw";
 import { colorSchemeCacheKey } from "../src/color-scheme.ts";
 import { appliedScheme, deviceTheme } from "./device-theme.ts";
+import { chooseFromAccountMenu } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
 
@@ -216,7 +217,7 @@ describe("the theme before the session is known (PRD §3.5)", () => {
     await screen.findByRole("button", { name: "Mês anterior" });
     await waitFor(() => expect(appliedScheme()).toBe("light"));
 
-    await user.click(screen.getByRole("button", { name: "Sair" }));
+    await chooseFromAccountMenu("Sair", user);
     const dialog = await screen.findByRole("dialog", { name: "Sair da conta" });
     await user.click(within(dialog).getByRole("button", { name: "Sair" }));
 

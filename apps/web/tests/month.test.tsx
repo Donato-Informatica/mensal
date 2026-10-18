@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { chooseFromAccountMenu } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp, settle } from "./open-app.tsx";
 
@@ -241,7 +242,7 @@ describe("hiding the summary", () => {
     api.stall();
     await user.click(close);
     // Before it is answered, the summary is turned back on in the settings.
-    await user.click(screen.getByRole("button", { name: "Configurações" }));
+    await chooseFromAccountMenu("Configurações", user);
     await user.click(
       await screen.findByRole("switch", {
         name: "Mostrar resumo de entradas e saídas",

@@ -1,13 +1,13 @@
 /*
- * Phone first: one row, the wordmark then icon-only buttons, the other screen's
- * link leading the actions.
+ * Phone first: one row, the wordmark and the other screen's link on the left,
+ * the account avatar on the right.
  */
 .bar {
   display: grid;
-  grid-template-areas: "brand nav actions";
-  grid-template-columns: 1fr auto auto;
+  grid-template-areas: "brand nav . actions";
+  grid-template-columns: auto auto 1fr auto;
   align-items: center;
-  column-gap: 4px;
+  column-gap: var(--mantine-spacing-sm);
   padding-block: 8px;
 }
 
@@ -48,7 +48,10 @@
   );
 }
 
-/* Wide enough for everything on a single row, the action back in the header. */
+/*
+ * Wide enough for everything on a single row, the action back in the header,
+ * next to the account avatar.
+ */
 @media (min-width: 48em) {
   .bar {
     grid-template-areas: "brand nav action actions";
@@ -61,7 +64,7 @@
   .action {
     position: static;
     grid-area: action;
-    justify-self: center;
+    justify-self: end;
   }
 
   .main {

@@ -1,22 +1,19 @@
-import { Box, Button, Container, Group } from "@mantine/core";
+import { Box, Button, Container } from "@mantine/core";
 import { IconCalendarMonth, IconRepeat } from "@tabler/icons-react";
 import { Link, useMatchRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { AccountMenu } from "./account-menu.tsx";
 import classes from "./app-layout.module.css";
-import { ChangePasswordButton } from "./change-password.tsx";
-import headerButton from "./header-button.module.css";
-import { SettingsButton } from "./settings.tsx";
-import { SignOutButton } from "./sign-out-button.tsx";
 import { Wordmark } from "./wordmark.tsx";
 
-/** The frame of the app proper: a header with the wordmark, screens and sign-out. */
+/** The frame of the app proper: a header with the wordmark, screens and account menu. */
 export function AppLayout({
   action,
   children,
 }: {
   /**
    * The screen's primary action: floating at the bottom right on phones,
-   * centered in the header from 48em up. Rendered once; CSS moves it.
+   * beside the account avatar in the header from 48em up. Rendered once; CSS moves it.
    */
   action?: ReactNode;
   children: ReactNode;
@@ -42,22 +39,9 @@ export function AppLayout({
               </ScreenLink>
             </nav>
             {action && <div className={classes.action}>{action}</div>}
-            <Group
-              className={classes.actions}
-              gap={4}
-              wrap="nowrap"
-              align="center"
-            >
-              <SettingsButton />
-              <ChangePasswordButton />
-              <SignOutButton
-                variant="subtle"
-                color="gray"
-                size="sm"
-                h={{ base: 44, sm: 30 }}
-                iconOnlyOnPhones
-              />
-            </Group>
+            <div className={classes.actions}>
+              <AccountMenu />
+            </div>
           </div>
         </Container>
       </Box>
@@ -88,13 +72,8 @@ function ScreenLink({
       size="sm"
       h={{ base: 44, sm: 30 }}
       leftSection={icon}
-      classNames={{ section: headerButton.section }}
-      aria-label={children}
-      title={children}
     >
-      <Box component="span" visibleFrom="sm">
-        {children}
-      </Box>
+      {children}
     </Button>
   );
 }

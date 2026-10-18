@@ -1,57 +1,41 @@
 import {
   Alert,
-  Box,
   Button,
   Modal,
   PasswordInput,
   Stack,
   Text,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
 import { useIsMutating, useMutation } from "@tanstack/react-query";
-import { IconLock } from "@tabler/icons-react";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { ApiError, errorMessage, unwrap } from "./api-error.ts";
-import headerButton from "./header-button.module.css";
 import { useSession } from "./session.ts";
 
 const changePasswordKey = ["change-password"];
 
 /**
- * Header button that opens the "Alterar senha" modal; icon-only on phones. It
- * stays open while the change is in flight, so its outcome is always seen.
+ * The "Alterar senha" modal, opened from the account menu. It stays open while
+ * the change is in flight, so its outcome is always seen.
  */
-export function ChangePasswordButton() {
-  const [opened, { open, close }] = useDisclosure(false);
+export function ChangePasswordModal({
+  opened,
+  onClose,
+}: {
+  opened: boolean;
+  onClose: () => void;
+}) {
   const pending = useIsMutating({ mutationKey: changePasswordKey }) > 0;
   return (
-    <>
-      <Button
-        variant="subtle"
-        color="gray"
-        size="sm"
-        h={{ base: 44, sm: 30 }}
-        leftSection={<IconLock size={18} aria-hidden="true" />}
-        classNames={{ section: headerButton.section }}
-        aria-label="Alterar senha"
-        title="Alterar senha"
-        onClick={open}
-      >
-        <Box component="span" visibleFrom="sm">
-          Alterar senha
-        </Box>
-      </Button>
-      <Modal
-        opened={opened}
-        onClose={() => {
-          if (!pending) close();
-        }}
-        title="Alterar senha"
-      >
-        <ChangePasswordForm onDone={close} />
-      </Modal>
-    </>
+    <Modal
+      opened={opened}
+      onClose={() => {
+        if (!pending) onClose();
+      }}
+      title="Alterar senha"
+    >
+      <ChangePasswordForm onDone={onClose} />
+    </Modal>
   );
 }
 
