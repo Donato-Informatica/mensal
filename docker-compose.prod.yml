@@ -50,6 +50,21 @@ services:
       default:
         aliases:
           - mensal-api.${COOLIFY_FQDN:-prod}
+    # TEMPORARY DEBUG (preview boot failure): print what the API sees, run the
+    # normal start, and on failure print the exit code and stay alive so the
+    # logs stay reachable from the Coolify UI. Revert before merging.
+    command:
+      - sh
+      - -c
+      - |
+        echo "[debug] BETTER_AUTH_URL=$$BETTER_AUTH_URL PORT=$$PORT NODE_ENV=$$NODE_ENV"
+        echo "[debug] DATABASE_URL=$$(echo "$$DATABASE_URL" | sed 's#//[^@]*@#//***@#')"
+        echo "[debug] secret length=$${#BETTER_AUTH_SECRET} resend key set=$${RESEND_API_KEY:+yes} EMAIL_FROM=$$EMAIL_FROM"
+        db_host=$$(echo "$$DATABASE_URL" | sed 's#.*@\([^:/]*\).*#\1#')
+        echo "[debug] db host=$$db_host resolves to: $$(getent hosts "$$db_host" || echo NOT-RESOLVED)"
+        : "$${DATABASE_URL:?is not set}" && npm run --silent -w @mensal/database migrate && node apps/api/src/server.ts
+        echo "[debug] API exited with code $$?"
+        sleep 3600
     depends_on:
       postgres:
         condition: service_healthy
