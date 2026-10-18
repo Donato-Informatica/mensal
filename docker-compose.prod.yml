@@ -34,6 +34,9 @@ services:
       # emails to the container log (ADR-0003). One without the other fails boot.
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
+      # Demo data on boot. Set to true ONLY in Coolify's Preview Deployments
+      # environment, never in production's.
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
     depends_on:
       postgres:
         condition: service_healthy

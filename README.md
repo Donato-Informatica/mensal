@@ -61,6 +61,8 @@ Then sign in at http://localhost:5173 as `demo@mensal.local` / `demo-password-lo
 
 The seed creates recurrences (salary, rent, internet, an ended subscription, …) and occurrences in every state (settled, pending, overdue, skipped, one-off), with dates relative to the current month. It is meant for local development only: it refuses to run against a non-local database host or when `NODE_ENV=production`. Running it again resets the demo user's data to this baseline; other users are never touched.
 
+Coolify preview deployments load the same data on boot when `SEED_DEMO_DATA=true`, set only in the Preview Deployments environment variables, never production's. That mode skips the local-host check but still refuses if the database has any user besides the demo one.
+
 ## Deploying to production
 
 The production stack is [docker-compose.prod.yml](docker-compose.prod.yml), meant for [Coolify](https://coolify.io) (PRD §8.4): Postgres, the API, and the web app (nginx serving the static build and forwarding `/api` to the API, so the browser sees one origin). Only `web` is public.

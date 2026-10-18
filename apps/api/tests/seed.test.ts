@@ -1,6 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createAuth } from "../src/auth.ts";
-import { assertLocalDatabase, demoUser, seed } from "../src/seed.ts";
+import {
+  assertLocalDatabase,
+  assertNoRealUsers,
+  demoUser,
+  seed,
+} from "../src/seed.ts";
 import { request, startApi, type TestApi } from "./api.ts";
 
 let api: TestApi;
@@ -57,5 +62,18 @@ describe("seed", () => {
     expect(() =>
       assertLocalDatabase("postgres://u:p@localhost/x", "development")
     ).not.toThrow();
+  });
+
+  it("refuses the preview opt-in once real users exist", async () => {
+    await request(api, "/api/auth/sign-up/email", {
+      body: {
+        name: "Real",
+        email: "real@example.com",
+        password: "a-long-enough-password",
+      },
+    });
+    await expect(assertNoRealUsers(api.db)).rejects.toThrow(
+      /other than the demo/
+    );
   });
 });
