@@ -21,6 +21,7 @@ import {
 } from "@tanstack/react-router";
 import { AppLayout } from "./app-layout.tsx";
 import appLayout from "./app-layout.module.css";
+import classes from "./recurrences.module.css";
 import { EditRecurrenceButton } from "./edit-recurrence.tsx";
 import { formatAmount, formatPeriodInline } from "./format.ts";
 import { NewRecurrenceButton } from "./new-recurrence.tsx";
@@ -113,31 +114,31 @@ function Row({
 }) {
   const { description, defaultAmount, dueDay, direction } = recurrence;
   return (
-    <Group
-      component="li"
-      justify="space-between"
-      wrap="nowrap"
-      px="lg"
-      py="sm"
+    <li
+      className={classes.row}
       style={
         first
           ? undefined
           : { borderTop: "1px solid var(--mensal-color-hairline)" }
       }
     >
-      <EditRecurrenceButton recurrence={recurrence}>
-        <Stack gap={0} miw={0}>
-          <Text c="bright" fw={500} truncate>
-            {description}
-          </Text>
-          <Text fz="sm" c="dimmed">
-            {dueDay === null ? "Sem vencimento" : `Dia ${dueDay}`} ·{" "}
-            {formatSpan(recurrence)}
-          </Text>
-        </Stack>
-      </EditRecurrenceButton>
-      <Group gap="sm" wrap="nowrap">
+      <div className={classes.text}>
+        <EditRecurrenceButton recurrence={recurrence}>
+          <Stack gap={0} miw={0}>
+            <Text c="bright" fw={500} truncate>
+              {description}
+            </Text>
+            <Text fz="sm" c="dimmed">
+              {dueDay === null ? "Sem vencimento" : `Dia ${dueDay}`} ·{" "}
+              {formatSpan(recurrence)}
+            </Text>
+          </Stack>
+        </EditRecurrenceButton>
+      </div>
+      <div className={classes.figures}>
+        {ended && <Badge variant="default">Encerrada</Badge>}
         <Text
+          className={classes.amount}
           fw={600}
           c={
             defaultAmount === null
@@ -146,17 +147,15 @@ function Row({
                 ? "var(--mensal-color-inflow)"
                 : "bright"
           }
-          style={{ whiteSpace: "nowrap" }}
         >
           {defaultAmount === null ? "A definir" : formatAmount(defaultAmount)}
         </Text>
-        {ended && <Badge variant="default">Encerrada</Badge>}
-        <RecurrenceActions
-          description={description}
-          recurrenceId={recurrence.id}
-        />
-      </Group>
-    </Group>
+      </div>
+      <RecurrenceActions
+        description={description}
+        recurrenceId={recurrence.id}
+      />
+    </li>
   );
 }
 

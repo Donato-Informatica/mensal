@@ -1,12 +1,13 @@
-/* Phone first: wordmark and actions on one row, the screens on a full-width row below. */
+/*
+ * Phone first: one row, the wordmark then icon-only buttons, the other screen's
+ * link leading the actions.
+ */
 .bar {
   display: grid;
-  grid-template-areas:
-    "brand actions"
-    "nav nav";
-  grid-template-columns: 1fr auto;
+  grid-template-areas: "brand nav actions";
+  grid-template-columns: 1fr auto auto;
   align-items: center;
-  row-gap: 4px;
+  column-gap: 4px;
   padding-block: 8px;
 }
 
@@ -20,8 +21,7 @@
 
 .nav {
   grid-area: nav;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   gap: 4px;
 }
 
@@ -54,14 +54,8 @@
     grid-template-areas: "brand nav action actions";
     grid-template-columns: auto auto 1fr auto;
     column-gap: var(--mantine-spacing-lg);
-    row-gap: 0;
     height: 64px;
     padding-block: 0;
-  }
-
-  .nav {
-    display: flex;
-    gap: 4px;
   }
 
   .action {

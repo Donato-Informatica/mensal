@@ -1,43 +1,57 @@
 import {
   Alert,
+  Box,
   Button,
-  Paper,
+  Modal,
   PasswordInput,
   Stack,
   Text,
-  Title,
 } from "@mantine/core";
-import { useMutation } from "@tanstack/react-query";
-import { Link, rootRouteId, useRouteContext } from "@tanstack/react-router";
+import { useDisclosure } from "@mantine/hooks";
+import { useIsMutating, useMutation } from "@tanstack/react-query";
+import { IconLock } from "@tabler/icons-react";
+import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { ApiError, errorMessage, unwrap } from "./api-error.ts";
-import { AppLayout } from "./app-layout.tsx";
+import headerButton from "./header-button.module.css";
 import { useSession } from "./session.ts";
 
+const changePasswordKey = ["change-password"];
+
 /**
- * Replaces the password, proven with the current one. The API then signs the
- * user out of their other devices and keeps this one (PRD §8.2).
+ * Header button that opens the "Alterar senha" modal; icon-only on phones. It
+ * stays open while the change is in flight, so its outcome is always seen.
  */
-export function ChangePassword() {
+export function ChangePasswordButton() {
+  const [opened, { open, close }] = useDisclosure(false);
+  const pending = useIsMutating({ mutationKey: changePasswordKey }) > 0;
   return (
-    <AppLayout>
-      <Stack gap="xl" maw={420}>
-        <Stack gap={4}>
-          <Title order={1}>Alterar senha</Title>
-          <Text c="dimmed" fz="sm">
-            Seus outros dispositivos serão desconectados.
-          </Text>
-        </Stack>
-        <Paper
-          bg="var(--mensal-color-surface-card)"
-          withBorder
-          p="xl"
-          radius="lg"
-        >
-          <ChangePasswordForm />
-        </Paper>
-      </Stack>
-    </AppLayout>
+    <>
+      <Button
+        variant="subtle"
+        color="gray"
+        size="sm"
+        h={{ base: 44, sm: 30 }}
+        leftSection={<IconLock size={18} aria-hidden="true" />}
+        classNames={{ section: headerButton.section }}
+        aria-label="Alterar senha"
+        title="Alterar senha"
+        onClick={open}
+      >
+        <Box component="span" visibleFrom="sm">
+          Alterar senha
+        </Box>
+      </Button>
+      <Modal
+        opened={opened}
+        onClose={() => {
+          if (!pending) close();
+        }}
+        title="Alterar senha"
+      >
+        <ChangePasswordForm onDone={close} />
+      </Modal>
+    </>
   );
 }
 
@@ -52,13 +66,18 @@ function retype(input: HTMLInputElement | null) {
   input?.select();
 }
 
-function ChangePasswordForm() {
+/**
+ * Replaces the password, proven with the current one. The API then signs the
+ * user out of their other devices and keeps this one (PRD §8.2).
+ */
+function ChangePasswordForm({ onDone }: { onDone: () => void }) {
   const { authClient } = useRouteContext({ from: rootRouteId });
   const { email } = useSession().user;
   const currentPassword = useRef<HTMLInputElement>(null);
   const confirmation = useRef<HTMLInputElement>(null);
   const [mismatch, setMismatch] = useState(false);
   const change = useMutation({
+    mutationKey: changePasswordKey,
     mutationFn: async (passwords: {
       currentPassword: string;
       newPassword: string;
@@ -83,8 +102,8 @@ function ChangePasswordForm() {
           Senha alterada. Nos outros dispositivos, entre de novo com a nova
           senha.
         </Alert>
-        <Button component={Link} to="/" fullWidth>
-          Voltar para o mês
+        <Button onClick={onDone} fullWidth>
+          Fechar
         </Button>
       </Stack>
     );
@@ -117,6 +136,9 @@ function ChangePasswordForm() {
         hidden
       />
       <Stack gap="md">
+        <Text c="dimmed" fz="sm">
+          Seus outros dispositivos serão desconectados.
+        </Text>
         {change.error && !wrongCurrentPassword && (
           <Alert color="red" variant="light">
             {errorMessage(change.error)}

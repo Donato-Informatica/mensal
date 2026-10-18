@@ -3,7 +3,7 @@ import { IconCalendarMonth, IconRepeat } from "@tabler/icons-react";
 import { Link, useMatchRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import classes from "./app-layout.module.css";
-import { ChangePasswordLink } from "./change-password-link.tsx";
+import { ChangePasswordButton } from "./change-password.tsx";
 import headerButton from "./header-button.module.css";
 import { SettingsButton } from "./settings.tsx";
 import { SignOutButton } from "./sign-out-button.tsx";
@@ -46,10 +46,10 @@ export function AppLayout({
               className={classes.actions}
               gap={4}
               wrap="nowrap"
-              align="flex-start"
+              align="center"
             >
               <SettingsButton />
-              <ChangePasswordLink />
+              <ChangePasswordButton />
               <SignOutButton
                 variant="subtle"
                 color="gray"
@@ -68,7 +68,7 @@ export function AppLayout({
   );
 }
 
-// DESIGN.md category-tab: the active one on surface-card, the rest muted.
+// DESIGN.md category-tab, muted; the current screen's own is left out.
 function ScreenLink({
   to,
   icon,
@@ -78,12 +78,12 @@ function ScreenLink({
   icon: ReactNode;
   children: string;
 }) {
-  const active = Boolean(useMatchRoute()({ to }));
+  if (useMatchRoute()({ to })) return null;
   return (
     <Button
       component={Link}
       to={to}
-      variant={active ? "surface" : "subtle"}
+      variant="subtle"
       color="gray"
       size="sm"
       h={{ base: 44, sm: 30 }}
@@ -91,7 +91,6 @@ function ScreenLink({
       classNames={{ section: headerButton.section }}
       aria-label={children}
       title={children}
-      aria-current={active ? "page" : undefined}
     >
       <Box component="span" visibleFrom="sm">
         {children}
