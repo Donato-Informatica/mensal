@@ -5,6 +5,7 @@ import { createDatabase, type Database } from "@mensal/database";
 import type { Activity } from "../src/activity.ts";
 import { createApp } from "../src/app.ts";
 import { createAuth } from "../src/auth.ts";
+import type { SendEmail } from "../src/email.ts";
 import type { Log } from "../src/log.ts";
 import { testDatabaseUrl } from "./database.ts";
 
@@ -20,10 +21,13 @@ export async function startApi({
   log,
   activity = () => {},
   rateLimit = false,
+  email,
 }: {
   now?: () => Date;
   /** Where the API's own log lines go, instead of the console. */
   log?: Log;
+  /** Where emails go: the log, as without Resend, by default. */
+  email?: SendEmail;
   /**
    * Where activity events go. Nowhere by default, so the suite's writes do
    * not flood the test output.
@@ -48,6 +52,7 @@ export async function startApi({
     activity,
     ...(now && { now }),
     ...(log && { log }),
+    ...(email && { email }),
   });
   server.on(
     "request",

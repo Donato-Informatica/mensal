@@ -33,7 +33,7 @@ Minimalist and opinionated where most personal-finance tools overdo it (PRD §1.
 - Monthly periodicity only: annual bills are one-off occurrences, installments are recurrences with an end period.
 - Statuses are Pendente, Liquidada and Pulada; overdue is derived, never stored. Status changes are optimistic, rolling back on failure (PRD §7.5).
 - The monthly screen groups occurrences as Atrasadas (including earlier periods' overdue ones), Vencem hoje, A vencer no mês, Liquidadas e puladas (PRD §7.4).
-- No email of any kind: password-reset links are printed to the server log for the administrator to forward. No billing or paid plans.
+- Email only for the password: the reset link and a "your password was changed" alert, sent through Resend. No verification, approval notices or notifications. No billing or paid plans.
 - Per-device display preferences live in the browser (e.g. showing the summary, confirming status changes).
 
 ## Brand Commitments

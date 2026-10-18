@@ -11,6 +11,7 @@ import { redirectFor, type Access } from "./access.ts";
 import type { ApiClient } from "./api-client.ts";
 import type { AuthClient } from "./auth-client.ts";
 import { AwaitingApproval } from "./awaiting-approval.tsx";
+import { ChangePassword } from "./change-password.tsx";
 import { useAccountColorScheme, useBrowserChrome } from "./color-scheme.ts";
 import { ForgotPassword } from "./forgot-password.tsx";
 import { Month } from "./month.tsx";
@@ -139,7 +140,15 @@ const routeTree = root.addChildren([
       component: AwaitingApproval,
     }),
   ]),
-  approved.addChildren([month, recurrences]),
+  approved.addChildren([
+    month,
+    recurrences,
+    createRoute({
+      getParentRoute: () => approved,
+      path: "/alterar-senha",
+      component: ChangePassword,
+    }),
+  ]),
 ]);
 
 export function createAppRouter(context: RouterContext) {

@@ -30,6 +30,10 @@ services:
       BETTER_AUTH_URL: ${SERVICE_URL_WEB}
       BETTER_AUTH_SECRET: ${SERVICE_PASSWORD_64_AUTH}
       PORT: 3000
+      # Set both in Coolify to send email through Resend, or neither to print
+      # emails to the container log (ADR-0003). One without the other fails boot.
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
     depends_on:
       postgres:
         condition: service_healthy

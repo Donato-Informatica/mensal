@@ -9,6 +9,16 @@ The manual release an administrator grants a newly signed-up user; without it th
 _UI (pt-BR)_: Aprovação
 _Avoid_: activation, verification, confirmation
 
+**Change password**:
+To replace one's password while signed in, proving it with the current one.
+_UI (pt-BR)_: Alterar senha
+_Avoid_: update password, edit password
+
+**Reset password**:
+To replace a forgotten password through a link sent to the user's email, without signing in.
+_UI (pt-BR)_: Redefinir senha (requested from "Esqueci a senha")
+_Avoid_: recover password, change password
+
 **Preference**:
 A choice a user makes about how the product behaves for them, shared by every device they sign in on; it never changes their data.
 _UI (pt-BR)_: Configurações

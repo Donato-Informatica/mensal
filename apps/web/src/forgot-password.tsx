@@ -4,10 +4,7 @@ import { Link, rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { errorMessage, unwrap } from "./api-error.ts";
 import { CardScreen } from "./card-screen.tsx";
 
-/**
- * Asks for a password-reset link. No email is sent: the API logs the link and
- * the administrator forwards it by hand (PRD §8.2).
- */
+/** Asks for a password-reset link by email (PRD §8.2, ADR-0003). */
 export function ForgotPassword() {
   const { authClient } = useRouteContext({ from: rootRouteId });
   const requestLink = useMutation({
@@ -27,8 +24,8 @@ export function ForgotPassword() {
     >
       {requestLink.isSuccess ? (
         <Alert color="green" variant="light">
-          Se houver uma conta com este e-mail, o administrador vai enviar a você
-          um link para criar uma nova senha.
+          Se houver uma conta com este e-mail, enviamos um link para criar uma
+          nova senha. Ele vale por 1 hora.
         </Alert>
       ) : (
         <form

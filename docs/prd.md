@@ -24,7 +24,7 @@ A **minimalist, opinionated** SaaS focused strictly on forecasting and settling 
 - Periodicity other than monthly. Annual bills are one-off occurrences; installments are recurrences with an `endPeriod`.
 - Balances, categories, multiple currencies, charts. Amounts are always BRL.
 - Billing or paid plans.
-- Sending email of any kind (verification, password reset, notifications).
+- Email beyond the transactional password emails of §8.2 ([ADR-0003](adr/0003-transactional-email-via-resend.md)): no verification, approval notices or notifications.
 - Internationalization: the UI is Brazilian Portuguese only.
 
 ---
@@ -345,7 +345,10 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 - Email and password sign-in; sessions in HttpOnly cookies (`SameSite=Lax`).
 - An Express middleware injects the verified `userId` and rejects unapproved users with `403 USER_NOT_APPROVED`. The `approved` field travels with the session, so the frontend can show the "Aguardando aprovação" screen.
 - The user's preferences (§3.5) travel with the session too, and are written through Better-Auth's `update-user`, outside `/api/v1`.
-- Password reset: `sendResetPassword` writes the reset URL to the server log, and the administrator forwards it to the user manually. No email provider in the MVP.
+- **Email** ([ADR-0003](adr/0003-transactional-email-via-resend.md)): through an injectable `email` sink on Better-Auth. With `RESEND_API_KEY` and `EMAIL_FROM` set it sends through Resend's REST API; with neither it writes each email's text to the log, in any environment, and the startup line says which. Setting only one refuses to boot. Emails are pt-BR, as inline HTML plus a plain-text twin.
+- **Reset password** ("Esqueci a senha" → "Redefinir senha"): `sendResetPassword` emails a link valid for 1 hour, to approved and unapproved users alike. It is sent without awaiting it, so the answer is the same and as fast whether or not the account exists; a send failure is logged without the link, and with Resend configured the link never reaches the log. A reset signs the user out of every device (`revokeSessionsOnPasswordReset`).
+- **Change password** ("Alterar senha", `/alterar-senha`, linked from the header of the app proper, so only approved users reach it): Better-Auth's `change-password`, with the current password, the new one and its confirmation (checked by the client). A wrong current password answers `400 INVALID_PASSWORD`. It always signs the user out of their other devices and keeps this one: a `before` hook forces `revokeOtherSessions`, whatever the client sends.
+- **Password-changed alert:** after a change or a reset, the user is emailed when it happened (São Paulo time) and a link to "Esqueci a senha", so someone whose password was replaced by another can take the account back. No IP or device details.
 
 ### 8.3 Data Layer (Drizzle + Postgres)
 
@@ -372,10 +375,10 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 A minimal baseline against opportunistic internet traffic (scanners, credential stuffing, sign-up spam, fingerprinting), applied in the API process so it travels with the container whatever proxy sits in front.
 
 - **Headers:** `helmet` with its defaults is the first middleware in the Express app. It also removes `X-Powered-By`.
-- **Rate limiting on `/api/auth` only:** Better-Auth's built-in limiter, enabled in every environment (not only production), in memory (one container), keyed on the client IP read from `x-forwarded-for` as set by the proxy. Per IP: sign-in 5 per minute, sign-up 3 per hour, password-reset request 3 per hour; every other path keeps Better-Auth's built-in rules: 3 per 10 s on `/sign-in/*`, `/sign-up/*`, `/change-password` and `/change-email`, 3 per 60 s on `/send-verification-email`, and 100 per 10 s on the rest. Over the limit: `429`. `/api/v1` has no limiter: only approved users reach it.
+- **Rate limiting on `/api/auth` only:** Better-Auth's built-in limiter, enabled in every environment (not only production), in memory (one container), keyed on the client IP read from `x-forwarded-for` as set by the proxy. Per IP: sign-in 5 per minute, sign-up 3 per hour, password-reset request 3 per hour, password change 5 per minute (it checks the current password, so a stolen session could guess it); every other path keeps Better-Auth's built-in rules: 3 per 10 s on `/sign-in/*`, `/sign-up/*` and `/change-email`, 3 per 60 s on `/send-verification-email`, and 100 per 10 s on the rest. Over the limit: `429`. `/api/v1` has no limiter: only approved users reach it.
 - **Errors are JSON:** a final error handler answers malformed JSON with `400 INVALID_INPUT` (`fields: []`), an oversized body with `413 PAYLOAD_TOO_LARGE`, and anything else with `500 INTERNAL_ERROR`, logging the error server-side and returning no detail.
 - **Boot check:** in production the API refuses to start when `BETTER_AUTH_SECRET` is the `.env.example` value or shorter than 32 characters, or when `BETTER_AUTH_URL` is not `https://`.
-- **Deliberately unchanged:** the 100 kB JSON body limit; no CORS package (same origin, §8.4); no CSRF tokens on `/api/v1` (`SameSite=Lax` keeps the session cookie off cross-site writes, and Better-Auth checks the origin on `/api/auth`); password-reset links in the server log (§8.2).
+- **Deliberately unchanged:** the 100 kB JSON body limit; no CORS package (same origin, §8.4); no CSRF tokens on `/api/v1` (`SameSite=Lax` keeps the session cookie off cross-site writes, and Better-Auth checks the origin on `/api/auth`).
 - **Out of scope for the MVP:** 2FA, account lockout, durable audit logs (the activity log of §8.7 is operational only), a password policy beyond Better-Auth's 8–128 characters, dependency auditing in the gate.
 - **At the proxy (M4):** the static frontend's own headers (CSP, `frame-ancestors`) are set where the HTML is served, not by the API. The proxy must overwrite any client-sent `X-Forwarded-For`, and the API port is not published on the VPS; behind Cloudflare the client IP would come from `cf-connecting-ip` instead.
 
@@ -386,8 +389,8 @@ A minimal activity log for the operator: who did what to which item, and when. I
 - **One JSON line per event**, e.g. `{"at":"2026-10-16T14:03:00.000Z","user":"…","action":"occurrence.status","kind":"occurrence","id":"…","from":"virtual_…","status":"SETTLED"}`. `at` is UTC ISO from the app's clock.
 - **Who:** the user id only, never email or name. The exception is a failed sign-in, which has no user: it carries the attempted `email` and the client `ip` (from `x-forwarded-for`, §8.6).
 - **What item:** its kind and id only. No descriptions, amounts or dates: they are the user's financial data. An edit lists the changed field _names_ in `fields`, never their values. A write that materializes a virtual occurrence (ADR-0001) carries the virtual id in `from` and the persisted uuid in `id`.
-- **Actions:** `occurrence.create` (one-off), `occurrence.edit`, `occurrence.status` (with the new `status`), `occurrence.delete`, `recurrence.create`, `recurrence.edit` (ending one shows `endPeriod` in `fields`), `recurrence.delete`, `user.sign-up`, `user.sign-in`, `user.sign-in-failed`. Only successful writes are logged; reads, no-op edits and refused requests are not (unexpected errors already reach the error handler, §8.6).
-- **Sink:** an injectable `activity` option on the app and on Better-Auth, writing to the console by default. No log provider in the MVP; adding one later replaces the default sink. The free-text operator log (errors, healthcheck, reset links) is unchanged.
+- **Actions:** `occurrence.create` (one-off), `occurrence.edit`, `occurrence.status` (with the new `status`), `occurrence.delete`, `recurrence.create`, `recurrence.edit` (ending one shows `endPeriod` in `fields`), `recurrence.delete`, `user.sign-up`, `user.sign-in`, `user.sign-in-failed`, `user.password-changed`, `user.password-reset`. A reset _request_ is not logged: one for an unknown email has no user. Only successful writes are logged; reads, no-op edits and refused requests are not (unexpected errors already reach the error handler, §8.6).
+- **Sink:** an injectable `activity` option on the app and on Better-Auth, writing to the console by default. No log provider in the MVP; adding one later replaces the default sink. The free-text operator log (errors, healthcheck, email failures, and emails while Resend is not configured, §8.2) is unchanged.
 
 ### 8.8 API Documentation
 

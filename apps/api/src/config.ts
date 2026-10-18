@@ -4,6 +4,8 @@ export interface Config {
   baseURL: string;
   secret: string;
   port: number;
+  /** Resend's key and sender (ADR-0003); unset sends emails to the log. */
+  email?: { apiKey: string; from: string };
 }
 
 /** The placeholder `BETTER_AUTH_SECRET` shipped in `.env.example`. */
@@ -11,7 +13,8 @@ const exampleSecret = "change-me-to-a-long-random-string";
 
 /**
  * The API's settings, read from `env` (see `.env.example`). In production it
- * refuses a guessable secret or a plain-http origin (PRD §8.6).
+ * refuses a guessable secret or a plain-http origin (PRD §8.6). Resend's key
+ * and sender come as a pair, or not at all.
  */
 export function readConfig(env: Record<string, string | undefined>): Config {
   function required(name: string): string {
@@ -25,6 +28,12 @@ export function readConfig(env: Record<string, string | undefined>): Config {
     baseURL: required("BETTER_AUTH_URL"),
     secret: required("BETTER_AUTH_SECRET"),
     port: Number(env.PORT ?? 3000),
+    ...((env.RESEND_API_KEY || env.EMAIL_FROM) && {
+      email: {
+        apiKey: required("RESEND_API_KEY"),
+        from: required("EMAIL_FROM"),
+      },
+    }),
   };
   if (env.NODE_ENV === "production") {
     if (config.secret === exampleSecret || config.secret.length < 32)

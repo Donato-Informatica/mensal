@@ -8,9 +8,12 @@ import {
   activityRecorder,
   consoleActivity,
   type Activity,
+  type PasswordAction,
   type RecordActivity,
   type SessionAction,
 } from "./activity.ts";
+import { consoleEmail, type Email, type SendEmail } from "./email.ts";
+import { passwordChangedEmail, resetPasswordEmail } from "./emails.ts";
 import type { Log } from "./log.ts";
 
 export interface AuthOptions {
@@ -19,10 +22,12 @@ export interface AuthOptions {
   baseURL: string;
   secret: string;
   /**
-   * Where the password-reset links, and any failure of the activity log, are
-   * written; the console by default.
+   * Where failures to send an email or to record activity are written; the
+   * console by default.
    */
   log?: Log;
+  /** Where emails go (ADR-0003); written to `log` by default. */
+  email?: SendEmail;
   /** Better-Auth's per-IP rate limiter on `/api/auth`; on by default. */
   rateLimit?: boolean;
   /** The clock that stamps activity events; the system clock by default. */
@@ -33,8 +38,8 @@ export interface AuthOptions {
 
 /**
  * Better-Auth on the app's own `db`: email + password, sessions in HttpOnly
- * SameSite=Lax cookies, and password-reset links written to the log for the
- * administrator to forward by hand (PRD §8.2). The anonymous endpoints are
+ * SameSite=Lax cookies, and password-reset links sent by `email` (PRD §8.2,
+ * ADR-0003); a reset signs the user out everywhere. The anonymous endpoints are
  * rate limited per client IP, read from the proxy's `X-Forwarded-For`
  * (PRD §8.6). Sign-ups, sign-ins and failed sign-ins go to the activity log
  * (PRD §8.7).
@@ -44,11 +49,39 @@ export function createAuth({
   baseURL,
   secret,
   log = console.log,
+  email = consoleEmail(log),
   rateLimit = true,
   now = () => new Date(),
   activity = consoleActivity,
 }: AuthOptions) {
   const record: RecordActivity = activityRecorder(activity, now, log);
+  /**
+   * Sends without waiting, so an answer neither slows down nor fails for an
+   * email that exists. A failure is logged without the email's content, which
+   * may hold a reset link.
+   */
+  function sendInBackground(message: Email) {
+    email(message).catch((error: unknown) => {
+      log(
+        `Email "${message.subject}" to ${message.to} failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    });
+  }
+  /** Logs and alerts a password replaced by a change or a reset (PRD §8.2). */
+  function passwordReplaced(
+    user: { id: string; email: string; name: string },
+    action: PasswordAction
+  ) {
+    record({ user: user.id, action });
+    sendInBackground(
+      passwordChangedEmail({
+        to: user.email,
+        name: user.name,
+        at: now(),
+        forgotPasswordURL: `${baseURL}/esqueci-a-senha`,
+      })
+    );
+  }
   return betterAuth({
     baseURL,
     secret,
@@ -56,8 +89,14 @@ export function createAuth({
     emailAndPassword: {
       enabled: true,
       sendResetPassword: async ({ user, url }) => {
-        log(`Password reset link for ${user.email}: ${url}`);
+        sendInBackground(
+          resetPasswordEmail({ to: user.email, name: user.name, url })
+        );
       },
+      onPasswordReset: async ({ user }) => {
+        passwordReplaced(user, "user.password-reset");
+      },
+      revokeSessionsOnPasswordReset: true,
     },
     rateLimit: {
       // Better-Auth's default is production only.
@@ -68,6 +107,8 @@ export function createAuth({
         "/sign-in/email": { window: 60, max: 5 },
         "/sign-up/email": { window: 3600, max: 3 },
         "/request-password-reset": { window: 3600, max: 3 },
+        // It checks the current password, so a stolen session could guess it.
+        "/change-password": { window: 60, max: 5 },
       },
     },
     user: {
@@ -119,7 +160,22 @@ export function createAuth({
       ipAddress: { ipAddressHeaders: ["x-forwarded-for"] },
     },
     hooks: {
+      // A password change always signs the user's other devices out, whatever
+      // the client asks (PRD §8.2).
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path !== "/change-password") return;
+        return {
+          context: { body: { ...ctx.body, revokeOtherSessions: true } },
+        };
+      }),
       after: createAuthMiddleware(async (ctx) => {
+        if (ctx.path === "/change-password") {
+          // Forced to revoke the other sessions, it always starts a new one.
+          const user = ctx.context.newSession?.user;
+          if (user && !isAPIError(ctx.context.returned))
+            passwordReplaced(user, "user.password-changed");
+          return;
+        }
         const action = sessionActions[ctx.path];
         if (!action) return;
         const user = ctx.context.newSession?.user.id;

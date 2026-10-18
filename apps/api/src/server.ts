@@ -3,15 +3,27 @@ import { consoleActivity } from "./activity.ts";
 import { createApp } from "./app.ts";
 import { createAuth } from "./auth.ts";
 import { readConfig } from "./config.ts";
+import { consoleEmail, resendEmail } from "./email.ts";
 
-const { databaseURL, baseURL, secret, port } = readConfig(process.env);
+const { databaseURL, baseURL, secret, port, email } = readConfig(process.env);
 const db = createDatabase(databaseURL);
 // One activity log (PRD §8.7) for the app's writes and Better-Auth's sign-ins.
 const activity = consoleActivity;
-const auth = createAuth({ db, baseURL, secret, activity });
+const auth = createAuth({
+  db,
+  baseURL,
+  secret,
+  activity,
+  email: email ? resendEmail(email) : consoleEmail(console.log),
+});
 
 const server = createApp({ auth, db, activity }).listen(port, () => {
   console.log(`API listening on http://localhost:${port}`);
+  console.log(
+    email
+      ? `Email: Resend, from ${email.from}`
+      : "Email: console (no RESEND_API_KEY)"
+  );
 });
 
 // In the container Node is PID 1, which ignores SIGTERM unless it is handled.

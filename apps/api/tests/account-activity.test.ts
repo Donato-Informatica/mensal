@@ -12,7 +12,7 @@ import {
 const at = "2026-10-16T14:03:00.000Z";
 
 const events: ActivityEvent[] = [];
-/** The free-text log, where password-reset links keep going. */
+/** The free-text log, where emails go without Resend. */
 const logLines: string[] = [];
 let api: TestApi;
 beforeAll(async () => {
@@ -89,6 +89,58 @@ describe("account events in the activity log (PRD §8.7)", () => {
     ]);
   });
 
+  it("logs a password change with the user's id", async () => {
+    const { cookie, userId } = await signUp(api);
+
+    const logged = await loggedBy(() =>
+      request(api, "/api/auth/change-password", {
+        cookie,
+        body: { currentPassword: password, newPassword: "a new passphrase" },
+      })
+    );
+
+    expect(logged).toEqual([
+      { at, user: userId, action: "user.password-changed" },
+    ]);
+  });
+
+  it("logs nothing for a password change refused for a wrong current password", async () => {
+    const { cookie } = await signUp(api);
+
+    const logged = await loggedBy(() =>
+      request(api, "/api/auth/change-password", {
+        cookie,
+        body: { currentPassword: "a wrong guess", newPassword: "whatever123" },
+      })
+    );
+
+    expect(logged).toEqual([]);
+  });
+
+  it("logs a password reset with the user's id", async () => {
+    const { userId, email } = await signUp(api);
+    const before = logLines.length;
+    await request(api, "/api/auth/request-password-reset", {
+      body: { email, redirectTo: "/redefinir-senha" },
+    });
+    const [link] = /https?:\/\/\S+/.exec(logLines.slice(before).join("\n"))!;
+    const opened = await fetch(link, { redirect: "manual" });
+    const token = new URL(
+      opened.headers.get("location")!,
+      api.url
+    ).searchParams.get("token");
+
+    const logged = await loggedBy(() =>
+      request(api, "/api/auth/reset-password", {
+        body: { token, newPassword: "a new passphrase" },
+      })
+    );
+
+    expect(logged).toEqual([
+      { at, user: userId, action: "user.password-reset" },
+    ]);
+  });
+
   it("logs nothing for a sign-in refused before any credential is checked", async () => {
     const statuses: number[] = [];
 
@@ -111,6 +163,7 @@ describe("account events in the activity log (PRD §8.7)", () => {
 
   it("logs nothing for the other auth endpoints", async () => {
     const { cookie, email } = await signUp(api);
+    const linesBefore = logLines.length;
 
     const statuses: number[] = [];
     const send = async (...args: Parameters<typeof request>) => {
@@ -130,8 +183,10 @@ describe("account events in the activity log (PRD §8.7)", () => {
 
     expect(statuses).toEqual([200, 200, 200, 200]);
     expect(logged).toEqual([]);
-    expect(logLines).toEqual([
-      expect.stringContaining(`Password reset link for ${email}`),
+    expect(logLines.slice(linesBefore)).toEqual([
+      expect.stringContaining(
+        `Email to ${email}: Redefinir sua senha do Mensal`
+      ),
     ]);
   });
 });
