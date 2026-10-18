@@ -5,12 +5,6 @@
 #
 # Coolify fills the SERVICE_* magic variables: passwords are generated once
 # and kept, SERVICE_URL_WEB is the domain you assign to `web`.
-#
-# Preview deployments (one stack per pull request) share this compose project
-# with production, and Coolify renames their services (`api` -> `api-pr-42`).
-# So services reach each other through aliases that are unique per stack, built
-# from COOLIFY_FQDN (the stack's own domain, set per deploy), never through the
-# bare service names `postgres` and `api`, which could resolve to another stack.
 services:
   postgres:
     image: postgres:17
@@ -18,10 +12,6 @@ services:
       POSTGRES_USER: mensal
       POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
       POSTGRES_DB: mensal
-    networks:
-      default:
-        aliases:
-          - mensal-db.${COOLIFY_FQDN:-prod}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -35,21 +25,15 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgres://mensal:${SERVICE_PASSWORD_POSTGRES}@mensal-db.${COOLIFY_FQDN:-prod}:5432/mensal
+      DATABASE_URL: postgres://mensal:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/mensal
       # Must be the https:// origin of `web` (the API refuses to boot otherwise).
-      # A preview's own origin is COOLIFY_URL; SERVICE_URL_WEB would be the
-      # service's default domain, and Better-Auth rejects any other origin.
-      BETTER_AUTH_URL: ${COOLIFY_URL:-${SERVICE_URL_WEB}}
+      BETTER_AUTH_URL: ${SERVICE_URL_WEB}
       BETTER_AUTH_SECRET: ${SERVICE_PASSWORD_64_AUTH}
       PORT: 3000
       # Set both in Coolify to send email through Resend, or neither to print
       # emails to the container log (ADR-0003). One without the other fails boot.
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
-    networks:
-      default:
-        aliases:
-          - mensal-api.${COOLIFY_FQDN:-prod}
     depends_on:
       postgres:
         condition: service_healthy
@@ -72,8 +56,6 @@ services:
       dockerfile: apps/web/Dockerfile
     environment:
       - SERVICE_URL_WEB_80
-      # The host nginx forwards /api to (see apps/web/nginx.conf.template).
-      - API_HOST=mensal-api.${COOLIFY_FQDN:-prod}
     depends_on:
       api:
         condition: service_healthy
