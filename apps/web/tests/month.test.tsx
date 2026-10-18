@@ -281,3 +281,93 @@ describe("moving between months", () => {
     await waitFor(() => expect(content).toHaveAttribute("aria-busy", "false"));
   });
 });
+
+describe("returning to the current month", () => {
+  const goToCurrent = () =>
+    screen.queryByRole("button", { name: "Ir para o mês atual" });
+  const nav = () => screen.getByRole("navigation", { name: "Telas" });
+
+  it("offers the way back only away from the current period", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    await screen.findByRole("heading", { name: "Outubro 2026" });
+    expect(goToCurrent()).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Mês anterior" }));
+    await screen.findByRole("heading", { name: "Setembro 2026" });
+    await user.click(goToCurrent()!);
+
+    expect(
+      await screen.findByRole("heading", { name: "Outubro 2026" })
+    ).toBeInTheDocument();
+    expect(goToCurrent()).toBeNull();
+    expect(window.location.search).toBe("");
+  });
+
+  it("is a step in the history, so Back returns to the far month", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/?mes=2026-03");
+    await screen.findByRole("heading", { name: "Março 2026" });
+
+    await user.click(goToCurrent()!);
+    await screen.findByRole("heading", { name: "Outubro 2026" });
+    window.history.back();
+
+    expect(
+      await screen.findByRole("heading", { name: "Março 2026" })
+    ).toBeInTheDocument();
+  });
+
+  it("comes back to the month last viewed after a visit to Recorrências", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    await screen.findByRole("heading", { name: "Outubro 2026" });
+    await user.click(screen.getByRole("button", { name: "Próximo mês" }));
+    await user.click(screen.getByRole("button", { name: "Próximo mês" }));
+    await screen.findByRole("heading", { name: "Dezembro 2026" });
+
+    await user.click(within(nav()).getByRole("link", { name: "Recorrências" }));
+    await screen.findByRole("heading", { name: "Recorrências" });
+    await user.click(within(nav()).getByRole("link", { name: "Mês" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Dezembro 2026" })
+    ).toBeInTheDocument();
+  });
+
+  it("goes back to the current period when that was the last one viewed", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    await screen.findByRole("heading", { name: "Outubro 2026" });
+    await user.click(screen.getByRole("button", { name: "Próximo mês" }));
+    await screen.findByRole("heading", { name: "Novembro 2026" });
+    await user.click(goToCurrent()!);
+    await screen.findByRole("heading", { name: "Outubro 2026" });
+
+    await user.click(within(nav()).getByRole("link", { name: "Recorrências" }));
+    await screen.findByRole("heading", { name: "Recorrências" });
+    await user.click(within(nav()).getByRole("link", { name: "Mês" }));
+
+    await screen.findByRole("heading", { name: "Outubro 2026" });
+    expect(window.location.search).toBe("");
+  });
+
+  it("is forgotten on sign-out", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/?mes=2026-03");
+    await screen.findByRole("heading", { name: "Março 2026" });
+    await user.click(within(nav()).getByRole("link", { name: "Recorrências" }));
+    await screen.findByRole("heading", { name: "Recorrências" });
+
+    await chooseFromAccountMenu("Sair", user);
+    const dialog = await screen.findByRole("dialog", { name: "Sair da conta" });
+    await user.click(within(dialog).getByRole("button", { name: "Sair" }));
+    await user.type(await screen.findByLabelText("E-mail"), email);
+    await user.type(screen.getByLabelText("Senha"), "correct-horse");
+    await user.click(screen.getByRole("button", { name: "Entrar" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Outubro 2026" })
+    ).toBeInTheDocument();
+  });
+});

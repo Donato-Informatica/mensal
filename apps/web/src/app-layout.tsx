@@ -4,6 +4,7 @@ import { Link, useMatchRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { AccountMenu } from "./account-menu.tsx";
 import classes from "./app-layout.module.css";
+import { useViewedMonth } from "./viewed-month.ts";
 import { Wordmark } from "./wordmark.tsx";
 
 /** The frame of the app proper: a header with the wordmark, screens and account menu. */
@@ -62,11 +63,18 @@ function ScreenLink({
   icon: ReactNode;
   children: string;
 }) {
+  // The monthly screen reopens on the month last viewed.
+  const viewed = useViewedMonth();
   if (useMatchRoute()({ to })) return null;
   return (
     <Button
-      component={Link}
-      to={to}
+      renderRoot={(props) =>
+        to === "/" ? (
+          <Link to="/" search={{ mes: viewed }} {...props} />
+        ) : (
+          <Link to={to} {...props} />
+        )
+      }
       variant="subtle"
       color="gray"
       size="sm"
