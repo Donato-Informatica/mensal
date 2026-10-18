@@ -94,13 +94,16 @@ interface Materializing {
 /** The account actions that start a session for the user. */
 export type SessionAction = "user.sign-up" | "user.sign-in";
 
+/** The account actions that replace the user's password. */
+export type PasswordAction = "user.password-changed" | "user.password-reset";
+
 /**
- * Signing up or in, by the user's id. A failed sign-in has no user: it names
- * the attempted email and the client's address instead, to spot credential
- * stuffing.
+ * Signing up or in, or replacing the password, by the user's id. A failed
+ * sign-in has no user: it names the attempted email and the client's address
+ * instead, to spot credential stuffing.
  */
 type AccountReport =
-  | { user: string; action: SessionAction }
+  | { user: string; action: SessionAction | PasswordAction }
   | {
       action: "user.sign-in-failed";
       email: string;

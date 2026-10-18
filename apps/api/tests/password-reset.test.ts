@@ -130,6 +130,21 @@ describe("password reset", () => {
     expect(logged.join("\n")).not.toMatch(/https?:\/\//);
   });
 
+  it("then emails the user that their password was changed", async () => {
+    const { email } = await signUp(api);
+    const link = await requestReset(email);
+    sent.length = 0;
+
+    await resetPassword(await tokenFrom(link), "a brand new passphrase");
+
+    expect(sent).toEqual([
+      expect.objectContaining({
+        to: email,
+        subject: "Sua senha do Mensal foi alterada",
+      }),
+    ]);
+  });
+
   it("signs the user out of every device", async () => {
     const { email } = await signUp(api);
     const device = cookieFrom(await signIn(email, password));

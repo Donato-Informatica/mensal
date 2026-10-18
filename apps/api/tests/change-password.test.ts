@@ -1,4 +1,5 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import type { Email } from "../src/email.ts";
 import {
   approve,
   cookieFrom,
@@ -9,12 +10,22 @@ import {
   type TestApi,
 } from "./api.ts";
 
+const sent: Email[] = [];
 let api: TestApi;
 beforeAll(async () => {
-  api = await startApi();
+  api = await startApi({
+    // 14:03 in São Paulo.
+    now: () => new Date("2026-10-17T17:03:00.000Z"),
+    email: async (email) => {
+      sent.push(email);
+    },
+  });
 });
 afterAll(async () => {
   await api.close();
+});
+beforeEach(() => {
+  sent.length = 0;
 });
 
 function signIn(email: string, withPassword: string) {
@@ -57,6 +68,26 @@ describe("changing the password", () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({ code: "INVALID_PASSWORD" });
     expect((await signIn(email, password)).status).toBe(200);
+    expect(sent).toEqual([]);
+  });
+
+  it("emails the user that their password was changed, when, and how to take it back", async () => {
+    const { cookie, email } = await signUp(api);
+
+    await changePassword(cookie, {
+      currentPassword: password,
+      newPassword: "a brand new passphrase",
+    });
+
+    expect(sent).toEqual([
+      expect.objectContaining({
+        to: email,
+        subject: "Sua senha do Mensal foi alterada",
+      }),
+    ]);
+    expect(sent[0]?.text).toContain("17/10/2026 às 14:03");
+    expect(sent[0]?.text).toContain(`${api.url}/esqueci-a-senha`);
+    expect(sent[0]?.html).toContain(`${api.url}/esqueci-a-senha`);
   });
 
   it("signs the user out of their other devices, keeping this one, even when not asked to", async () => {

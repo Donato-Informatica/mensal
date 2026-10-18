@@ -8,11 +8,12 @@ import {
   activityRecorder,
   consoleActivity,
   type Activity,
+  type PasswordAction,
   type RecordActivity,
   type SessionAction,
 } from "./activity.ts";
 import { consoleEmail, type Email, type SendEmail } from "./email.ts";
-import { resetPasswordEmail } from "./emails.ts";
+import { passwordChangedEmail, resetPasswordEmail } from "./emails.ts";
 import type { Log } from "./log.ts";
 
 export interface AuthOptions {
@@ -66,6 +67,21 @@ export function createAuth({
       );
     });
   }
+  /** Logs and alerts a password replaced by a change or a reset (PRD §8.2). */
+  function passwordReplaced(
+    user: { id: string; email: string; name: string },
+    action: PasswordAction
+  ) {
+    record({ user: user.id, action });
+    sendInBackground(
+      passwordChangedEmail({
+        to: user.email,
+        name: user.name,
+        at: now(),
+        forgotPasswordURL: `${baseURL}/esqueci-a-senha`,
+      })
+    );
+  }
   return betterAuth({
     baseURL,
     secret,
@@ -76,6 +92,9 @@ export function createAuth({
         sendInBackground(
           resetPasswordEmail({ to: user.email, name: user.name, url })
         );
+      },
+      onPasswordReset: async ({ user }) => {
+        passwordReplaced(user, "user.password-reset");
       },
       revokeSessionsOnPasswordReset: true,
     },
@@ -150,6 +169,13 @@ export function createAuth({
         };
       }),
       after: createAuthMiddleware(async (ctx) => {
+        if (ctx.path === "/change-password") {
+          // Forced to revoke the other sessions, it always starts a new one.
+          const user = ctx.context.newSession?.user;
+          if (user && !isAPIError(ctx.context.returned))
+            passwordReplaced(user, "user.password-changed");
+          return;
+        }
         const action = sessionActions[ctx.path];
         if (!action) return;
         const user = ctx.context.newSession?.user.id;
