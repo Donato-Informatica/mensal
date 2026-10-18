@@ -69,6 +69,45 @@ describe("readConfig", () => {
     });
   });
 
+  describe("email", () => {
+    it("sends through Resend when both its key and the sender are set", () => {
+      expect(
+        readConfig({
+          ...development,
+          RESEND_API_KEY: "re_123",
+          EMAIL_FROM: "Mensal <nao-responda@mensal.example>",
+        }).email
+      ).toEqual({
+        apiKey: "re_123",
+        from: "Mensal <nao-responda@mensal.example>",
+      });
+    });
+
+    it("falls back to the console when neither is set, even in production", () => {
+      expect(readConfig(development).email).toBeUndefined();
+      expect(
+        readConfig({
+          NODE_ENV: "production",
+          DATABASE_URL: "postgres://mensal:secret@db:5432/mensal",
+          BETTER_AUTH_URL: "https://mensal.example",
+          BETTER_AUTH_SECRET: "q3Vn8yJx0cR2tLw5ZbKp7HdMf9SgAe1U",
+        }).email
+      ).toBeUndefined();
+    });
+
+    it("refuses one without the other", () => {
+      expect(() =>
+        readConfig({ ...development, RESEND_API_KEY: "re_123" })
+      ).toThrow("EMAIL_FROM is not set");
+      expect(() =>
+        readConfig({
+          ...development,
+          EMAIL_FROM: "Mensal <nao-responda@mensal.example>",
+        })
+      ).toThrow("RESEND_API_KEY is not set");
+    });
+  });
+
   it("lets development and test use the .env.example secret and plain http", () => {
     for (const NODE_ENV of [undefined, "development", "test"])
       expect(() => readConfig({ ...development, NODE_ENV })).not.toThrow();

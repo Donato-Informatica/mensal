@@ -31,7 +31,7 @@ npm run -w @mensal/api dev     # :3000
 npm run -w @mensal/web dev     # :5173 — open this one
 ```
 
-Sign-up is open, but the API rejects unapproved users. Approve a user by setting `users.approved = true` directly in the database (e.g. via Drizzle Studio: `npm run studio`, http://localhost:4983). Password-reset links are printed to the API log.
+Sign-up is open, but the API rejects unapproved users. Approve a user by setting `users.approved = true` directly in the database (e.g. via Drizzle Studio: `npm run studio`, http://localhost:4983). Without `RESEND_API_KEY` and `EMAIL_FROM` (see `apps/api/.env.example`), emails such as password-reset links are printed to the API log instead of sent.
 
 ### Demo data (optional)
 

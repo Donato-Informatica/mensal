@@ -131,7 +131,9 @@ describe("account events in the activity log (PRD §8.7)", () => {
     expect(statuses).toEqual([200, 200, 200, 200]);
     expect(logged).toEqual([]);
     expect(logLines).toEqual([
-      expect.stringContaining(`Password reset link for ${email}`),
+      expect.stringContaining(
+        `Email to ${email}: Redefinir sua senha do Mensal`
+      ),
     ]);
   });
 });

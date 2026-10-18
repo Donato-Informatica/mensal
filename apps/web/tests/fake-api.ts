@@ -53,7 +53,7 @@ export function fakeApi() {
   let signedIn: Account | undefined;
   /** Reset tokens not yet used, by token, to the email they reset. */
   const resetTokens = new Map<string, string>();
-  /** The reset screen each logged link leads to, by email. */
+  /** The reset screen each emailed link leads to, by email. */
   const resetLinks = new Map<string, string>();
   let down = false;
   /**
@@ -513,8 +513,8 @@ export function fakeApi() {
     },
 
     /**
-     * Where the reset link last logged for this email leads once opened (the
-     * reset screen with its token), or undefined when none was logged.
+     * Where the reset link last emailed to this address leads once opened (the
+     * reset screen with its token), or undefined when none was sent.
      */
     resetLinkFor(email: string): string | undefined {
       return resetLinks.get(email);

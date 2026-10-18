@@ -29,7 +29,8 @@ Three vitest projects (`vitest.config.ts`):
 - **Deep modules**: each `packages/*` exposes only its root files (`index.ts`, …); `lib/` and `tests/` are private. Import packages by name (`@mensal/shared`), never by path. `npm run lint:boundaries` (dependency-cruiser) enforces this and runs in `check` and on commit. Read [packages/README.md](packages/README.md) before adding or importing a package.
 - **Migrations**: only `npm run -w @mensal/database generate` writes them (drizzle-kit; never hand-edit `packages/database/migrations/`). drizzle-kit is the only migration system — `auth migrate` is never used.
 - **Better-Auth schema** is generated into `packages/database/lib/schema/auth.ts` by `npm run -w @mensal/api auth:generate`. Never add `--adapter`: the CLI then emits singular tables and breaks `usePlural: true`.
-- **Approval gate**: sign-up is open, but `/api/v1` rejects unapproved users with `403 USER_NOT_APPROVED`. Approval is an administrator setting `users.approved = true` directly in the database. Password-reset links are printed to the server log for manual forwarding (no email provider).
+- **Approval gate**: sign-up is open, but `/api/v1` rejects unapproved users with `403 USER_NOT_APPROVED`. Approval is an administrator setting `users.approved = true` directly in the database.
+- **Email** ([ADR-0003](docs/adr/0003-transactional-email-via-resend.md)): password emails go through Better-Auth's injectable `email` sink: Resend when `RESEND_API_KEY` and `EMAIL_FROM` are set, otherwise printed to the server log. API tests inject a capturing sink; nothing ever calls Resend in tests.
 
 ## Agent skills
 

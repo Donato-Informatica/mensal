@@ -28,7 +28,7 @@ async function askForLink(email: string) {
 }
 
 describe("forgetting the password", () => {
-  it("requests a reset link for the administrator to forward", async () => {
+  it("requests a reset link by email", async () => {
     const user = userEvent.setup();
     openApp(api, "/entrar");
 
@@ -39,7 +39,7 @@ describe("forgetting the password", () => {
 
     expect(
       await screen.findByText(
-        "Se houver uma conta com este e-mail, o administrador vai enviar a você um link para criar uma nova senha."
+        "Se houver uma conta com este e-mail, enviamos um link para criar uma nova senha. Ele vale por 1 hora."
       )
     ).toBeInTheDocument();
     expect(api.resetLinkFor("ana@example.com")).toBeDefined();
@@ -50,7 +50,7 @@ describe("opening the reset link", () => {
   async function requestedLink() {
     openApp(api, "/esqueci-a-senha");
     await askForLink("ana@example.com");
-    await screen.findByText(/o administrador vai enviar/);
+    await screen.findByText(/enviamos um link/);
     cleanup();
     return api.resetLinkFor("ana@example.com")!;
   }

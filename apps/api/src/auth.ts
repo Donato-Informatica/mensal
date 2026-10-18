@@ -11,6 +11,8 @@ import {
   type RecordActivity,
   type SessionAction,
 } from "./activity.ts";
+import { consoleEmail, type Email, type SendEmail } from "./email.ts";
+import { resetPasswordEmail } from "./emails.ts";
 import type { Log } from "./log.ts";
 
 export interface AuthOptions {
@@ -19,10 +21,12 @@ export interface AuthOptions {
   baseURL: string;
   secret: string;
   /**
-   * Where the password-reset links, and any failure of the activity log, are
-   * written; the console by default.
+   * Where failures to send an email or to record activity are written; the
+   * console by default.
    */
   log?: Log;
+  /** Where emails go (ADR-0003); written to `log` by default. */
+  email?: SendEmail;
   /** Better-Auth's per-IP rate limiter on `/api/auth`; on by default. */
   rateLimit?: boolean;
   /** The clock that stamps activity events; the system clock by default. */
@@ -33,8 +37,8 @@ export interface AuthOptions {
 
 /**
  * Better-Auth on the app's own `db`: email + password, sessions in HttpOnly
- * SameSite=Lax cookies, and password-reset links written to the log for the
- * administrator to forward by hand (PRD §8.2). The anonymous endpoints are
+ * SameSite=Lax cookies, and password-reset links sent by `email` (PRD §8.2,
+ * ADR-0003); a reset signs the user out everywhere. The anonymous endpoints are
  * rate limited per client IP, read from the proxy's `X-Forwarded-For`
  * (PRD §8.6). Sign-ups, sign-ins and failed sign-ins go to the activity log
  * (PRD §8.7).
@@ -44,11 +48,24 @@ export function createAuth({
   baseURL,
   secret,
   log = console.log,
+  email = consoleEmail(log),
   rateLimit = true,
   now = () => new Date(),
   activity = consoleActivity,
 }: AuthOptions) {
   const record: RecordActivity = activityRecorder(activity, now, log);
+  /**
+   * Sends without waiting, so an answer neither slows down nor fails for an
+   * email that exists. A failure is logged without the email's content, which
+   * may hold a reset link.
+   */
+  function sendInBackground(message: Email) {
+    email(message).catch((error: unknown) => {
+      log(
+        `Email "${message.subject}" to ${message.to} failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    });
+  }
   return betterAuth({
     baseURL,
     secret,
@@ -56,8 +73,11 @@ export function createAuth({
     emailAndPassword: {
       enabled: true,
       sendResetPassword: async ({ user, url }) => {
-        log(`Password reset link for ${user.email}: ${url}`);
+        sendInBackground(
+          resetPasswordEmail({ to: user.email, name: user.name, url })
+        );
       },
+      revokeSessionsOnPasswordReset: true,
     },
     rateLimit: {
       // Better-Auth's default is production only.
