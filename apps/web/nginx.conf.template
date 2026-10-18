@@ -4,9 +4,10 @@ server {
 
   # Same origin as the SPA (PRD §8.4): no CORS. Coolify's proxy sits in front
   # and sets X-Forwarded-*; pass them on, since Better-Auth rate-limits by the
-  # client IP in x-forwarded-for (PRD §8.6).
+  # client IP in x-forwarded-for (PRD §8.6). ${API_HOST} is filled in when the
+  # container starts (nginx image templates; see docker-compose.prod.yml).
   location /api/ {
-    proxy_pass http://api:3000;
+    proxy_pass http://${API_HOST}:3000;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;

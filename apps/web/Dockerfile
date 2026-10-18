@@ -17,6 +17,9 @@ COPY packages/shared packages/shared
 RUN npm run build:web
 
 FROM nginx:1-alpine
-COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+# The nginx image renders /etc/nginx/templates/*.template into conf.d at start.
+# Only API_HOST is substituted, so nginx's own $variables stay intact.
+ENV API_HOST=api NGINX_ENVSUBST_FILTER=^API_HOST$
+COPY apps/web/nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
 EXPOSE 80
