@@ -32,6 +32,20 @@
 
 .amount {
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Wide screens: the amount and badge take fixed columns, so every row's amounts line up. */
+@media (min-width: 36.01em) {
+  .amount {
+    min-width: 7.5rem;
+    justify-content: flex-end;
+  }
+
+  .badge {
+    min-width: 5.5rem;
+    justify-content: center;
+  }
 }
 
 /* "A definir": ink on a dashed underline reads as a field to fill in. */

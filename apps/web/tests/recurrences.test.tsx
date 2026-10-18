@@ -33,6 +33,26 @@ async function rows(): Promise<string[]> {
 }
 
 describe("the recurrences screen", () => {
+  it("is the only screen the monthly one links to in the header, and back", async () => {
+    // Each screen renders its own header.
+    const nav = () => screen.getByRole("navigation", { name: "Telas" });
+    openApp(api, "/");
+    await screen.findByRole("heading", { name: "Outubro 2026" });
+    expect(within(nav()).queryByRole("link", { name: "Mês" })).toBeNull();
+
+    await user.click(within(nav()).getByRole("link", { name: "Recorrências" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "Recorrências" })
+    ).toBeInTheDocument();
+    expect(
+      within(nav()).queryByRole("link", { name: "Recorrências" })
+    ).toBeNull();
+    expect(
+      within(nav()).getByRole("link", { name: "Mês" })
+    ).toBeInTheDocument();
+  });
+
   it("is reached from the monthly screen and lists the active recurrences", async () => {
     api.addRecurrence(email, {
       description: "Aluguel",

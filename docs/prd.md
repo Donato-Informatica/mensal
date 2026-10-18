@@ -303,7 +303,7 @@ All routes under `/api/v1` require an authenticated, approved user (see 8.2). Er
 
 All UI text is Brazilian Portuguese, written directly in the components (no i18n library). Currency and dates are formatted with `Intl` (`pt-BR`, `BRL`). API error codes are mapped to Portuguese messages.
 
-1. **Period navigator:** fixed month selector at the top (`< Outubro 2026 >`), moving back and forward with one click or the `←` / `→` keys.
+1. **Period navigator:** fixed month selector at the top (`< Outubro 2026 >`), moving back and forward with one click or the `←` / `→` keys. Away from the current period, a **Mês atual** button returns to it. Leaving for Recorrências and coming back via **Mês** keeps the month that was on screen (per tab, not saved; cleared on sign-out).
 2. **Summary bar:** one dominant figure, **Sobra prevista** (expected inflows minus expected outflows, computed by the client), with two supporting blocks, **Entradas** and **Saídas**, each with **Previsto** and **Realizado**.
 3. **One-click settle:** a checkbox or quick action on each row toggles between `PENDING` and `SETTLED`. If the amount is null, the click opens an inline popover asking only for the amount.
 4. **Groups (in this order):**
@@ -347,7 +347,7 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 - The user's preferences (§3.5) travel with the session too, and are written through Better-Auth's `update-user`, outside `/api/v1`.
 - **Email** ([ADR-0003](adr/0003-transactional-email-via-resend.md)): through an injectable `email` sink on Better-Auth. With `RESEND_API_KEY` and `EMAIL_FROM` set it sends through Resend's REST API; with neither it writes each email's text to the log, in any environment, and the startup line says which. Setting only one refuses to boot. Emails are pt-BR, as inline HTML plus a plain-text twin.
 - **Reset password** ("Esqueci a senha" → "Redefinir senha"): `sendResetPassword` emails a link valid for 1 hour, to approved and unapproved users alike. It is sent without awaiting it, so the answer is the same and as fast whether or not the account exists; a send failure is logged without the link, and with Resend configured the link never reaches the log. A reset signs the user out of every device (`revokeSessionsOnPasswordReset`).
-- **Change password** ("Alterar senha", `/alterar-senha`, linked from the header of the app proper, so only approved users reach it): Better-Auth's `change-password`, with the current password, the new one and its confirmation (checked by the client). A wrong current password answers `400 INVALID_PASSWORD`. It always signs the user out of their other devices and keeps this one: a `before` hook forces `revokeOtherSessions`, whatever the client sends.
+- **Change password** ("Alterar senha", a modal opened from the account menu in the header of the app proper, so only approved users reach it): Better-Auth's `change-password`, with the current password, the new one and its confirmation (checked by the client). A wrong current password answers `400 INVALID_PASSWORD`. It always signs the user out of their other devices and keeps this one: a `before` hook forces `revokeOtherSessions`, whatever the client sends.
 - **Password-changed alert:** after a change or a reset, the user is emailed when it happened (São Paulo time) and a link to "Esqueci a senha", so someone whose password was replaced by another can take the account back. No IP or device details.
 
 ### 8.3 Data Layer (Drizzle + Postgres)

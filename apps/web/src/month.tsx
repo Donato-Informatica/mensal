@@ -6,12 +6,14 @@ import {
   CloseButton,
   Group,
   Paper,
+  Popover,
   SimpleGrid,
   Stack,
   Text,
   Title,
   VisuallyHidden,
 } from "@mantine/core";
+import { MonthPicker } from "@mantine/dates";
 import { useHotkeys } from "@mantine/hooks";
 import {
   currentPeriod,
@@ -27,18 +29,20 @@ import {
 import {
   IconArrowDownLeft,
   IconArrowUpRight,
+  IconCalendarMonth,
+  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
   IconPencil,
 } from "@tabler/icons-react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
   rootRouteId,
   useNavigate,
   useRouteContext,
   useRouterState,
 } from "@tanstack/react-router";
-import { useCallback, useId, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { errorMessage } from "./api-error.ts";
 import { AppLayout } from "./app-layout.tsx";
 import appLayout from "./app-layout.module.css";
@@ -50,6 +54,8 @@ import classes from "./occurrence-row.module.css";
 import { NewOneOffButton } from "./new-one-off.tsx";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
 import { periodQuery } from "./period-query.ts";
+import { monthPickerProps } from "./pickers.ts";
+import { useDocumentTitle } from "./document-title.ts";
 import { RecurrenceActions } from "./recurrence-actions.tsx";
 import type { SaveFailure } from "./session.ts";
 import { useConfirmStatusChanges, useShowSummary } from "./settings.tsx";
@@ -62,6 +68,7 @@ import {
   type StatusChangeRequest,
 } from "./status-controls.tsx";
 import { UndoToast } from "./undo-toast.tsx";
+import { rememberViewedMonth } from "./viewed-month.ts";
 
 /** A change the API refused, kept until retried or dismissed. */
 type Failure = { request: StatusChangeRequest; error: unknown };
@@ -70,6 +77,7 @@ type Failure = { request: StatusChangeRequest; error: unknown };
 export function Month({ period }: { period: string }) {
   const { api } = useRouteContext({ from: rootRouteId });
   const { data } = useSuspenseQuery(periodQuery(api, period));
+  useDocumentTitle(formatPeriod(period));
   // Another month is on its way: this one stays up, dimmed, until it lands.
   const loading = useRouterState({ select: (state) => state.isLoading });
   const [showSummary, setShowSummary, summaryFailure] = useShowSummary();
@@ -163,12 +171,31 @@ function PeriodNavigator() {
   const navigate = useNavigate();
   // The month asked for, which runs ahead of the one on screen while it loads:
   // the title answers a click at once and fast repeats keep stepping.
-  const asked = useRouterState({
-    select: (state) => state.location.search as { mes?: unknown },
-  });
+  const { search: asked, pathname } = useRouterState({
+    select: (state) => state.location,
+  }) as { search: { mes?: unknown }; pathname: string };
   const target =
     (typeof asked.mes === "string" ? periodOfMonth(asked.mes) : undefined) ??
     currentPeriod();
+  const away = target !== currentPeriod();
+  const queryClient = useQueryClient();
+  // The month that "Mês" reopens after a visit to another screen.
+  // Leaving already changes the URL, which must not read as a return to now.
+  const onMonthScreen = pathname === "/";
+  useEffect(() => {
+    if (onMonthScreen) {
+      rememberViewedMonth(queryClient, away ? monthOf(target) : undefined);
+    }
+  }, [queryClient, onMonthScreen, away, target]);
+  const [picking, setPicking] = useState(false);
+  const jumpTo = (picked: string | null) => {
+    setPicking(false);
+    if (picked === null) return;
+    void navigate({
+      to: "/",
+      search: { mes: picked === currentPeriod() ? undefined : monthOf(picked) },
+    });
+  };
   const move = (months: number) =>
     void navigate({
       to: "/",
@@ -219,9 +246,36 @@ function PeriodNavigator() {
           >
             <IconChevronLeft size={20} aria-hidden="true" />
           </ActionIcon>
-          <Title order={1} ta="center">
-            {formatPeriod(target)}
-          </Title>
+          <Popover opened={picking} onChange={setPicking} withArrow>
+            <Popover.Target>
+              <Title order={1} ta="center">
+                <Button
+                  variant="subtle"
+                  color="gray"
+                  h="auto"
+                  px="xs"
+                  fz="inherit"
+                  fw="inherit"
+                  aria-haspopup="dialog"
+                  title="Escolher mês"
+                  rightSection={
+                    <IconChevronDown size={18} aria-hidden="true" />
+                  }
+                  onClick={() => setPicking((open) => !open)}
+                >
+                  {formatPeriod(target)}
+                </Button>
+              </Title>
+            </Popover.Target>
+            <Popover.Dropdown role="dialog" aria-label="Escolher mês">
+              <MonthPicker
+                value={target}
+                onChange={jumpTo}
+                allowDeselect={false}
+                {...monthPickerProps}
+              />
+            </Popover.Dropdown>
+          </Popover>
           <ActionIcon
             variant="surface"
             size={36}
@@ -232,7 +286,27 @@ function PeriodNavigator() {
             <IconChevronRight size={20} aria-hidden="true" />
           </ActionIcon>
         </Group>
-        <Box />
+        <Group justify="flex-end">
+          {/* Out of sight, not out of the layout, so the title never shifts. */}
+          <Button
+            variant="subtle"
+            color="gray"
+            size="sm"
+            h={{ base: 44, sm: 30 }}
+            px="xs"
+            aria-label="Ir para o mês atual"
+            leftSection={<IconCalendarMonth size={18} aria-hidden="true" />}
+            styles={{ section: { marginInlineEnd: 0 } }}
+            style={{ visibility: away ? "visible" : "hidden" }}
+            onClick={() =>
+              void navigate({ to: "/", search: { mes: undefined } })
+            }
+          >
+            <Text span visibleFrom="sm" ml={8}>
+              Mês atual
+            </Text>
+          </Button>
+        </Group>
       </Box>
     </Box>
   );

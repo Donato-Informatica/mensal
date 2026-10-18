@@ -1,6 +1,7 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { chooseFromAccountMenu } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
 
@@ -16,6 +17,13 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
 });
+
+/** Opens the "Alterar senha" modal from the header of the monthly screen. */
+async function openChangePassword() {
+  openApp(api, "/");
+  await chooseFromAccountMenu("Alterar senha");
+  return screen.findByRole("dialog", { name: "Alterar senha" });
+}
 
 /** Fills in the "Alterar senha" form and sends it. */
 async function changePassword({
@@ -35,21 +43,20 @@ async function changePassword({
 }
 
 describe("changing the password", () => {
-  it("is reached from the header, and the new password is the one to sign in with", async () => {
+  it("is opened from the header, and the new password is the one to sign in with", async () => {
     const user = userEvent.setup();
-    openApp(api, "/");
+    const dialog = await openChangePassword();
 
-    await user.click(
-      await screen.findByRole("link", { name: "Alterar senha" })
-    );
     await changePassword({ current: "old-horse", next: "new-horse" });
     expect(
-      await screen.findByText(
+      await within(dialog).findByText(
         "Senha alterada. Nos outros dispositivos, entre de novo com a nova senha."
       )
     ).toBeInTheDocument();
-    await user.click(screen.getByRole("link", { name: "Voltar para o mês" }));
-    await user.click(await screen.findByRole("button", { name: "Sair" }));
+    // The text one, not the modal's own "Fechar" ×.
+    await user.click(within(dialog).getByText("Fechar"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await chooseFromAccountMenu("Sair", user);
     await user.click(
       within(await screen.findByRole("dialog")).getByRole("button", {
         name: "Sair",
@@ -64,18 +71,37 @@ describe("changing the password", () => {
     ).toBeInTheDocument();
   });
 
+  it("starts empty when opened again", async () => {
+    const user = userEvent.setup();
+    const dialog = await openChangePassword();
+    await user.type(within(dialog).getByLabelText("Senha atual"), "old-horse");
+
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await chooseFromAccountMenu("Alterar senha", user);
+
+    expect(
+      within(
+        await screen.findByRole("dialog", { name: "Alterar senha" })
+      ).getByLabelText("Senha atual")
+    ).toHaveValue("");
+  });
+
   it("says when the current password is wrong", async () => {
-    openApp(api, "/alterar-senha");
+    await openChangePassword();
 
     await changePassword({ current: "not-my-horse", next: "new-horse" });
 
     expect(
       await screen.findByText("Senha atual incorreta.")
     ).toBeInTheDocument();
+    const current = screen.getByLabelText("Senha atual");
+    expect(current).toBeInvalid();
+    expect(current).toHaveFocus();
   });
 
   it("refuses a confirmation that differs from the new password", async () => {
-    openApp(api, "/alterar-senha");
+    await openChangePassword();
 
     await changePassword({
       current: "old-horse",
@@ -86,6 +112,9 @@ describe("changing the password", () => {
     expect(
       await screen.findByText("As senhas não conferem.")
     ).toBeInTheDocument();
+    const confirmation = screen.getByLabelText("Confirmar nova senha");
+    expect(confirmation).toBeInvalid();
+    expect(confirmation).toHaveFocus();
     expect(api.passwordOf(email)).toBe("old-horse");
   });
 });

@@ -36,6 +36,11 @@ The calendar month in which an occurrence is expected to be settled; its due dat
 _UI (pt-BR)_: Competência
 _Avoid_: competence, reference month, accrual month
 
+**Current period**:
+The period containing today.
+_UI (pt-BR)_: Mês atual
+_Avoid_: this month, present month
+
 **Due date**:
 The date by which an occurrence should be settled. It may be absent.
 _UI (pt-BR)_: Vencimento

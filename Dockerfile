@@ -26,5 +26,7 @@ EXPOSE 3000
 # drizzle-kit applies pending migrations before the API starts (PRD §8.3:
 # never `auth migrate`). The DATABASE_URL guard matters: drizzle.config.ts
 # falls back to localhost when it is unset. `exec node` rather than the api's
-# `npm start` makes Node PID 1, so it receives SIGTERM.
-CMD ["sh", "-c", ": \"${DATABASE_URL:?is not set}\" && npm run --silent -w @mensal/database migrate && exec node apps/api/src/server.ts"]
+# `npm start` makes Node PID 1, so it receives SIGTERM. SEED_DEMO_DATA=true
+# (set only in Coolify's preview environment) also loads the demo data; a
+# failed seed is logged and never blocks boot.
+CMD ["sh", "-c", ": \"${DATABASE_URL:?is not set}\" && npm run --silent -w @mensal/database migrate && { [ \"$SEED_DEMO_DATA\" != true ] || node apps/api/src/seed-cli.ts || echo \"demo seed failed\"; } && exec node apps/api/src/server.ts"]

@@ -1,0 +1,36 @@
+/*
+ * Description, then the figures, then the menu. The amount ends right against
+ * the menu, so every row's amount ends on the same edge; "Encerrada", when
+ * there is one, sits before it (under it on phones, as on the monthly screen).
+ */
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-lg);
+}
+
+.text {
+  display: flex;
+  min-width: 0;
+}
+
+.figures {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+}
+
+.amount {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 36em) {
+  .figures {
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 2px;
+  }
+}

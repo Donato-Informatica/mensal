@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { chooseFromAccountMenu } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp as openAppWith } from "./open-app.tsx";
 
@@ -18,8 +19,10 @@ function openApp(path: string) {
   openAppWith(api, path);
 }
 
-async function confirmSignOut() {
-  await userEvent.click(await screen.findByRole("button", { name: "Sair" }));
+async function confirmSignOut({ fromMenu = true } = {}) {
+  if (fromMenu) await chooseFromAccountMenu("Sair");
+  else
+    await userEvent.click(await screen.findByRole("button", { name: "Sair" }));
   const dialog = await screen.findByRole("dialog", { name: "Sair da conta" });
   await userEvent.click(within(dialog).getByRole("button", { name: "Sair" }));
   return dialog;
@@ -128,7 +131,7 @@ describe("awaiting approval", () => {
   it("lets the user sign out", async () => {
     openApp("/aguardando-aprovacao");
 
-    await confirmSignOut();
+    await confirmSignOut({ fromMenu: false });
 
     expect(
       await screen.findByRole("heading", { name: "Entrar" })
@@ -171,7 +174,7 @@ describe("approved", () => {
   it("stays signed in when sign-out is cancelled", async () => {
     openApp("/");
 
-    await userEvent.click(await screen.findByRole("button", { name: "Sair" }));
+    await chooseFromAccountMenu("Sair");
     const dialog = await screen.findByRole("dialog", { name: "Sair da conta" });
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Cancelar" })
@@ -214,7 +217,7 @@ describe("when things go wrong", () => {
     });
     api.signIn("ana@example.com");
     openApp("/");
-    await screen.findByRole("button", { name: "Sair" });
+    await screen.findByRole("button", { name: "Conta" });
 
     api.breakDown();
     const dialog = await confirmSignOut();

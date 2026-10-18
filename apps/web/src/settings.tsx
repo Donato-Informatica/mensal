@@ -1,19 +1,15 @@
 import {
   Alert,
   Box,
-  Button,
   Group,
   Modal,
   SegmentedControl,
   Switch,
   Text,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
 import type { ColorScheme } from "@mensal/shared";
-import { IconSettings } from "@tabler/icons-react";
 import { useId } from "react";
 import { errorMessage } from "./api-error.ts";
-import headerButton from "./header-button.module.css";
 import { usePreference, type Preference, type SaveFailure } from "./session.ts";
 import classes from "./settings.module.css";
 
@@ -33,30 +29,18 @@ export function useConfirmStatusChanges() {
   return usePreference("confirmStatusChanges");
 }
 
-/** Header button that opens the settings modal. */
-export function SettingsButton() {
-  const [opened, { open, close }] = useDisclosure(false);
+/** The settings modal, opened from the account menu. */
+export function SettingsModal({
+  opened,
+  onClose,
+}: {
+  opened: boolean;
+  onClose: () => void;
+}) {
   return (
-    <>
-      <Button
-        variant="subtle"
-        color="gray"
-        size="sm"
-        h={{ base: 44, sm: 30 }}
-        leftSection={<IconSettings size={18} aria-hidden="true" />}
-        classNames={{ section: headerButton.section }}
-        aria-label="Configurações"
-        title="Configurações"
-        onClick={open}
-      >
-        <Box component="span" visibleFrom="sm">
-          Configurações
-        </Box>
-      </Button>
-      <Modal opened={opened} onClose={close} title="Configurações">
-        <SettingsForm />
-      </Modal>
-    </>
+    <Modal opened={opened} onClose={onClose} title="Configurações">
+      <SettingsForm />
+    </Modal>
   );
 }
 

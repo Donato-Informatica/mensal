@@ -1,6 +1,5 @@
 import {
   Alert,
-  Box,
   Button,
   Modal,
   Stack,
@@ -8,46 +7,36 @@ import {
   type ButtonProps,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconLogout } from "@tabler/icons-react";
 import { errorMessage } from "./api-error.ts";
 import { DialogActions } from "./dialog-actions.tsx";
-import headerButton from "./header-button.module.css";
 import { useSessionChange } from "./session.ts";
 
-/**
- * Signs out once confirmed. With `iconOnlyOnPhones`, the label shows from 48em
- * up and stays the accessible name.
- */
-export function SignOutButton({
-  iconOnlyOnPhones,
-  ...props
-}: ButtonProps & { iconOnlyOnPhones?: boolean }) {
+/** Signs out once confirmed. */
+export function SignOutButton(props: ButtonProps) {
   const [opened, { open, close }] = useDisclosure(false);
 
   return (
     <>
-      <Button
-        {...props}
-        onClick={open}
-        {...(iconOnlyOnPhones && {
-          leftSection: <IconLogout size={18} aria-hidden="true" />,
-          classNames: { section: headerButton.section },
-          "aria-label": "Sair",
-          title: "Sair",
-        })}
-      >
-        {iconOnlyOnPhones ? (
-          <Box component="span" visibleFrom="sm">
-            Sair
-          </Box>
-        ) : (
-          "Sair"
-        )}
+      <Button {...props} onClick={open}>
+        Sair
       </Button>
-      <Modal opened={opened} onClose={close} title="Sair da conta">
-        <ConfirmSignOut onCancel={close} />
-      </Modal>
+      <SignOutModal opened={opened} onClose={close} />
     </>
+  );
+}
+
+/** The sign-out confirmation, opened from a button or the account menu. */
+export function SignOutModal({
+  opened,
+  onClose,
+}: {
+  opened: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <Modal opened={opened} onClose={onClose} title="Sair da conta">
+      <ConfirmSignOut onCancel={onClose} />
+    </Modal>
   );
 }
 

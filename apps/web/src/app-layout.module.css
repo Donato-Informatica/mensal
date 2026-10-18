@@ -1,12 +1,13 @@
-/* Phone first: wordmark and actions on one row, the screens on a full-width row below. */
+/*
+ * Phone first: one row, the wordmark and the other screen's link on the left,
+ * the account avatar on the right.
+ */
 .bar {
   display: grid;
-  grid-template-areas:
-    "brand actions"
-    "nav nav";
-  grid-template-columns: 1fr auto;
+  grid-template-areas: "brand nav . actions";
+  grid-template-columns: auto auto 1fr auto;
   align-items: center;
-  row-gap: 4px;
+  column-gap: var(--mantine-spacing-sm);
   padding-block: 8px;
 }
 
@@ -20,8 +21,7 @@
 
 .nav {
   grid-area: nav;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   gap: 4px;
 }
 
@@ -48,26 +48,23 @@
   );
 }
 
-/* Wide enough for everything on a single row, the action back in the header. */
+/*
+ * Wide enough for everything on a single row, the action back in the header,
+ * next to the account avatar.
+ */
 @media (min-width: 48em) {
   .bar {
     grid-template-areas: "brand nav action actions";
     grid-template-columns: auto auto 1fr auto;
     column-gap: var(--mantine-spacing-lg);
-    row-gap: 0;
     height: 64px;
     padding-block: 0;
-  }
-
-  .nav {
-    display: flex;
-    gap: 4px;
   }
 
   .action {
     position: static;
     grid-area: action;
-    justify-self: center;
+    justify-self: end;
   }
 
   .main {

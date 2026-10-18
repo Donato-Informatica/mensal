@@ -13,6 +13,7 @@ import {
 import type { ColorScheme } from "@mensal/shared";
 import { unwrap, type AuthResult } from "./api-error.ts";
 import type { AuthClient } from "./auth-client.ts";
+import { rememberViewedMonth } from "./viewed-month.ts";
 
 const sessionKey = ["session"];
 
@@ -161,6 +162,7 @@ export function useSessionChange<Input = void>(
     mutationFn: async (input: Input) => unwrap(await change(authClient, input)),
     onSuccess: async () => {
       queryClient.removeQueries({ queryKey: sessionKey });
+      rememberViewedMonth(queryClient, undefined);
       await navigate({ to });
     },
   });

@@ -1,0 +1,24 @@
+/* The avatar is the whole trigger: 44px on phones, 36px from 48em. */
+.trigger {
+  display: block;
+  border-radius: 50%;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border: 1px solid var(--mensal-color-hairline-strong);
+}
+
+@media (min-width: 48em) {
+  .avatar {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+}
+
+.identity {
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+}

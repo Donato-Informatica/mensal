@@ -1,6 +1,6 @@
 import { schema, type Database } from "@mensal/database";
 import { clampDueDate, shiftPeriod } from "@mensal/shared";
-import { eq } from "drizzle-orm";
+import { eq, ne } from "drizzle-orm";
 import type { Auth } from "./auth.ts";
 
 export const demoUser = {
@@ -20,6 +20,24 @@ export function assertLocalDatabase(
   if (nodeEnv === "production" || !LOCAL_HOSTS.has(hostname)) {
     throw new Error(
       `Refusing to seed ${hostname}: the seed is demo data for local development only.`
+    );
+  }
+}
+
+/**
+ * The guard for hosted preview deployments, where the database host is not
+ * local: the seed may run only while the database holds no user but the demo
+ * one, so it can never touch real data even if the opt-in leaks to production.
+ */
+export async function assertNoRealUsers(db: Database): Promise<void> {
+  const others = await db
+    .select({ id: schema.users.id })
+    .from(schema.users)
+    .where(ne(schema.users.email, demoUser.email))
+    .limit(1);
+  if (others.length > 0) {
+    throw new Error(
+      "Refusing to seed: the database has users other than the demo user."
     );
   }
 }
