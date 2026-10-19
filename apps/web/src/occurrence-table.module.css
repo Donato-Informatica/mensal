@@ -31,9 +31,16 @@
   white-space: nowrap;
 }
 
-/* Atrasada and Vence hoje: the "needs you" yellow, as their list groups. */
+/*
+ * Atrasada and Vence hoje: the "needs you" yellow, as their list groups. The
+ * edge sits on the first cell: on the row it would paint under the opaque
+ * sticky cells.
+ */
 .needsYou {
-  background: var(--mensal-color-needs-you-fill);
+  background: var(--mensal-color-needs-you-row);
+}
+
+.needsYou > td:first-child {
   box-shadow: inset 3px 0 0 var(--mensal-color-needs-you-edge);
 }
 
@@ -70,7 +77,7 @@
 }
 
 .table tbody tr.needsYou {
-  --row-fill: var(--mensal-color-needs-you-fill);
+  --row-fill: var(--mensal-color-needs-you-row);
 }
 
 /* Phone: touch targets as tall as the list's rows, and a narrower fixed Descrição. */

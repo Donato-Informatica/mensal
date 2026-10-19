@@ -255,6 +255,8 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     "--mensal-color-needs-you-label": "var(--mantine-color-yellow-4)",
     "--mensal-color-needs-you-fill": "transparent",
     "--mensal-color-needs-you-edge": "var(--mantine-color-yellow-9)",
+    // A table row has no label or panel to carry the yellow: a faint tint.
+    "--mensal-color-needs-you-row": "rgb(250 255 105 / 0.08)",
     // The fill's own colour: no edge shows at night.
     "--mensal-color-filled-control-edge": "var(--mantine-primary-color-filled)",
     // Mantine's own, as every disabled control and segmented track at night.
@@ -298,6 +300,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     "--mensal-color-needs-you-label": "var(--mantine-color-bright)",
     "--mensal-color-needs-you-fill": "var(--mantine-primary-color-filled)",
     "--mensal-color-needs-you-edge": "var(--mantine-color-bright)",
+    "--mensal-color-needs-you-row": "var(--mensal-color-needs-you-fill)",
     "--mensal-color-filled-control-edge": "var(--mantine-color-bright)",
     "--mensal-color-primary-disabled": paper.primaryDisabled,
     "--mensal-color-on-primary-disabled": "var(--mantine-color-dimmed)",
