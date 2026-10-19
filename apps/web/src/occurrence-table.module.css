@@ -1,5 +1,11 @@
-/* The table scrolls inside its card, so the page never scrolls sideways. */
+/*
+ * The table scrolls inside its card, so the page never scrolls sideways.
+ * Positioned, so absolutely placed content (the visually hidden headers) is
+ * clipped here too: escaping, it widens the page, and on phones that pushes
+ * the floating primary action off screen.
+ */
 .scroll {
+  position: relative;
   overflow-x: auto;
 }
 
