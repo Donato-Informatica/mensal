@@ -42,7 +42,8 @@
   --row-fill: transparent;
 }
 
-.table :is(th, td):nth-child(-n + 2) {
+/* The failure row is a single full-width cell: it never sticks. */
+.table tr:not(.failureRow) > :is(th, td):nth-child(-n + 2) {
   position: sticky;
   z-index: 1;
   background:
@@ -50,14 +51,14 @@
     var(--mensal-color-surface-card);
 }
 
-.table :is(th, td):nth-child(1) {
+.table tr:not(.failureRow) > :is(th, td):nth-child(1) {
   left: 0;
   width: var(--sticky-checkbox-width);
   min-width: var(--sticky-checkbox-width);
   max-width: var(--sticky-checkbox-width);
 }
 
-.table :is(th, td):nth-child(2) {
+.table tr:not(.failureRow) > :is(th, td):nth-child(2) {
   left: var(--sticky-checkbox-width);
   box-shadow: 1px 0 0 var(--table-border-color);
 }
@@ -76,7 +77,19 @@
     height: 44px;
   }
 
-  .table :is(th, td):nth-child(2) .clip {
+  .table tr:not(.failureRow) > :is(th, td):nth-child(2) .clip {
     max-width: 9rem;
   }
+
+  /* The description button is as tall as the cell, like the list row's. */
+  .describe {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
+.failureRow {
+  /* Marker for the sticky-column selectors above. */
+  background: transparent;
 }

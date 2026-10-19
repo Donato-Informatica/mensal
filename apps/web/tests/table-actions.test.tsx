@@ -145,6 +145,8 @@ describe("settling from a table row", () => {
     await user.click(checkbox);
 
     const alert = await screen.findByRole("alert");
+    // Its single full-width cell must stay out of the sticky columns.
+    expect(alert.closest("tr")?.className).toMatch(/failureRow/);
     expect(alert).toHaveTextContent(
       "Alteração não salva. Algo deu errado. Tente novamente."
     );

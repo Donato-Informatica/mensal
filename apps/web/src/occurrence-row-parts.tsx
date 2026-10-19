@@ -9,6 +9,7 @@ import { errorMessage } from "./api-error.ts";
 import { OneOffActions } from "./delete-one-off.tsx";
 import { EditOccurrenceButton } from "./edit-occurrence.tsx";
 import { formatAmount, formatPeriod } from "./format.ts";
+import { directionLabel } from "./occurrence-labels.ts";
 import classes from "./occurrence-row.module.css";
 import { RecurrenceActions } from "./recurrence-actions.tsx";
 import { SkipMenuItem, type StatusChangeRequest } from "./status-controls.tsx";
@@ -86,7 +87,7 @@ export function Amount({
   const direction = showDirection && (
     <>
       <DirectionIcon inflow={inflow} />
-      <VisuallyHidden>{inflow ? "Entrada" : "Saída"}</VisuallyHidden>
+      <VisuallyHidden>{directionLabel(item)}</VisuallyHidden>
     </>
   );
   if (item.amount === null) {
@@ -145,7 +146,8 @@ export function RowMenu({
   );
 }
 
-function DirectionIcon({ inflow }: { inflow: boolean }) {
+/** The arrow that leads an amount or a Tipo cell; never the only cue. */
+export function DirectionIcon({ inflow }: { inflow: boolean }) {
   const Icon = inflow ? IconArrowDownLeft : IconArrowUpRight;
   return (
     <Icon
@@ -159,8 +161,8 @@ function DirectionIcon({ inflow }: { inflow: boolean }) {
 }
 
 // DESIGN.md badge-pill: surface-card; overdue alone stands out in accent-rose.
-const quietBadge = { variant: "default" } as const;
-const overdueBadge = { variant: "overdue" } as const;
+export const quietBadge = { variant: "default" } as const;
+export const overdueBadge = { variant: "overdue" } as const;
 
 /**
  * Liquidada, Pulada, or the period of an overdue item from an earlier one;

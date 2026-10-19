@@ -1,6 +1,7 @@
 import { Group, SegmentedControl, Stack, VisuallyHidden } from "@mantine/core";
-import type { OccurrenceView } from "@mensal/shared";
+import { OccurrenceViewSchema, type OccurrenceView } from "@mensal/shared";
 import { IconLayoutList, IconTable } from "@tabler/icons-react";
+import type { ReactNode } from "react";
 import { FailureNotice } from "./occurrence-row-parts.tsx";
 import { usePreference } from "./session.ts";
 
@@ -18,6 +19,11 @@ export const occurrenceViews: { value: OccurrenceView; label: string }[] = [
   { value: "table", label: "Tabela" },
 ];
 
+const icons: Record<OccurrenceView, ReactNode> = {
+  list: <IconLayoutList size={18} aria-hidden="true" />,
+  table: <IconTable size={18} aria-hidden="true" />,
+};
+
 /**
  * The compact Lista / Tabela switch next to the period navigator. A change
  * that could not be saved goes back, and says so.
@@ -31,27 +37,19 @@ export function OccurrenceViewSwitch() {
           aria-label="Visualização"
           size="xs"
           value={view}
-          onChange={(to) => setView(to as OccurrenceView)}
-          data={[
-            {
-              value: "list",
-              label: (
-                <>
-                  <IconLayoutList size={18} aria-hidden="true" />
-                  <VisuallyHidden>Lista</VisuallyHidden>
-                </>
-              ),
-            },
-            {
-              value: "table",
-              label: (
-                <>
-                  <IconTable size={18} aria-hidden="true" />
-                  <VisuallyHidden>Tabela</VisuallyHidden>
-                </>
-              ),
-            },
-          ]}
+          onChange={(to) => {
+            const chosen = OccurrenceViewSchema.safeParse(to);
+            if (chosen.success) setView(chosen.data);
+          }}
+          data={occurrenceViews.map(({ value, label }) => ({
+            value,
+            label: (
+              <>
+                {icons[value]}
+                <VisuallyHidden>{label}</VisuallyHidden>
+              </>
+            ),
+          }))}
         />
       </Group>
       {failure && (
