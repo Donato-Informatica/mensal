@@ -22,7 +22,7 @@ export function AppLayout({
   return (
     <>
       <Box component="header">
-        <Container size="md">
+        <Container size="xl">
           <div className={classes.bar}>
             <Wordmark markSize={28} className={classes.brand} />
             <nav aria-label="Telas" className={classes.nav}>
@@ -46,7 +46,7 @@ export function AppLayout({
           </div>
         </Container>
       </Box>
-      <Container component="main" size="md" className={classes.main}>
+      <Container component="main" size="xl" className={classes.main}>
         {children}
       </Container>
     </>

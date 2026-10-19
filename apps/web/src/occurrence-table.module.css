@@ -31,17 +31,9 @@
   white-space: nowrap;
 }
 
-/*
- * Atrasada and Vence hoje: the "needs you" yellow, as their list groups. The
- * edge sits on the first cell: on the row it would paint under the opaque
- * sticky cells.
- */
+/* Atrasada and Vence hoje: the "needs you" yellow, as their list groups. */
 .needsYou {
   background: var(--mensal-color-needs-you-row);
-}
-
-.needsYou > td:first-child {
-  box-shadow: inset 3px 0 0 var(--mensal-color-needs-you-edge);
 }
 
 /*
