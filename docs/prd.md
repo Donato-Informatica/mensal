@@ -315,6 +315,7 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 6. **Recurrences screen:** a second screen listing recurrences (filter active/all) with edit, end and delete actions. The same actions are reachable from an occurrence row.
 7. **One-off and recurrence dialog:** creating a one-off occurrence or a recurrence from the monthly screen.
 8. **Auth screens:** sign-up, sign-in, and an **"Aguardando aprovação"** screen (with sign-out) shown to unapproved users.
+9. **CSV export:** **Exportar CSV** on the monthly screen downloads the period as `mensal-AAAA-MM.csv`, generated in the browser from the loaded period (no API route; it never materializes a virtual occurrence). Only the period's own occurrences, in the table's order; overdue occurrences of earlier periods are left out, so joining several months never counts one twice. UTF-8 with a BOM, `;` separator, CRLF line endings, header `Descrição;Vencimento;Tipo;Valor;Situação;Liquidada em;Origem;Notas`. Valor is the absolute amount as `1234,56` (no thousands separator or symbol; empty for "A definir"); dates are `DD/MM/AAAA` (empty when absent); Tipo is Entrada / Saída, Origem is Avulsa / Recorrência, Situação uses the table's labels. Fields containing `;`, `"`, CR or LF are quoted, with `"` doubled. No summary rows. The button is disabled when the period has no occurrences of its own.
 
 ---
 
