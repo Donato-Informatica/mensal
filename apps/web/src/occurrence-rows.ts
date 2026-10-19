@@ -1,5 +1,5 @@
 import type { PeriodItem, PeriodPayload } from "@mensal/shared";
-import { groupOccurrences } from "./occurrence-groups.ts";
+import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
 
 /** Where an occurrence stands, as the table and the CSV name it (PRD §7.4). */
 export type Situation =
@@ -26,24 +26,27 @@ export function occurrenceRows(
   const source = includePreviousPeriods
     ? payload
     : { ...payload, overdueFromPreviousPeriods: [] };
-  return groupOccurrences(source, today).flatMap(({ title, items }) =>
+  return groupOccurrences(source, today).flatMap(({ key, title, items }) =>
     items.map((item) => ({
       item,
       group: title,
-      situation: situationOf(title, item),
+      situation: situationOf(key, item),
     }))
   );
 }
 
-function situationOf(group: string, item: PeriodItem): Situation {
+function situationOf(
+  group: OccurrenceGroup["key"],
+  item: PeriodItem
+): Situation {
   switch (group) {
-    case "Atrasadas":
+    case "overdue":
       return "Atrasada";
-    case "Vencem hoje":
+    case "today":
       return "Vence hoje";
-    case "A vencer no mês":
+    case "upcoming":
       return "A vencer";
-    default:
+    case "closed":
       return item.status === "SKIPPED" ? "Pulada" : "Liquidada";
   }
 }

@@ -1,6 +1,8 @@
 import type { PeriodItem, PeriodPayload } from "@mensal/shared";
 
 export interface OccurrenceGroup {
+  /** Stable identity; the title is only what the list shows. */
+  key: "overdue" | "today" | "upcoming" | "closed";
   title: string;
   items: PeriodItem[];
 }
@@ -17,8 +19,9 @@ export function groupOccurrences(
   const upcoming = items.filter(
     (item) => item.status === "PENDING" && !item.overdue
   );
-  const groups = [
+  const groups: OccurrenceGroup[] = [
     {
+      key: "overdue",
       title: "Atrasadas",
       // Earlier periods come first, as their due dates do.
       items: [
@@ -27,14 +30,17 @@ export function groupOccurrences(
       ],
     },
     {
+      key: "today",
       title: "Vencem hoje",
       items: upcoming.filter((item) => item.dueDate === today),
     },
     {
+      key: "upcoming",
       title: "A vencer no mês",
       items: upcoming.filter((item) => item.dueDate !== today),
     },
     {
+      key: "closed",
       title: "Liquidadas e puladas",
       items: items.filter((item) => item.status !== "PENDING"),
     },

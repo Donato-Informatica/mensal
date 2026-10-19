@@ -1,14 +1,17 @@
 import { Badge, Box, Group, Paper, Table, Text } from "@mantine/core";
 import { VisuallyHidden } from "@mantine/core";
 import { today, type PeriodPayload, type StatusChange } from "@mensal/shared";
-import { IconArrowDownLeft, IconArrowUpRight } from "@tabler/icons-react";
 import { Fragment, type ReactNode } from "react";
 import { EditOccurrenceButton } from "./edit-occurrence.tsx";
 import { formatDate } from "./format.ts";
+import { columns, directionLabel, originLabel } from "./occurrence-labels.ts";
 import { occurrenceRows, type OccurrenceRow } from "./occurrence-rows.ts";
 import {
   Amount,
+  DirectionIcon,
   FailureNotice,
+  overdueBadge,
+  quietBadge,
   RowMenu,
   type Failure,
   type FailureProps,
@@ -54,14 +57,14 @@ export function OccurrenceTable({
             <Table.Th>
               <VisuallyHidden>Liquidar</VisuallyHidden>
             </Table.Th>
-            <Table.Th>Descrição</Table.Th>
-            <Table.Th>Vencimento</Table.Th>
-            <Table.Th>Tipo</Table.Th>
-            <Table.Th ta="right">Valor</Table.Th>
-            <Table.Th>Situação</Table.Th>
-            <Table.Th>Liquidada em</Table.Th>
-            <Table.Th>Origem</Table.Th>
-            <Table.Th>Notas</Table.Th>
+            <Table.Th>{columns.description}</Table.Th>
+            <Table.Th>{columns.dueDate}</Table.Th>
+            <Table.Th>{columns.direction}</Table.Th>
+            <Table.Th ta="right">{columns.amount}</Table.Th>
+            <Table.Th>{columns.situation}</Table.Th>
+            <Table.Th>{columns.settledAt}</Table.Th>
+            <Table.Th>{columns.origin}</Table.Th>
+            <Table.Th>{columns.notes}</Table.Th>
             <Table.Th>
               <VisuallyHidden>Ações</VisuallyHidden>
             </Table.Th>
@@ -98,7 +101,6 @@ function TableRow({
   onStatusChange: (request: StatusChangeRequest) => void;
 }) {
   const inflow = item.direction === "INFLOW";
-  const DirectionIcon = inflow ? IconArrowDownLeft : IconArrowUpRight;
   const needsYou = situation === "Atrasada" || situation === "Vence hoje";
   const onChange = (change: StatusChange) => onStatusChange({ item, change });
   return (
@@ -108,7 +110,7 @@ function TableRow({
           <SettleCheckbox item={item} onChange={onChange} />
         </Table.Td>
         <Table.Td>
-          <EditOccurrenceButton item={item}>
+          <EditOccurrenceButton item={item} className={classes.describe}>
             <Text c="bright" fw={500} className={classes.clip}>
               {item.description}
             </Text>
@@ -119,30 +121,22 @@ function TableRow({
         </Table.Td>
         <Table.Td>
           <Group gap={6} wrap="nowrap">
-            <DirectionIcon
-              size={14}
-              stroke={2.5}
-              color={inflow ? "var(--mensal-color-inflow)" : undefined}
-              style={{ flex: "none" }}
-              aria-hidden="true"
-            />
-            {inflow ? "Entrada" : "Saída"}
+            <DirectionIcon inflow={inflow} />
+            {directionLabel(item)}
           </Group>
         </Table.Td>
         <Table.Td className={classes.amount}>
           <Amount item={item} showDirection={false} />
         </Table.Td>
         <Table.Td>
-          <Badge variant={situation === "Atrasada" ? "overdue" : "default"}>
+          <Badge {...(situation === "Atrasada" ? overdueBadge : quietBadge)}>
             {situation}
           </Badge>
         </Table.Td>
         <Table.Td className={classes.nowrap}>
           {item.settledAt === null ? "" : formatDate(item.settledAt)}
         </Table.Td>
-        <Table.Td>
-          {item.recurrenceId === null ? "Avulsa" : "Recorrência"}
-        </Table.Td>
+        <Table.Td>{originLabel(item)}</Table.Td>
         <Table.Td>
           {item.notes && (
             <Box className={classes.clip} title={item.notes}>
@@ -155,7 +149,7 @@ function TableRow({
         </Table.Td>
       </Table.Tr>
       {failure && (
-        <Table.Tr>
+        <Table.Tr className={classes.failureRow}>
           <Table.Td colSpan={10}>
             <FailureNotice
               error={failure.error}

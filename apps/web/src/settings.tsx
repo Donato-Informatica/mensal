@@ -7,7 +7,7 @@ import {
   Switch,
   Text,
 } from "@mantine/core";
-import type { ColorScheme, OccurrenceView } from "@mensal/shared";
+import { OccurrenceViewSchema, type ColorScheme } from "@mensal/shared";
 import { useId } from "react";
 import { errorMessage } from "./api-error.ts";
 import { usePreference, type Preference, type SaveFailure } from "./session.ts";
@@ -130,8 +130,10 @@ function SettingsForm() {
           data={occurrenceViews}
           value={occurrenceView}
           onChange={(to) => {
+            const chosen = OccurrenceViewSchema.safeParse(to);
+            if (!chosen.success) return;
             forgetOtherFailures("occurrenceView");
-            setOccurrenceView(to as OccurrenceView);
+            setOccurrenceView(chosen.data);
           }}
         />
       </Group>

@@ -1,19 +1,11 @@
 import type { PeriodPayload } from "@mensal/shared";
 import { formatDate } from "./format.ts";
+import { columns, directionLabel, originLabel } from "./occurrence-labels.ts";
 import { occurrenceRows } from "./occurrence-rows.ts";
 
 const BOM = String.fromCharCode(0xfeff);
 
-const HEADER = [
-  "Descrição",
-  "Vencimento",
-  "Tipo",
-  "Valor",
-  "Situação",
-  "Liquidada em",
-  "Origem",
-  "Notas",
-];
+const HEADER = Object.values(columns);
 
 /** The period's own occurrences, in table order (PRD §7.9). */
 export function periodCsvRows(payload: PeriodPayload, today: string) {
@@ -31,11 +23,11 @@ export function occurrenceCsv(payload: PeriodPayload, today: string): string {
     [
       item.description,
       item.dueDate === null ? "" : formatDate(item.dueDate),
-      item.direction === "INFLOW" ? "Entrada" : "Saída",
+      directionLabel(item),
       item.amount === null ? "" : decimal(item.amount),
       situation,
       item.settledAt === null ? "" : formatDate(item.settledAt),
-      item.recurrenceId === null ? "Avulsa" : "Recorrência",
+      originLabel(item),
       item.notes ?? "",
     ]
       .map(field)

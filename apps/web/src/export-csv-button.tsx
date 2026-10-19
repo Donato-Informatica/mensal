@@ -1,6 +1,7 @@
 import { Button, Text } from "@mantine/core";
 import { today, type PeriodPayload } from "@mensal/shared";
 import { IconDownload } from "@tabler/icons-react";
+import { useMemo } from "react";
 import { occurrenceCsv, periodCsvRows } from "./occurrence-csv.ts";
 
 /**
@@ -9,10 +10,13 @@ import { occurrenceCsv, periodCsvRows } from "./occurrence-csv.ts";
  * virtual occurrence.
  */
 export function ExportCsvButton({ payload }: { payload: PeriodPayload }) {
-  const now = today();
+  const empty = useMemo(
+    () => periodCsvRows(payload, today()).length === 0,
+    [payload]
+  );
   const download = () => {
     const url = URL.createObjectURL(
-      new Blob([occurrenceCsv(payload, now)], {
+      new Blob([occurrenceCsv(payload, today())], {
         type: "text/csv;charset=utf-8",
       })
     );
@@ -32,7 +36,7 @@ export function ExportCsvButton({ payload }: { payload: PeriodPayload }) {
       h={{ base: 44, sm: 30 }}
       px="xs"
       aria-label="Exportar CSV"
-      disabled={periodCsvRows(payload, now).length === 0}
+      disabled={empty}
       leftSection={<IconDownload size={18} aria-hidden="true" />}
       styles={{ section: { marginInlineEnd: 0 } }}
       onClick={download}
