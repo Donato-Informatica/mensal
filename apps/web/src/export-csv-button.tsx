@@ -1,4 +1,4 @@
-import { Button, Text } from "@mantine/core";
+import { Button } from "@mantine/core";
 import { today, type PeriodPayload } from "@mensal/shared";
 import { IconDownload } from "@tabler/icons-react";
 import { useMemo } from "react";
@@ -33,17 +33,13 @@ export function ExportCsvButton({ payload }: { payload: PeriodPayload }) {
       variant="subtle"
       color="gray"
       size="sm"
-      h={{ base: 44, sm: 30 }}
+      h={36}
       px="xs"
-      aria-label="Exportar CSV"
       disabled={empty}
       leftSection={<IconDownload size={18} aria-hidden="true" />}
-      styles={{ section: { marginInlineEnd: 0 } }}
       onClick={download}
     >
-      <Text span visibleFrom="sm" ml={8}>
-        Exportar CSV
-      </Text>
+      Exportar CSV
     </Button>
   );
 }

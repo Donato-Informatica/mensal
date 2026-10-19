@@ -57,7 +57,7 @@ import {
   type FailureProps,
 } from "./occurrence-row-parts.tsx";
 import { OccurrenceTable } from "./occurrence-table.tsx";
-import { OccurrenceViewSwitch, useOccurrenceView } from "./occurrence-view.tsx";
+import { OccurrenceViewBar, useOccurrenceView } from "./occurrence-view.tsx";
 import { periodQuery } from "./period-query.ts";
 import { monthPickerProps } from "./pickers.ts";
 import { useDocumentTitle } from "./document-title.ts";
@@ -117,7 +117,6 @@ export function Month({ period }: { period: string }) {
     <AppLayout action={<NewOneOffButton period={period} />}>
       <Stack gap="xl">
         <PeriodNavigator />
-        <OccurrenceViewSwitch />
         <Stack gap="xl" className={classes.content} aria-busy={loading}>
           {showSummary && (
             <Summary
@@ -130,20 +129,23 @@ export function Month({ period }: { period: string }) {
               )}
             />
           )}
-          <Group justify="flex-end">
-            <ExportCsvButton payload={data} />
-          </Group>
-          <Occurrences
-            payload={data}
-            failures={failures}
-            onDismissFailure={withoutFailure}
-            onRetry={changeStatus}
-            onStatusChange={(request) =>
-              confirmStatusChanges && needsConfirmation(request.change)
-                ? setConfirming(request)
-                : changeStatus(request)
-            }
-          />
+          {/* The bar heads the occurrences it switches and exports. */}
+          <Stack gap="sm">
+            <OccurrenceViewBar>
+              <ExportCsvButton payload={data} />
+            </OccurrenceViewBar>
+            <Occurrences
+              payload={data}
+              failures={failures}
+              onDismissFailure={withoutFailure}
+              onRetry={changeStatus}
+              onStatusChange={(request) =>
+                confirmStatusChanges && needsConfirmation(request.change)
+                  ? setConfirming(request)
+                  : changeStatus(request)
+              }
+            />
+          </Stack>
         </Stack>
       </Stack>
       <ConfirmStatusChange
@@ -182,6 +184,27 @@ function PeriodNavigator() {
     (typeof asked.mes === "string" ? periodOfMonth(asked.mes) : undefined) ??
     currentPeriod();
   const away = target !== currentPeriod();
+  // "Mês atual" sits beside the arrow that points back to the current month.
+  const backSide = target > currentPeriod() ? "start" : "end";
+  const goToCurrent = (
+    <Button
+      variant="subtle"
+      color="gray"
+      size="sm"
+      h={36}
+      miw={36}
+      px={{ base: 9, sm: "xs" }}
+      radius={9999}
+      aria-label="Ir para o mês atual"
+      leftSection={<IconCalendarMonth size={18} aria-hidden="true" />}
+      styles={{ section: { marginInlineEnd: 0 } }}
+      onClick={() => void navigate({ to: "/", search: { mes: undefined } })}
+    >
+      <Text span visibleFrom="sm" ml={8}>
+        Mês atual
+      </Text>
+    </Button>
+  );
   const queryClient = useQueryClient();
   // The month that "Mês" reopens after a visit to another screen.
   // Leaving already changes the URL, which must not read as a return to now.
@@ -231,16 +254,20 @@ function PeriodNavigator() {
       className={appLayout.mobileRule}
       style={{ zIndex: 1 }}
     >
+      {/* Equal side columns that always fit "Mês atual", so the title never shifts. */}
       <Box
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr minmax(0, 400px) 1fr",
+          gridTemplateColumns:
+            "minmax(36px, 1fr) minmax(0, 400px) minmax(36px, 1fr)",
           alignItems: "center",
-          gap: "var(--mantine-spacing-sm)",
+          gap: "var(--mantine-spacing-xs)",
         }}
       >
-        <Box />
-        <Group justify="space-between" wrap="nowrap">
+        <Group justify="flex-end">
+          {away && backSide === "start" && goToCurrent}
+        </Group>
+        <Group justify="space-between" wrap="nowrap" gap="xs">
           <ActionIcon
             variant="surface"
             size={36}
@@ -252,14 +279,24 @@ function PeriodNavigator() {
           </ActionIcon>
           <Popover opened={picking} onChange={setPicking} withArrow>
             <Popover.Target>
-              <Title order={1} ta="center">
+              {/* Shrinks with the row; a long month name wraps (DESIGN.md). */}
+              <Title
+                order={1}
+                ta="center"
+                fz={{ base: 24, xs: 32 }}
+                miw={0}
+                style={{ flex: "0 1 auto" }}
+              >
                 <Button
                   variant="subtle"
                   color="gray"
                   h="auto"
-                  px="xs"
+                  maw="100%"
+                  px={{ base: 4, xs: "xs" }}
                   fz="inherit"
                   fw="inherit"
+                  lh={1.2}
+                  styles={{ label: { whiteSpace: "normal" } }}
                   aria-haspopup="dialog"
                   title="Escolher mês"
                   rightSection={
@@ -290,26 +327,8 @@ function PeriodNavigator() {
             <IconChevronRight size={20} aria-hidden="true" />
           </ActionIcon>
         </Group>
-        <Group justify="flex-end">
-          {/* Out of sight, not out of the layout, so the title never shifts. */}
-          <Button
-            variant="subtle"
-            color="gray"
-            size="sm"
-            h={{ base: 44, sm: 30 }}
-            px="xs"
-            aria-label="Ir para o mês atual"
-            leftSection={<IconCalendarMonth size={18} aria-hidden="true" />}
-            styles={{ section: { marginInlineEnd: 0 } }}
-            style={{ visibility: away ? "visible" : "hidden" }}
-            onClick={() =>
-              void navigate({ to: "/", search: { mes: undefined } })
-            }
-          >
-            <Text span visibleFrom="sm" ml={8}>
-              Mês atual
-            </Text>
-          </Button>
+        <Group justify="flex-start">
+          {away && backSide === "end" && goToCurrent}
         </Group>
       </Box>
     </Box>

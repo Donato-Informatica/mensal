@@ -1,4 +1,4 @@
-import { Group, SegmentedControl, Stack, VisuallyHidden } from "@mantine/core";
+import { Group, SegmentedControl, Stack } from "@mantine/core";
 import { OccurrenceViewSchema, type OccurrenceView } from "@mensal/shared";
 import { IconLayoutList, IconTable } from "@tabler/icons-react";
 import type { ReactNode } from "react";
@@ -25,17 +25,18 @@ const icons: Record<OccurrenceView, ReactNode> = {
 };
 
 /**
- * The compact Lista / Tabela switch next to the period navigator. A change
- * that could not be saved goes back, and says so.
+ * The bar heading the month's occurrences: the Lista / Tabela switch on the
+ * left, `children` (what acts on the occurrences shown) on the right. A view
+ * change that could not be saved goes back, and says so.
  */
-export function OccurrenceViewSwitch() {
+export function OccurrenceViewBar({ children }: { children?: ReactNode }) {
   const [view, setView, failure] = useOccurrenceView();
   return (
     <Stack gap="xs">
-      <Group justify="flex-end">
+      <Group justify="space-between" gap="sm">
         <SegmentedControl
           aria-label="Visualização"
-          size="xs"
+          size="sm"
           value={view}
           onChange={(to) => {
             const chosen = OccurrenceViewSchema.safeParse(to);
@@ -44,13 +45,14 @@ export function OccurrenceViewSwitch() {
           data={occurrenceViews.map(({ value, label }) => ({
             value,
             label: (
-              <>
+              <Group gap={6} wrap="nowrap" justify="center">
                 {icons[value]}
-                <VisuallyHidden>{label}</VisuallyHidden>
-              </>
+                {label}
+              </Group>
             ),
           }))}
         />
+        {children}
       </Group>
       {failure && (
         <FailureNotice
