@@ -1,0 +1,32 @@
+/* The table scrolls inside its card, so the page never scrolls sideways. */
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  min-width: 56rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* One line, cut with an ellipsis; the full text is the title. */
+.clip {
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Atrasada and Vence hoje: the "needs you" yellow, as their list groups. */
+.needsYou {
+  background: var(--mensal-color-needs-you-fill);
+  box-shadow: inset 3px 0 0 var(--mensal-color-needs-you-edge);
+}

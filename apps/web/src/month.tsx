@@ -49,6 +49,8 @@ import classes from "./occurrence-row.module.css";
 import { NewOneOffButton } from "./new-one-off.tsx";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
 import { Amount, FailureNotice, StatusBadge } from "./occurrence-row-parts.tsx";
+import { OccurrenceTable } from "./occurrence-table.tsx";
+import { OccurrenceViewSwitch, useOccurrenceView } from "./occurrence-view.tsx";
 import { periodQuery } from "./period-query.ts";
 import { monthPickerProps } from "./pickers.ts";
 import { useDocumentTitle } from "./document-title.ts";
@@ -113,6 +115,7 @@ export function Month({ period }: { period: string }) {
     <AppLayout action={<NewOneOffButton period={period} />}>
       <Stack gap="xl">
         <PeriodNavigator />
+        <OccurrenceViewSwitch />
         <Stack gap="xl" className={classes.content} aria-busy={loading}>
           {showSummary && (
             <Summary
@@ -433,8 +436,17 @@ function Occurrences({
   payload: PeriodPayload;
   onStatusChange: (request: StatusChangeRequest) => void;
 }) {
+  const [view] = useOccurrenceView();
   const groups = groupOccurrences(payload, today());
   const listRef = useFlip<HTMLDivElement>(payload.period);
+  if (view === "table") {
+    return (
+      <OccurrenceTable
+        payload={payload}
+        empty={<EmptyMonth period={payload.period} />}
+      />
+    );
+  }
   if (groups.length === 0) {
     return <EmptyMonth period={payload.period} />;
   }

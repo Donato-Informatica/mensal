@@ -1,6 +1,11 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { schema, type Database } from "@mensal/database";
-import { ColorSchemeSchema, defaultColorScheme } from "@mensal/shared";
+import {
+  ColorSchemeSchema,
+  defaultColorScheme,
+  defaultOccurrenceView,
+  OccurrenceViewSchema,
+} from "@mensal/shared";
 import { betterAuth } from "better-auth";
 import { createAuthMiddleware, getIP, isAPIError } from "better-auth/api";
 import { openAPI } from "better-auth/plugins";
@@ -142,6 +147,14 @@ export function createAuth({
           defaultValue: defaultColorScheme,
           input: true,
           validator: { input: ColorSchemeSchema },
+        },
+        // "list" or "table"; anything else is rejected.
+        occurrenceView: {
+          type: "string",
+          required: true,
+          defaultValue: defaultOccurrenceView,
+          input: true,
+          validator: { input: OccurrenceViewSchema },
         },
       },
     },

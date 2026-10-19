@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "occurrence_view" text DEFAULT 'list' NOT NULL;

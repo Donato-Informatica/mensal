@@ -7,10 +7,11 @@ import {
   Switch,
   Text,
 } from "@mantine/core";
-import type { ColorScheme } from "@mensal/shared";
+import type { ColorScheme, OccurrenceView } from "@mensal/shared";
 import { useId } from "react";
 import { errorMessage } from "./api-error.ts";
 import { usePreference, type Preference, type SaveFailure } from "./session.ts";
+import { occurrenceViews } from "./occurrence-view.tsx";
 import classes from "./settings.module.css";
 
 /**
@@ -63,14 +64,19 @@ const colorSchemes: { value: ColorScheme; label: string }[] = [
 
 function SettingsForm() {
   const themeLabel = useId();
+  const viewLabel = useId();
   // The app's theme (Tema), a preference of the account (PRD §3.5).
   const [colorScheme, setColorScheme, themeFailure] =
     usePreference("colorScheme");
+  // How the month lists its occurrences (Visualização), also a preference.
+  const [occurrenceView, setOccurrenceView, viewFailure] =
+    usePreference("occurrenceView");
   const [showSummary, setShowSummary, summaryFailure] = useShowSummary();
   const [confirmStatusChanges, setConfirmStatusChanges, confirmFailure] =
     useConfirmStatusChanges();
   const failures: Record<Preference, SaveFailure | undefined> = {
     colorScheme: themeFailure,
+    occurrenceView: viewFailure,
     showSummary: summaryFailure,
     confirmStatusChanges: confirmFailure,
   };
@@ -107,6 +113,25 @@ function SettingsForm() {
           onChange={(to) => {
             forgetOtherFailures("colorScheme");
             setColorScheme(to);
+          }}
+        />
+      </Group>
+      <Group
+        className={classes.row}
+        justify="space-between"
+        wrap="nowrap"
+        gap="lg"
+      >
+        <Text id={viewLabel} fz="md">
+          Visualização
+        </Text>
+        <SegmentedControl
+          aria-labelledby={viewLabel}
+          data={occurrenceViews}
+          value={occurrenceView}
+          onChange={(to) => {
+            forgetOtherFailures("occurrenceView");
+            setOccurrenceView(to as OccurrenceView);
           }}
         />
       </Group>

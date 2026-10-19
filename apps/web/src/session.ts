@@ -10,7 +10,7 @@ import {
   useNavigate,
   useRouteContext,
 } from "@tanstack/react-router";
-import type { ColorScheme } from "@mensal/shared";
+import type { ColorScheme, OccurrenceView } from "@mensal/shared";
 import { unwrap, type AuthResult } from "./api-error.ts";
 import type { AuthClient } from "./auth-client.ts";
 import { rememberViewedMonth } from "./viewed-month.ts";
@@ -43,6 +43,7 @@ export interface Preferences {
   showSummary: boolean;
   confirmStatusChanges: boolean;
   colorScheme: ColorScheme;
+  occurrenceView: OccurrenceView;
 }
 
 /** A preference, by name. */

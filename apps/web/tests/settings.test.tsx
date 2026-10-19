@@ -108,6 +108,7 @@ describe("settings", () => {
         showSummary: false,
         confirmStatusChanges: false,
         colorScheme: "dark",
+        occurrenceView: "list",
       })
     );
   });
