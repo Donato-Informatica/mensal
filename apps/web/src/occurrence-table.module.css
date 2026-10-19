@@ -30,3 +30,53 @@
   background: var(--mensal-color-needs-you-fill);
   box-shadow: inset 3px 0 0 var(--mensal-color-needs-you-edge);
 }
+
+/*
+ * Sticky columns: the checkbox and Descrição stay while the rest scrolls. Their
+ * background is opaque -- the card colour under the row's own fill -- so
+ * scrolled cells never show through. Targeting by position keeps the cells'
+ * markup free for the row actions.
+ */
+.table {
+  --sticky-checkbox-width: 3rem;
+  --row-fill: transparent;
+}
+
+.table :is(th, td):nth-child(-n + 2) {
+  position: sticky;
+  z-index: 1;
+  background:
+    linear-gradient(var(--row-fill), var(--row-fill)),
+    var(--mensal-color-surface-card);
+}
+
+.table :is(th, td):nth-child(1) {
+  left: 0;
+  width: var(--sticky-checkbox-width);
+  min-width: var(--sticky-checkbox-width);
+  max-width: var(--sticky-checkbox-width);
+}
+
+.table :is(th, td):nth-child(2) {
+  left: var(--sticky-checkbox-width);
+  box-shadow: 1px 0 0 var(--table-border-color);
+}
+
+.table tbody tr.needsYou {
+  --row-fill: var(--mensal-color-needs-you-fill);
+}
+
+/* Phone: touch targets as tall as the list's rows, and a narrower fixed Descrição. */
+@media (max-width: 36em) {
+  .table {
+    --sticky-checkbox-width: 3.5rem;
+  }
+
+  .table td {
+    height: 44px;
+  }
+
+  .table :is(th, td):nth-child(2) .clip {
+    max-width: 9rem;
+  }
+}

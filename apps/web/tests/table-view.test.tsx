@@ -274,3 +274,33 @@ describe("the table", () => {
     expect(screen.queryByRole("table")).toBeNull();
   });
 });
+
+describe("the table on a phone", () => {
+  it("scrolls inside its own keyboard-reachable container, with every column", async () => {
+    api.setPreferences(email, { occurrenceView: "table" });
+    api.addOccurrence(email, { description: "Escola" });
+    openApp(api, "/");
+
+    const table = await screen.findByRole("table");
+    const container = screen.getByRole("region", { name: "Contas do mês" });
+
+    expect(container.contains(table)).toBe(true);
+    expect(container.getAttribute("tabindex")).toBe("0");
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((th) => th.textContent)
+    ).toEqual([
+      "Liquidar",
+      "Descrição",
+      "Vencimento",
+      "Tipo",
+      "Valor",
+      "Situação",
+      "Liquidada em",
+      "Origem",
+      "Notas",
+      "Ações",
+    ]);
+  });
+});
