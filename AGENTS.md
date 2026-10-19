@@ -13,6 +13,7 @@ Mensal: forecast and settle a person's monthly cash flow. npm-workspaces monorep
 - Single test file: `npx vitest run <path>`. Single suite: `npx vitest run --project unit|api|web`. Only `*.test.{ts,tsx}` under a workspace's `tests/` folder are ever picked up; tests anywhere else silently never run.
 - Local stack: `docker compose up -d` first (Postgres 17; fresh databases need `npm run -w @mensal/database migrate`; browse/edit data with `npm run studio` → Drizzle Studio on :4983). Then `npm run -w @mensal/api dev` (:3000, needs `apps/api/.env` copied from `.env.example`) and `npm run -w @mensal/web dev` (:5173, proxies `/api` to :3000 — same origin, no CORS).
 - API docs: with the API running, `http://localhost:5173/api/docs` (try the endpoints) and `/api/openapi.json` (import into Postman). A new `/api/v1` route needs an entry in `apps/api/src/openapi.ts`, or `openapi.test.ts` fails (PRD §8.8).
+- Cloud sessions (`CLAUDE_CODE_REMOTE=true`): a SessionStart hook runs `scripts/cloud-session-start.sh`, which installs Node 24 and dependencies, starts the compose Postgres and migrates it. Its log is `/tmp/mensal-cloud-setup.log`.
 - Demo data: `npm run seed` (local database only; refuses non-local hosts) recreates `demo@mensal.local` / `demo-password-local` with example recurrences and occurrences. Re-running resets that user.
 
 ## Testing
