@@ -43,6 +43,7 @@ import { AppLayout } from "./app-layout.tsx";
 import appLayout from "./app-layout.module.css";
 import { OneOffActions } from "./delete-one-off.tsx";
 import { EditOccurrenceButton } from "./edit-occurrence.tsx";
+import { ExportCsvButton } from "./export-csv-button.tsx";
 import { useFlip } from "./flip.ts";
 import { formatAmount, formatDayAndMonth, formatPeriod } from "./format.ts";
 import classes from "./occurrence-row.module.css";
@@ -128,6 +129,9 @@ export function Month({ period }: { period: string }) {
               )}
             />
           )}
+          <Group justify="flex-end">
+            <ExportCsvButton payload={data} />
+          </Group>
           <Occurrences
             payload={data}
             failures={failures}
