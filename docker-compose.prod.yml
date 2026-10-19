@@ -44,8 +44,11 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
       # Demo data on boot. Set to true ONLY in Coolify's Preview Deployments
-      # environment, never in production's.
-      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
+      # environment, never in production's. No `:-default`: Coolify bakes a
+      # default into each preview's generated compose using production's
+      # value, so the preview's `true` would never reach the container. Unset
+      # is an empty string, which the Dockerfile treats as "do not seed".
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA}
     depends_on:
       postgres:
         condition: service_healthy
