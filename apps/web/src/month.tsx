@@ -41,7 +41,6 @@ import {
 import { useCallback, useEffect, useId, useState } from "react";
 import { AppLayout } from "./app-layout.tsx";
 import appLayout from "./app-layout.module.css";
-import { OneOffActions } from "./delete-one-off.tsx";
 import { EditOccurrenceButton } from "./edit-occurrence.tsx";
 import { ExportCsvButton } from "./export-csv-button.tsx";
 import { useFlip } from "./flip.ts";
@@ -49,28 +48,30 @@ import { formatAmount, formatDayAndMonth, formatPeriod } from "./format.ts";
 import classes from "./occurrence-row.module.css";
 import { NewOneOffButton } from "./new-one-off.tsx";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
-import { Amount, FailureNotice, StatusBadge } from "./occurrence-row-parts.tsx";
+import {
+  Amount,
+  FailureNotice,
+  RowMenu,
+  StatusBadge,
+  type Failure,
+  type FailureProps,
+} from "./occurrence-row-parts.tsx";
 import { OccurrenceTable } from "./occurrence-table.tsx";
 import { OccurrenceViewSwitch, useOccurrenceView } from "./occurrence-view.tsx";
 import { periodQuery } from "./period-query.ts";
 import { monthPickerProps } from "./pickers.ts";
 import { useDocumentTitle } from "./document-title.ts";
-import { RecurrenceActions } from "./recurrence-actions.tsx";
 import type { SaveFailure } from "./session.ts";
 import { useConfirmStatusChanges, useShowSummary } from "./settings.tsx";
 import {
   ConfirmStatusChange,
   needsConfirmation,
   SettleCheckbox,
-  SkipMenuItem,
   useStatusChange,
   type StatusChangeRequest,
 } from "./status-controls.tsx";
 import { UndoToast } from "./undo-toast.tsx";
 import { rememberViewedMonth } from "./viewed-month.ts";
-
-/** A change the API refused, kept until retried or dismissed. */
-type Failure = { request: StatusChangeRequest; error: unknown };
 
 /** The monthly screen: one period's summary and occurrences. */
 export function Month({ period }: { period: string }) {
@@ -426,12 +427,6 @@ function Figure({ label, cents }: { label: string; cents: number }) {
   );
 }
 
-type FailureProps = {
-  failures: ReadonlyMap<string, Failure>;
-  onDismissFailure: (id: string) => void;
-  onRetry: (request: StatusChangeRequest) => void;
-};
-
 function Occurrences({
   payload,
   onStatusChange,
@@ -448,6 +443,8 @@ function Occurrences({
       <OccurrenceTable
         payload={payload}
         empty={<EmptyMonth period={payload.period} />}
+        onStatusChange={onStatusChange}
+        {...failureProps}
       />
     );
   }
@@ -630,18 +627,7 @@ function Row({
           <Amount item={item} />
           <StatusBadge item={item} period={period} />
           <Box className={classes.menu}>
-            {item.recurrenceId === null ? (
-              <OneOffActions item={item}>
-                <SkipMenuItem item={item} onChange={onStatusChange} />
-              </OneOffActions>
-            ) : (
-              <RecurrenceActions
-                description={item.description}
-                recurrenceId={item.recurrenceId}
-              >
-                <SkipMenuItem item={item} onChange={onStatusChange} />
-              </RecurrenceActions>
-            )}
+            <RowMenu item={item} onChange={onStatusChange} />
           </Box>
         </Box>
       </Box>

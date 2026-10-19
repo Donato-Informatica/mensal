@@ -1,22 +1,40 @@
 import { Badge, Box, Group, Paper, Table, Text } from "@mantine/core";
 import { VisuallyHidden } from "@mantine/core";
-import { today, type PeriodPayload } from "@mensal/shared";
+import { today, type PeriodPayload, type StatusChange } from "@mensal/shared";
 import { IconArrowDownLeft, IconArrowUpRight } from "@tabler/icons-react";
-import type { ReactNode } from "react";
-import { formatAmount, formatDate } from "./format.ts";
+import { Fragment, type ReactNode } from "react";
+import { EditOccurrenceButton } from "./edit-occurrence.tsx";
+import { formatDate } from "./format.ts";
 import { occurrenceRows, type OccurrenceRow } from "./occurrence-rows.ts";
+import {
+  Amount,
+  FailureNotice,
+  RowMenu,
+  type Failure,
+  type FailureProps,
+} from "./occurrence-row-parts.tsx";
 import classes from "./occurrence-table.module.css";
+import {
+  SettleCheckbox,
+  type StatusChangeRequest,
+} from "./status-controls.tsx";
 
 /**
  * The period's occurrences as one table, in the list's group order, with
- * every field of each (PRD §7.4). `empty` shows when there is nothing to list.
+ * every field of each (PRD §7.4) and the list's own row controls (PRD §7.3,
+ * §7.6). `empty` shows when there is nothing to list.
  */
 export function OccurrenceTable({
   payload,
   empty,
-}: {
+  onStatusChange,
+  failures,
+  onDismissFailure,
+  onRetry,
+}: FailureProps & {
   payload: PeriodPayload;
   empty: ReactNode;
+  onStatusChange: (request: StatusChangeRequest) => void;
 }) {
   const rows = occurrenceRows(payload, today());
   if (rows.length === 0) return <>{empty}</>;
@@ -50,7 +68,14 @@ export function OccurrenceTable({
         </Table.Thead>
         <Table.Tbody>
           {rows.map((row) => (
-            <TableRow key={row.item.id} row={row} />
+            <TableRow
+              key={row.item.id}
+              row={row}
+              failure={failures.get(row.item.id)}
+              onDismissFailure={() => onDismissFailure(row.item.id)}
+              onRetry={onRetry}
+              onStatusChange={onStatusChange}
+            />
           ))}
         </Table.Tbody>
       </Table>
@@ -58,68 +83,88 @@ export function OccurrenceTable({
   );
 }
 
-function TableRow({ row: { item, situation } }: { row: OccurrenceRow }) {
+function TableRow({
+  row: { item, situation },
+  failure,
+  onDismissFailure,
+  onRetry,
+  onStatusChange,
+}: {
+  row: OccurrenceRow;
+  failure: Failure | undefined;
+  onDismissFailure: () => void;
+  onRetry: (request: StatusChangeRequest) => void;
+  onStatusChange: (request: StatusChangeRequest) => void;
+}) {
   const inflow = item.direction === "INFLOW";
   const DirectionIcon = inflow ? IconArrowDownLeft : IconArrowUpRight;
   const needsYou = situation === "Atrasada" || situation === "Vence hoje";
+  const onChange = (change: StatusChange) => onStatusChange({ item, change });
   return (
-    <Table.Tr className={needsYou ? classes.needsYou : undefined}>
-      <Table.Td />
-      <Table.Td>
-        <Text c="bright" fw={500} className={classes.clip}>
-          {item.description}
-        </Text>
-      </Table.Td>
-      <Table.Td className={classes.nowrap}>
-        {item.dueDate === null ? "Sem vencimento" : formatDate(item.dueDate)}
-      </Table.Td>
-      <Table.Td>
-        <Group gap={6} wrap="nowrap">
-          <DirectionIcon
-            size={14}
-            stroke={2.5}
-            color={inflow ? "var(--mensal-color-inflow)" : undefined}
-            style={{ flex: "none" }}
-            aria-hidden="true"
-          />
-          {inflow ? "Entrada" : "Saída"}
-        </Group>
-      </Table.Td>
-      <Table.Td className={classes.amount}>
-        {item.amount === null ? (
-          <Text span fw={600} c="bright">
-            A definir
-          </Text>
-        ) : (
-          <Text
-            span
-            fw={600}
-            c={inflow ? "var(--mensal-color-inflow)" : "bright"}
-          >
-            <span aria-hidden="true">{inflow ? "+" : "−"}</span>
-            {formatAmount(item.amount)}
-          </Text>
-        )}
-      </Table.Td>
-      <Table.Td>
-        <Badge variant={situation === "Atrasada" ? "overdue" : "default"}>
-          {situation}
-        </Badge>
-      </Table.Td>
-      <Table.Td className={classes.nowrap}>
-        {item.settledAt === null ? "" : formatDate(item.settledAt)}
-      </Table.Td>
-      <Table.Td>
-        {item.recurrenceId === null ? "Avulsa" : "Recorrência"}
-      </Table.Td>
-      <Table.Td>
-        {item.notes && (
-          <Box className={classes.clip} title={item.notes}>
-            {item.notes}
-          </Box>
-        )}
-      </Table.Td>
-      <Table.Td />
-    </Table.Tr>
+    <Fragment>
+      <Table.Tr className={needsYou ? classes.needsYou : undefined}>
+        <Table.Td>
+          <SettleCheckbox item={item} onChange={onChange} />
+        </Table.Td>
+        <Table.Td>
+          <EditOccurrenceButton item={item}>
+            <Text c="bright" fw={500} className={classes.clip}>
+              {item.description}
+            </Text>
+          </EditOccurrenceButton>
+        </Table.Td>
+        <Table.Td className={classes.nowrap}>
+          {item.dueDate === null ? "Sem vencimento" : formatDate(item.dueDate)}
+        </Table.Td>
+        <Table.Td>
+          <Group gap={6} wrap="nowrap">
+            <DirectionIcon
+              size={14}
+              stroke={2.5}
+              color={inflow ? "var(--mensal-color-inflow)" : undefined}
+              style={{ flex: "none" }}
+              aria-hidden="true"
+            />
+            {inflow ? "Entrada" : "Saída"}
+          </Group>
+        </Table.Td>
+        <Table.Td className={classes.amount}>
+          <Amount item={item} showDirection={false} />
+        </Table.Td>
+        <Table.Td>
+          <Badge variant={situation === "Atrasada" ? "overdue" : "default"}>
+            {situation}
+          </Badge>
+        </Table.Td>
+        <Table.Td className={classes.nowrap}>
+          {item.settledAt === null ? "" : formatDate(item.settledAt)}
+        </Table.Td>
+        <Table.Td>
+          {item.recurrenceId === null ? "Avulsa" : "Recorrência"}
+        </Table.Td>
+        <Table.Td>
+          {item.notes && (
+            <Box className={classes.clip} title={item.notes}>
+              {item.notes}
+            </Box>
+          )}
+        </Table.Td>
+        <Table.Td>
+          <RowMenu item={item} onChange={onChange} />
+        </Table.Td>
+      </Table.Tr>
+      {failure && (
+        <Table.Tr>
+          <Table.Td colSpan={10}>
+            <FailureNotice
+              error={failure.error}
+              subject={item.description}
+              onRetry={() => onRetry(failure.request)}
+              onDismiss={onDismissFailure}
+            />
+          </Table.Td>
+        </Table.Tr>
+      )}
+    </Fragment>
   );
 }

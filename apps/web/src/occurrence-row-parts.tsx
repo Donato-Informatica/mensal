@@ -1,14 +1,27 @@
 import { Badge, Box, Button, Group, Text, VisuallyHidden } from "@mantine/core";
-import type { PeriodItem } from "@mensal/shared";
+import type { PeriodItem, StatusChange } from "@mensal/shared";
 import {
   IconArrowDownLeft,
   IconArrowUpRight,
   IconPencil,
 } from "@tabler/icons-react";
 import { errorMessage } from "./api-error.ts";
+import { OneOffActions } from "./delete-one-off.tsx";
 import { EditOccurrenceButton } from "./edit-occurrence.tsx";
 import { formatAmount, formatPeriod } from "./format.ts";
 import classes from "./occurrence-row.module.css";
+import { RecurrenceActions } from "./recurrence-actions.tsx";
+import { SkipMenuItem, type StatusChangeRequest } from "./status-controls.tsx";
+
+/** A change the API refused, kept until retried or dismissed. */
+export type Failure = { request: StatusChangeRequest; error: unknown };
+
+/** The monthly screen's failures, shared by the list and the table. */
+export type FailureProps = {
+  failures: ReadonlyMap<string, Failure>;
+  onDismissFailure: (id: string) => void;
+  onRetry: (request: StatusChangeRequest) => void;
+};
 
 /** Why a change could not be saved, with a retry and a way to dismiss it. */
 export function FailureNotice({
@@ -61,9 +74,16 @@ export function FailureNotice({
  * The amount, led by a sign and an arrow so direction never rests on colour
  * alone; "A definir" is a button that opens the edit dialog to fill it in.
  */
-export function Amount({ item }: { item: PeriodItem }) {
+export function Amount({
+  item,
+  showDirection = true,
+}: {
+  item: PeriodItem;
+  /** Off where another column already says the direction. */
+  showDirection?: boolean;
+}) {
   const inflow = item.direction === "INFLOW";
-  const direction = (
+  const direction = showDirection && (
     <>
       <DirectionIcon inflow={inflow} />
       <VisuallyHidden>{inflow ? "Entrada" : "Saída"}</VisuallyHidden>
@@ -98,6 +118,30 @@ export function Amount({ item }: { item: PeriodItem }) {
         {formatAmount(item.amount)}
       </Text>
     </Group>
+  );
+}
+
+/**
+ * The "Mais ações" menu of an occurrence: Pular, then the one-off actions or
+ * the recurrence's (PRD §7.6).
+ */
+export function RowMenu({
+  item,
+  onChange,
+}: {
+  item: PeriodItem;
+  onChange: (change: StatusChange) => void;
+}) {
+  const skip = <SkipMenuItem item={item} onChange={onChange} />;
+  return item.recurrenceId === null ? (
+    <OneOffActions item={item}>{skip}</OneOffActions>
+  ) : (
+    <RecurrenceActions
+      description={item.description}
+      recurrenceId={item.recurrenceId}
+    >
+      {skip}
+    </RecurrenceActions>
   );
 }
 
