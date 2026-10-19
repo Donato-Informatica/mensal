@@ -1,6 +1,11 @@
 import { createAuthClient as createBetterAuthClient } from "better-auth/client";
 import { inferAdditionalFields } from "better-auth/client/plugins";
-import { ColorSchemeSchema, defaultColorScheme } from "@mensal/shared";
+import {
+  ColorSchemeSchema,
+  defaultColorScheme,
+  defaultOccurrenceView,
+  OccurrenceViewSchema,
+} from "@mensal/shared";
 
 /** Better-Auth's client, talking to the API on the page's own origin. */
 export function createAuthClient(fetchImpl: typeof fetch = fetch) {
@@ -29,6 +34,12 @@ export function createAuthClient(fetchImpl: typeof fetch = fetch) {
             type: [...ColorSchemeSchema.options],
             required: true,
             defaultValue: defaultColorScheme,
+            input: true,
+          },
+          occurrenceView: {
+            type: [...OccurrenceViewSchema.options],
+            required: true,
+            defaultValue: defaultOccurrenceView,
             input: true,
           },
         },

@@ -18,6 +18,7 @@ export const users = pgTable("users", {
     .default(true)
     .notNull(),
   colorScheme: text("color_scheme").default("dark").notNull(),
+  occurrenceView: text("occurrence_view").default("list").notNull(),
 });
 
 export const sessions = pgTable(

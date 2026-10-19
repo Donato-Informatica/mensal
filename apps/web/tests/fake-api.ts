@@ -4,11 +4,13 @@ import {
   ColorSchemeSchema,
   currentPeriod,
   defaultColorScheme,
+  defaultOccurrenceView,
   editRefusal,
   isActive,
   isInEffect,
   NewOneOffSchema,
   NewRecurrenceSchema,
+  OccurrenceViewSchema,
   OccurrenceEditSchema,
   parseVirtualId,
   RecurrenceEditSchema,
@@ -23,11 +25,12 @@ import {
 
 import type { Preference, Preferences } from "../src/session.ts";
 
-/** A new account's preferences (PRD §3.5): all on, in the dark theme. */
+/** A new account's preferences (PRD §3.5): all on, in the dark theme, as a list. */
 const defaultPreferences: Preferences = {
   showSummary: true,
   confirmStatusChanges: true,
   colorScheme: defaultColorScheme,
+  occurrenceView: defaultOccurrenceView,
 };
 
 interface Account {
@@ -114,6 +117,12 @@ export function fakeApi() {
     if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
     const { rejected } = colorSchemeIn(body);
     if (rejected) return rejected;
+    // The API's validator: absent, or list or table.
+    if (
+      !OccurrenceViewSchema.optional().safeParse(body.occurrenceView).success
+    ) {
+      return json(400, { code: "VALIDATION_ERROR", message: "Invalid option" });
+    }
     for (const preference of Object.keys(defaultPreferences) as Preference[]) {
       const value = body[preference];
       if (typeof value === typeof defaultPreferences[preference]) {

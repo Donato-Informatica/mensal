@@ -29,6 +29,11 @@ The preference that sets the product's colours: dark (the default), light, or au
 _UI (pt-BR)_: Tema (Escuro, Claro, Automático)
 _Avoid_: appearance, mode, skin
 
+**View**:
+The preference that sets how the monthly screen shows its occurrences: as a grouped list (the default) or as a table. In code, `occurrenceView`: `list` or `table`.
+_UI (pt-BR)_: Visualização (Lista, Tabela)
+_Avoid_: layout, mode, display
+
 ## Time
 
 **Period**:

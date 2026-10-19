@@ -30,7 +30,32 @@ describe("preferences (PRD §3.5)", () => {
       showSummary: true,
       confirmStatusChanges: true,
       colorScheme: "dark",
+      occurrenceView: "list",
     });
+  });
+
+  it("include the view, which the user can set to table", async () => {
+    const { cookie } = await signUp(api);
+
+    const response = await request(api, "/api/auth/update-user", {
+      cookie,
+      body: { occurrenceView: "table" },
+    });
+
+    expect(response.status).toBe(200);
+    expect((await sessionUser(cookie)).occurrenceView).toBe("table");
+  });
+
+  it("reject a view that is not list or table", async () => {
+    const { cookie } = await signUp(api);
+
+    const response = await request(api, "/api/auth/update-user", {
+      cookie,
+      body: { occurrenceView: "grid" },
+    });
+
+    expect(response.status).toBe(400);
+    expect((await sessionUser(cookie)).occurrenceView).toBe("list");
   });
 
   it("are changed by the user through update-user", async () => {
