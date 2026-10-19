@@ -46,6 +46,7 @@ export function OccurrenceTable({
       withBorder
       radius="lg"
       className={classes.scroll}
+      tabIndex={0}
     >
       <Table className={classes.table}>
         <Table.Thead>
