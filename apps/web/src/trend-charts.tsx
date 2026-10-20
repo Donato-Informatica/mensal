@@ -157,7 +157,8 @@ function TrendChart({
     yAxisProps: { width: 80, tickFormatter: formatCompactAmount },
     tooltipProps: {
       content: ({ label, payload }: TooltipContentProps) => (
-        <TrendTooltip label={label} payload={payload} series={visible} />
+        // Every series, even one hidden through the legend (PRD §7.11).
+        <TrendTooltip label={label} payload={payload} series={series} />
       ),
     },
   };
@@ -250,7 +251,7 @@ interface TooltipContentProps {
   payload?: readonly { payload?: TrendRow }[] | undefined;
 }
 
-/** Every visible series of the month in full BRL, "—" for a blank Realizado. */
+/** Every series of the month in full BRL, "—" for a blank Realizado. */
 function TrendTooltip({
   label,
   payload,
