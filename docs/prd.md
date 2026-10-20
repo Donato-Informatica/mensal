@@ -22,7 +22,7 @@ A **minimalist, opinionated** SaaS focused strictly on forecasting and settling 
 ### 1.3 Non-Goals (MVP)
 
 - Periodicity other than monthly. Annual bills are one-off occurrences; installments are recurrences with an `endPeriod`.
-- Balances, categories, multiple currencies, charts. Amounts are always BRL.
+- Balances, categories, multiple currencies. Amounts are always BRL. The only chart is the trend of §7.11.
 - Billing or paid plans.
 - Email beyond the transactional password emails of §8.2 ([ADR-0003](adr/0003-transactional-email-via-resend.md)): no verification, approval notices or notifications.
 - Internationalization: the UI is Brazilian Portuguese only.
@@ -298,6 +298,26 @@ All routes under `/api/v1` require an authenticated, approved user (see 8.2). Er
 - `PATCH /:id`: updates the editable fields (rule 5.8). Accepts a virtual id and materializes it.
 - `DELETE /:id`: hard-deletes a one-off occurrence; otherwise `409 ONLY_ONE_OFF_DELETABLE`.
 
+### 6.4 Summaries (`/api/v1/summaries`)
+
+- `GET /?from=yyyy-mm&to=yyyy-mm` (e.g. `?from=2026-05&to=2026-10`): the summary (§4) of every period from `from` to `to`, both inclusive, in ascending order. Requires `from <= to` and at most 12 periods, otherwise `400 INVALID_PERIOD_RANGE`; a malformed month is `400 INVALID_PERIOD`. Every period of the range is present, with zeros when it has no occurrences. Overdue occurrences from earlier periods never enter any summary, as in §4. Read-only: it never materializes a virtual occurrence.
+
+  ```json
+  {
+    "items": [
+      {
+        "period": "2026-05-01",
+        "summary": {
+          "inflowExpected": 650000,
+          "inflowSettled": 650000,
+          "outflowExpected": 420000,
+          "outflowSettled": 410000
+        }
+      }
+    ]
+  }
+  ```
+
 ---
 
 ## 7. Frontend and Minimalist UX
@@ -318,6 +338,12 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 8. **Auth screens:** sign-up, sign-in, and an **"Aguardando aprovação"** screen (with sign-out) shown to unapproved users.
 9. **Table view:** with the `occurrenceView` preference (§3.5) set to Tabela, the block of occurrences of the monthly screen is a table instead of the grouped list; the period navigator, summary bar and "Nova avulsa" do not change. A Lista / Tabela switch in the bar heading the occurrences (beside **Exportar CSV**) and a **Visualização** control in Configurações set it, applied at once and rolled back with a notice on failure; it holds while moving between months. The table has the columns checkbox, Descrição, Vencimento (`DD/MM/AAAA` or "Sem vencimento"), Tipo (Entrada / Saída), Valor, Situação (Atrasada, Vence hoje, A vencer, Liquidada, Pulada), Liquidada em, Origem (Avulsa / Recorrência), Notas (one line, full text on hover) and a row menu. Rows follow the list's group order, include the overdue occurrences of earlier periods on the current period, and mark Atrasada and Vence hoje with the "needs you" yellow. An empty period shows the list's empty-month message.
 10. **CSV export:** **Exportar CSV** on the monthly screen downloads the period as `mensal-AAAA-MM.csv`, generated in the browser from the loaded period (no API route; it never materializes a virtual occurrence). Only the period's own occurrences, in the table's order; overdue occurrences of earlier periods are left out, so joining several months never counts one twice. UTF-8 with a BOM, `;` separator, CRLF line endings, header `Descrição;Vencimento;Tipo;Valor;Situação;Liquidada em;Origem;Notas`. Valor is the absolute amount as `1234,56` (no thousands separator or symbol; empty for "A definir"); dates are `DD/MM/AAAA` (empty when absent); Tipo is Entrada / Saída, Origem is Avulsa / Recorrência, Situação uses the table's labels. Fields containing `;`, `"`, CR or LF are quoted, with `"` doubled. No summary rows. The button is disabled when the period has no occurrences of its own.
+11. **Trend (Evolução):** an icon button in the summary bar (accessible label "Evolução") opens a modal (full screen on phones) with the trend of the 3, 6 or 12 periods ending at the period on screen, inclusive, even when it lies in the future; the title shows the range (e.g. "Mai 2026 – Out 2026"). Range (default 6 meses) and chart type (default Linhas) are kept per tab, not saved, like the period on screen. Data comes from §6.4, refetched whenever an occurrence or recurrence changes. The modal does not navigate, and `←` / `→` do nothing while it is open.
+    - **Main chart**, as lines or bars: Entradas Previsto and Realizado, Saídas Previsto and Realizado, and Sobra prevista. In bar mode Sobra prevista stays a line over the bars. Inflows are emerald, outflows rose, left over yellow (ink in the light scheme, per the Fill-Only Rule in DESIGN.md); Previsto is a solid line or a translucent bar, Realizado a dashed line or a solid bar. Realizado is left blank for periods after the current period.
+    - **Sobra acumulada chart**, always a line: the running sum of Sobra prevista from zero at the first period of the range, computed by the client.
+    - Both charts draw a zero line and, when the current period is in range, a vertical dashed marker, without a label, on it. The legend toggles each series. X axis `mai/26`; Y axis compact (`R$ 6,5 mil`); the tooltip lists every series of the month in full BRL, "—" for a blank Realizado. Periods without occurrences count as zero and are never trimmed.
+    - A collapsible **Ver valores** table below the charts lists, per period, Competência, Entradas Previsto / Realizado, Saídas Previsto / Realizado, Sobra prevista and Sobra acumulada.
+    - Loading shows skeletons; a failure shows a message with "Tentar novamente"; a range that is all zeros shows "Nenhuma conta nesses meses." instead of the charts.
 
 ---
 

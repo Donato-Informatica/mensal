@@ -125,6 +125,48 @@ export function resolvePeriod({
   };
 }
 
+/** The summary of one period of a range. */
+export interface PeriodRangeItem {
+  period: string;
+  summary: PeriodSummary;
+}
+
+export interface SummariesPayload {
+  items: PeriodRangeItem[];
+}
+
+export interface SummarizeRangeInput {
+  /** The first period of the range, 'YYYY-MM-01', inclusive. */
+  from: string;
+  /** The last period of the range, 'YYYY-MM-01', inclusive. */
+  to: string;
+  /** The user's persisted occurrences; those outside the range are ignored. */
+  occurrences: readonly PersistedOccurrence[];
+  /** The user's recurrences; each counts only in the periods it is in effect. */
+  recurrences: readonly ProjectedRecurrence[];
+}
+
+/**
+ * The summary of every period from `from` to `to`, inclusive and ascending,
+ * each the same as `resolvePeriod` gives for that period: overdue occurrences
+ * of earlier periods never count (PRD §4, §6.4). Empty when `from` is after `to`.
+ */
+export function summarizeRange({
+  from,
+  to,
+  occurrences,
+  recurrences,
+}: SummarizeRangeInput): SummariesPayload {
+  return {
+    items: periodsBetween(from, to).map((period) => ({
+      period,
+      summary: summarize(
+        occurrencesBetween(period, period, occurrences, recurrences)
+      ),
+    })),
+  };
+}
+
 /** A period item before its `overdue` flag is derived. */
 type UnflaggedItem = Omit<PeriodItem, "overdue">;
 
@@ -239,7 +281,9 @@ function byDueDate(a: PeriodItem, b: PeriodItem): number {
   return a.dueDate < b.dueDate ? -1 : 1;
 }
 
-function summarize(items: readonly PeriodItem[]): PeriodSummary {
+function summarize(
+  items: readonly Pick<PeriodItem, "direction" | "status" | "amount">[]
+): PeriodSummary {
   const summary: PeriodSummary = {
     inflowExpected: 0,
     inflowSettled: 0,

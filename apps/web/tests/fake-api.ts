@@ -18,6 +18,8 @@ import {
   periodOfMonth,
   resolvePeriod,
   StatusChangeSchema,
+  parseSummariesQuery,
+  summarizeRange,
   today,
   type Occurrence,
   type Recurrence,
@@ -143,6 +145,25 @@ export function fakeApi() {
       resolvePeriod({
         period,
         today: today(),
+        occurrences: signedIn.occurrences,
+        recurrences: signedIn.recurrences,
+      })
+    );
+  }
+
+  /**
+   * GET /api/v1/summaries?from&to, behind the approval gate, with the route's
+   * own range checks (PRD §6.4).
+   */
+  function getSummaries(search: URLSearchParams): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const parsed = parseSummariesQuery(Object.fromEntries(search));
+    if ("code" in parsed) return json(400, { code: parsed.code });
+    return json(
+      200,
+      summarizeRange({
+        ...parsed.query,
         occurrences: signedIn.occurrences,
         recurrences: signedIn.recurrences,
       })
@@ -465,6 +486,9 @@ export function fakeApi() {
       const { pathname, searchParams } = new URL(request.url);
       if (request.method === "GET" && pathname === "/api/v1/recurrences") {
         return getRecurrences(searchParams);
+      }
+      if (request.method === "GET" && pathname === "/api/v1/summaries") {
+        return getSummaries(searchParams);
       }
       const recurrenceMatch = /^\/api\/v1\/recurrences\/([^/]+)$/.exec(
         pathname

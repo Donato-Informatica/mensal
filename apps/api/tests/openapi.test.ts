@@ -127,6 +127,16 @@ describe("the API description's responses", () => {
       "/api/v1/periods/2026-10",
       200
     );
+    await call(
+      "GET /api/v1/summaries",
+      "/api/v1/summaries?from=2026-09&to=2026-11",
+      200
+    );
+    await call(
+      "GET /api/v1/summaries",
+      "/api/v1/summaries?from=2026-11&to=2026-09",
+      400
+    );
     const oneOff = await call(
       "POST /api/v1/occurrences",
       "/api/v1/occurrences",

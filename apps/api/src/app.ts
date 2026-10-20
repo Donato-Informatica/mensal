@@ -15,6 +15,7 @@ import type { Log } from "./log.ts";
 import { occurrencesRouter } from "./occurrences.ts";
 import { periodsRouter } from "./periods.ts";
 import { recurrencesRouter } from "./recurrences.ts";
+import { summariesRouter } from "./summaries.ts";
 import { requireApprovedUser } from "./require-approved-user.ts";
 
 export interface AppOptions {
@@ -59,6 +60,7 @@ export function createApp({
   v1.use("/occurrences", occurrencesRouter({ db, now, record }));
   v1.use("/periods", periodsRouter({ db, now }));
   v1.use("/recurrences", recurrencesRouter({ db, now, record }));
+  v1.use("/summaries", summariesRouter({ db }));
   app.use("/api/v1", v1);
 
   app.use(errorHandler(log));

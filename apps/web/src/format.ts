@@ -10,6 +10,22 @@ export function formatAmount(cents: number): string {
   return brl.format(cents / 100);
 }
 
+const compactBrl = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  notation: "compact",
+});
+
+/** Cents as BRL, or "—" when there is no amount, e.g. a future Realizado. */
+export function formatOptionalAmount(cents: number | null): string {
+  return cents === null ? "—" : formatAmount(cents);
+}
+
+/** Cents as compact BRL for a chart axis, e.g. 650000 → "R$ 6,5 mil". */
+export function formatCompactAmount(cents: number): string {
+  return compactBrl.format(cents / 100);
+}
+
 // Dates are calendar dates, so they are read and formatted in UTC to keep the
 // browser's time zone from shifting the day.
 const dayAndMonth = new Intl.DateTimeFormat("pt-BR", {
@@ -37,6 +53,27 @@ export function formatPeriod(period: string): string {
 /** A period ('YYYY-MM-01') within a sentence, e.g. "outubro 2026". */
 export function formatPeriodInline(period: string): string {
   return `${monthName.format(new Date(period))} ${period.slice(0, 4)}`;
+}
+
+const shortMonthName = new Intl.DateTimeFormat("pt-BR", {
+  month: "short",
+  timeZone: "UTC",
+});
+
+/** A period's ('YYYY-MM-01') month abbreviated, without the dot, e.g. "out". */
+function shortMonth(period: string): string {
+  return shortMonthName.format(new Date(period)).replace(".", "");
+}
+
+/** A period ('YYYY-MM-01') with its month abbreviated, e.g. "Out 2026". */
+export function formatShortPeriod(period: string): string {
+  const month = shortMonth(period);
+  return `${month.charAt(0).toUpperCase()}${month.slice(1)} ${period.slice(0, 4)}`;
+}
+
+/** A period ('YYYY-MM-01') for a chart axis, e.g. "mai/26". */
+export function formatAxisPeriod(period: string): string {
+  return `${shortMonth(period)}/${period.slice(2, 4)}`;
 }
 
 const fullDate = new Intl.DateTimeFormat("pt-BR", {

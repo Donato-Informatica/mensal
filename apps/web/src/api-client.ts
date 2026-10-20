@@ -9,6 +9,7 @@ import {
   type RecurrenceEdit,
   type RecurrenceListQuery,
   type StatusChange,
+  type SummariesPayload,
 } from "@mensal/shared";
 import { ApiError } from "./api-error.ts";
 
@@ -47,6 +48,12 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
     /** The payload of `period` ('YYYY-MM-01'). */
     period: (period: string) =>
       send<PeriodPayload>(`/periods/${monthOf(period)}`),
+
+    /** The summary of each period from `from` to `to` ('YYYY-MM-01'), inclusive. */
+    summaries: (from: string, to: string) =>
+      send<SummariesPayload>(
+        `/summaries?from=${monthOf(from)}&to=${monthOf(to)}`
+      ),
 
     /** The user's recurrences: the active ones, or all of them. */
     recurrences: (status: RecurrenceListQuery["status"]) =>

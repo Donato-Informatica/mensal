@@ -3,7 +3,9 @@ export {
   ColorSchemeSchema,
   defaultColorScheme,
   defaultOccurrenceView,
+  MAX_SUMMARY_PERIODS,
   OccurrenceViewSchema,
+  parseSummariesQuery,
   DirectionSchema,
   NewOneOffSchema,
   NewRecurrenceSchema,
@@ -17,6 +19,8 @@ export {
   RecurrenceListQuerySchema,
   RecurrenceSchema,
   StatusChangeSchema,
+  SummariesPayloadSchema,
+  SummariesQuerySchema,
   VirtualOccurrenceSchema,
   type ColorScheme,
   type Direction,
@@ -30,6 +34,7 @@ export {
   type RecurrenceEdit,
   type RecurrenceListQuery,
   type StatusChange,
+  type SummariesQuery,
   type VirtualOccurrence,
 } from "./lib/schemas.ts";
 export { editRefusal } from "./lib/occurrence-edit.ts";
@@ -37,11 +42,15 @@ export { monthOf, periodOfMonth, shiftPeriod } from "./lib/period.ts";
 export { isActive, isInEffect } from "./lib/recurrence.ts";
 export {
   resolvePeriod,
+  summarizeRange,
   withStatusChange,
   type PeriodItem,
   type PeriodPayload,
   type PeriodSummary,
   type ResolvePeriodInput,
+  type PeriodRangeItem,
+  type SummariesPayload,
+  type SummarizeRangeInput,
 } from "./lib/resolve-period.ts";
 export { applyStatusChange } from "./lib/status-change.ts";
 export { currentPeriod, today } from "./lib/today.ts";

@@ -1,0 +1,70 @@
+/* The table scrolls inside the modal, so a phone never scrolls sideways. */
+.scroll {
+  position: relative;
+  overflow-x: auto;
+}
+
+.table {
+  min-width: 48rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.period {
+  white-space: nowrap;
+}
+
+.amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.chevron {
+  transition: transform 150ms ease;
+}
+
+.chevron[data-opened] {
+  transform: rotate(180deg);
+}
+
+.tooltipAmount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A legend entry is a toggle: a hidden series fades its entry. */
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  border-radius: var(--mantine-radius-sm);
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-text);
+}
+
+.legendItem[aria-pressed="false"] {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+/* Previsto is a solid line or a translucent bar, Realizado a dashed line or a
+   solid bar, as on the chart; a Previsto bar's opacity is set inline from the
+   chart's own. */
+.swatch {
+  flex: none;
+  width: 16px;
+}
+
+.swatch[data-shape="line"] {
+  border-top: 3px solid var(--swatch-color);
+}
+
+.swatch[data-shape="line"][data-settled] {
+  border-top-style: dashed;
+}
+
+.swatch[data-shape="bar"] {
+  height: 12px;
+  border-radius: 2px;
+  background: var(--swatch-color);
+}

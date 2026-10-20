@@ -42,7 +42,9 @@ export function docsRouter({ auth }: { auth: Auth }): Router {
     res.type("html").send(page);
   });
   router.get("/docs/scalar.js", (_req, res) => {
-    res.sendFile(scalarBundle);
+    // A fixed path, never the request's: allowed even when the install
+    // lives under a dot-directory (e.g. a .claude/worktrees checkout).
+    res.sendFile(scalarBundle, { dotfiles: "allow" });
   });
   return router;
 }

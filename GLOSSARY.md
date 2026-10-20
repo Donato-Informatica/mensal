@@ -125,3 +125,13 @@ _Avoid_: actual, realized
 A period's expected inflows minus its expected outflows; negative when the period is short. Computed by the client, never stored.
 _UI (pt-BR)_: Sobra prevista
 _Avoid_: balance, net, profit
+
+**Trend**:
+The expected and settled totals and the left over of a run of consecutive periods ending at the period on screen, laid side by side to show how they change from month to month. The run may reach into future periods.
+_UI (pt-BR)_: Evolução
+_Avoid_: history, report, dashboard
+
+**Accumulated left over**:
+The running sum of each period's left over across a trend, starting from zero at its first period; it changes when the trend covers a different run of periods. Computed by the client, never stored.
+_UI (pt-BR)_: Sobra acumulada
+_Avoid_: balance, running balance, savings
