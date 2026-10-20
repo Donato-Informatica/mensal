@@ -19,15 +19,11 @@ import {
   formatShortPeriod,
 } from "./format.ts";
 import classes from "./trend.module.css";
-import {
-  trendLabels,
-  type TrendRow,
-  type TrendValue as SeriesName,
-} from "./trend-rows.ts";
+import { trendLabels, type TrendRow, type TrendValue } from "./trend-rows.ts";
 import { useTrendSetting, type TrendChartType } from "./trend-settings.ts";
 
 interface Series {
-  name: SeriesName;
+  name: TrendValue;
   label: string;
   color: string;
   /** Realizado: a dashed line or a solid bar; Previsto the other way round. */
@@ -38,7 +34,7 @@ interface Series {
 
 /** The series of `name`, labelled as everywhere else in the trend. */
 function seriesOf(
-  name: SeriesName,
+  name: TrendValue,
   color: string,
   options: Pick<Series, "settled" | "alwaysLine">
 ): Series {
@@ -126,9 +122,9 @@ function TrendChart({
   series: readonly Series[];
   chartType: TrendChartType;
 }) {
-  const [hidden, setHidden] = useState<ReadonlySet<SeriesName>>(new Set());
+  const [hidden, setHidden] = useState<ReadonlySet<TrendValue>>(new Set());
   const visible = series.filter(({ name }) => !hidden.has(name));
-  const toggle = (name: SeriesName) =>
+  const toggle = (name: TrendValue) =>
     setHidden((current) => {
       const next = new Set(current);
       if (!next.delete(name)) next.add(name);
@@ -210,9 +206,9 @@ function TrendLegend({
   onToggle,
 }: {
   series: readonly Series[];
-  hidden: ReadonlySet<SeriesName>;
+  hidden: ReadonlySet<TrendValue>;
   chartType: TrendChartType;
-  onToggle: (name: SeriesName) => void;
+  onToggle: (name: TrendValue) => void;
 }) {
   return (
     <Group gap="xs" wrap="wrap">
