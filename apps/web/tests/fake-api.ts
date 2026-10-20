@@ -17,8 +17,8 @@ import {
   RecurrenceListQuerySchema,
   periodOfMonth,
   resolvePeriod,
-  shiftPeriod,
   StatusChangeSchema,
+  SummariesQuerySchema,
   summarizeRange,
   today,
   type Occurrence,
@@ -158,17 +158,14 @@ export function fakeApi() {
   function getSummaries(search: URLSearchParams): Response {
     if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
     if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
-    const from = periodOfMonth(search.get("from") ?? "");
-    const to = periodOfMonth(search.get("to") ?? "");
-    if (!from || !to) return json(400, { code: "INVALID_PERIOD" });
-    if (from > to || to >= shiftPeriod(from, 12)) {
-      return json(400, { code: "INVALID_PERIOD_RANGE" });
+    const query = SummariesQuerySchema.safeParse(Object.fromEntries(search));
+    if (!query.success) {
+      return json(400, { code: query.error.issues[0]!.message });
     }
     return json(
       200,
       summarizeRange({
-        from,
-        to,
+        ...query.data,
         occurrences: signedIn.occurrences,
         recurrences: signedIn.recurrences,
       })

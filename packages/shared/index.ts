@@ -3,6 +3,7 @@ export {
   ColorSchemeSchema,
   defaultColorScheme,
   defaultOccurrenceView,
+  MAX_SUMMARY_PERIODS,
   OccurrenceViewSchema,
   DirectionSchema,
   NewOneOffSchema,
@@ -18,6 +19,7 @@ export {
   RecurrenceSchema,
   StatusChangeSchema,
   SummariesPayloadSchema,
+  SummariesQuerySchema,
   VirtualOccurrenceSchema,
   type ColorScheme,
   type Direction,
@@ -31,6 +33,7 @@ export {
   type RecurrenceEdit,
   type RecurrenceListQuery,
   type StatusChange,
+  type SummariesQuery,
   type VirtualOccurrence,
 } from "./lib/schemas.ts";
 export { editRefusal } from "./lib/occurrence-edit.ts";

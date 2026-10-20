@@ -1,4 +1,5 @@
 import {
+  MAX_SUMMARY_PERIODS,
   NewOneOffSchema,
   NewRecurrenceSchema,
   OccurrenceEditSchema,
@@ -154,7 +155,7 @@ export function buildOpenApiSpec() {
     "/api/v1/summaries": {
       get: secured({
         tags: ["Summaries"],
-        summary: "Get the summary of each period of a range of up to 12",
+        summary: `Get the summary of each period of a range of up to ${MAX_SUMMARY_PERIODS}`,
         parameters: ["from", "to"].map((name) => ({
           name,
           in: "query" as const,
@@ -167,7 +168,7 @@ export function buildOpenApiSpec() {
             output(SummariesPayloadSchema)
           ),
           400: refusal(
-            "A month is not a valid YYYY-MM, or `from` is after `to` or more than 12 periods before it",
+            `A month is not a valid YYYY-MM, or \`from\` is after \`to\` or more than ${MAX_SUMMARY_PERIODS} periods before it`,
             "INVALID_PERIOD",
             "INVALID_PERIOD_RANGE"
           ),

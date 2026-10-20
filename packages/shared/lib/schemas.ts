@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { periodOfMonth, shiftPeriod } from "./period.ts";
 import { periodOf } from "./today.ts";
 
 /** A calendar date, 'YYYY-MM-DD'. */
@@ -103,6 +104,31 @@ export const RecurrenceListQuerySchema = z.object({
   status: z.enum(["active", "all"]).default("active"),
 });
 export type RecurrenceListQuery = z.output<typeof RecurrenceListQuerySchema>;
+
+/** The most periods one `GET /summaries` may cover (PRD §6.4). */
+export const MAX_SUMMARY_PERIODS = 12;
+
+/** A 'YYYY-MM' query parameter, as its period ('YYYY-MM-01'). */
+const MonthParameterSchema = z.unknown().transform((value, context) => {
+  const period = typeof value === "string" ? periodOfMonth(value) : undefined;
+  if (period) return period;
+  context.addIssue({ code: "custom", message: "INVALID_PERIOD" });
+  return z.NEVER;
+});
+
+/**
+ * The query of `GET /summaries?from&to` (PRD §6.4): two 'YYYY-MM' months, as
+ * periods, at most `MAX_SUMMARY_PERIODS` apart. Each issue's message is the
+ * refusal's code: `INVALID_PERIOD` for a malformed month, otherwise
+ * `INVALID_PERIOD_RANGE` for a reversed or too long range.
+ */
+export const SummariesQuerySchema = z
+  .object({ from: MonthParameterSchema, to: MonthParameterSchema })
+  .refine(
+    ({ from, to }) => from <= to && to < shiftPeriod(from, MAX_SUMMARY_PERIODS),
+    { message: "INVALID_PERIOD_RANGE" }
+  );
+export type SummariesQuery = z.output<typeof SummariesQuerySchema>;
 
 export const OccurrenceSchema = z.object({
   id: z.uuid(),
