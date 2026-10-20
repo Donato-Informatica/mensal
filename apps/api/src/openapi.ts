@@ -87,6 +87,16 @@ const idParameter = {
   schema: { type: "string" },
 } as const;
 
+/** A 'YYYY-MM' month parameter. */
+function monthParameter(name: string, where: "path" | "query") {
+  return {
+    name,
+    in: where,
+    required: true,
+    schema: { type: "string", pattern: "^\\d{4}-\\d{2}$" },
+  } as const;
+}
+
 /** An occurrence as the API answers: persisted, or still virtual (PRD §5.2). */
 const anyOccurrence = {
   anyOf: [output(OccurrenceSchema), output(VirtualOccurrenceSchema)],
@@ -138,14 +148,7 @@ export function buildOpenApiSpec() {
       get: secured({
         tags: ["Periods"],
         summary: "Get a period's occurrences and summary",
-        parameters: [
-          {
-            name: "month",
-            in: "path",
-            required: true,
-            schema: { type: "string", pattern: "^\\d{4}-\\d{2}$" },
-          },
-        ],
+        parameters: [monthParameter("month", "path")],
         responses: {
           200: ok("The period", output(PeriodPayloadSchema)),
           400: refusal("The month is not a valid YYYY-MM", "INVALID_PERIOD"),
@@ -156,12 +159,10 @@ export function buildOpenApiSpec() {
       get: secured({
         tags: ["Summaries"],
         summary: `Get the summary of each period of a range of up to ${MAX_SUMMARY_PERIODS}`,
-        parameters: ["from", "to"].map((name) => ({
-          name,
-          in: "query" as const,
-          required: true,
-          schema: { type: "string", pattern: "^\\d{4}-\\d{2}$" },
-        })),
+        parameters: [
+          monthParameter("from", "query"),
+          monthParameter("to", "query"),
+        ],
         responses: {
           200: ok(
             "Each period's summary, ascending",
