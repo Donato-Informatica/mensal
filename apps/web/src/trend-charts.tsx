@@ -64,8 +64,20 @@ const accumulatedSeries: readonly Series[] = [
   }),
 ];
 
-const realizadoDash = "6 4";
-const previstoBarOpacity = 0.35;
+/**
+ * How `series` is drawn in a `chartType` chart, and so in its legend:
+ * Realizado a dashed line or a solid bar, Previsto a solid line or a
+ * translucent bar.
+ */
+function seriesStyle(
+  { settled, alwaysLine }: Series,
+  chartType: TrendChartType
+): { type: "line" | "bar"; strokeDasharray?: string; opacity?: number } {
+  if (chartType === "bars" && !alwaysLine) {
+    return { type: "bar", ...(settled ? {} : { opacity: 0.35 }) };
+  }
+  return { type: "line", ...(settled ? { strokeDasharray: "6 4" } : {}) };
+}
 
 /**
  * The Evolução charts (PRD §7.11): the main one as lines or bars, and Sobra
@@ -171,27 +183,30 @@ function TrendChart({
         <CompositeChart
           {...commonChartProps}
           maxBarWidth={24}
-          series={visible.map(({ name, label, color, alwaysLine }) => ({
-            name,
-            label,
-            color,
-            type: alwaysLine ? "line" : "bar",
+          series={visible.map((each) => ({
+            name: each.name,
+            label: each.label,
+            color: each.color,
+            type: seriesStyle(each, chartType).type,
           }))}
-          barProps={(item) =>
-            series.find(({ name }) => name === item.name)?.settled
-              ? {}
-              : { fillOpacity: previstoBarOpacity }
-          }
+          barProps={(item) => {
+            const each = series.find(({ name }) => name === item.name);
+            const opacity = each && seriesStyle(each, chartType).opacity;
+            return opacity === undefined ? {} : { fillOpacity: opacity };
+          }}
         />
       ) : (
         <LineChart
           {...commonChartProps}
-          series={visible.map(({ name, label, color, settled }) => ({
-            name,
-            label,
-            color,
-            ...(settled ? { strokeDasharray: realizadoDash } : {}),
-          }))}
+          series={visible.map((each) => {
+            const { strokeDasharray } = seriesStyle(each, chartType);
+            return {
+              name: each.name,
+              label: each.label,
+              color: each.color,
+              ...(strokeDasharray ? { strokeDasharray } : {}),
+            };
+          })}
         />
       )}
     </Stack>
@@ -212,8 +227,9 @@ function TrendLegend({
 }) {
   return (
     <Group gap="xs" wrap="wrap">
-      {series.map(({ name, label, color, settled, alwaysLine }) => {
-        const bar = chartType === "bars" && !alwaysLine;
+      {series.map((each) => {
+        const { name, label, color, settled } = each;
+        const { type, opacity } = seriesStyle(each, chartType);
         return (
           <UnstyledButton
             key={name}
@@ -224,13 +240,12 @@ function TrendLegend({
             <span
               aria-hidden="true"
               className={classes.swatch}
-              data-shape={bar ? "bar" : "line"}
+              data-shape={type}
               data-settled={settled || undefined}
               style={
                 {
                   "--swatch-color": color,
-                  // A Previsto bar is as translucent as on the chart.
-                  opacity: bar && !settled ? previstoBarOpacity : undefined,
+                  opacity,
                 } as CSSProperties
               }
             />
