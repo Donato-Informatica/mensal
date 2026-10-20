@@ -149,10 +149,8 @@ function TrendChart({
   if (rows.some(({ period }) => period === currentPeriod)) {
     referenceLines.push({
       x: currentPeriod,
-      label: "Hoje",
       color: "dimmed",
       strokeDasharray: "3 3",
-      labelPosition: "insideTopLeft",
     });
   }
   const commonChartProps = {
