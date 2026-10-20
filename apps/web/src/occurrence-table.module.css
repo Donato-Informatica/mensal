@@ -1,0 +1,100 @@
+/*
+ * The table scrolls inside its card, so the page never scrolls sideways.
+ * Positioned, so absolutely placed content (the visually hidden headers) is
+ * clipped here too: escaping, it widens the page, and on phones that pushes
+ * the floating primary action off screen.
+ */
+.scroll {
+  position: relative;
+  overflow-x: auto;
+}
+
+.table {
+  min-width: 56rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* One line, cut with an ellipsis; the full text is the title. */
+.clip {
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Atrasada and Vence hoje: the "needs you" yellow, as their list groups. */
+.needsYou {
+  background: var(--mensal-color-needs-you-row);
+}
+
+/*
+ * Sticky columns: the checkbox and Descrição stay while the rest scrolls. Their
+ * background is opaque -- the card colour under the row's own fill -- so
+ * scrolled cells never show through. Targeting by position keeps the cells'
+ * markup free for the row actions.
+ */
+.table {
+  --sticky-checkbox-width: 3rem;
+  --row-fill: transparent;
+}
+
+/* The failure row is a single full-width cell: it never sticks. */
+.table tr:not(.failureRow) > :is(th, td):nth-child(-n + 2) {
+  position: sticky;
+  z-index: 1;
+  background:
+    linear-gradient(var(--row-fill), var(--row-fill)),
+    var(--mensal-color-surface-card);
+}
+
+.table tr:not(.failureRow) > :is(th, td):nth-child(1) {
+  left: 0;
+  width: var(--sticky-checkbox-width);
+  min-width: var(--sticky-checkbox-width);
+  max-width: var(--sticky-checkbox-width);
+}
+
+.table tr:not(.failureRow) > :is(th, td):nth-child(2) {
+  left: var(--sticky-checkbox-width);
+  box-shadow: 1px 0 0 var(--table-border-color);
+}
+
+.table tbody tr.needsYou {
+  --row-fill: var(--mensal-color-needs-you-row);
+}
+
+/* Phone: touch targets as tall as the list's rows, and a narrower fixed Descrição. */
+@media (max-width: 36em) {
+  .table {
+    --sticky-checkbox-width: 3.5rem;
+  }
+
+  .table td {
+    height: 44px;
+  }
+
+  .table tr:not(.failureRow) > :is(th, td):nth-child(2) .clip {
+    max-width: 9rem;
+  }
+
+  /* The description button is as tall as the cell, like the list row's. */
+  .describe {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
+.failureRow {
+  /* Marker for the sticky-column selectors above. */
+  background: transparent;
+}

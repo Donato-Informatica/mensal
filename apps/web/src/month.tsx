@@ -1,6 +1,5 @@
 import {
   ActionIcon,
-  Badge,
   Box,
   Button,
   CloseButton,
@@ -27,13 +26,10 @@ import {
   type StatusChange,
 } from "@mensal/shared";
 import {
-  IconArrowDownLeft,
-  IconArrowUpRight,
   IconCalendarMonth,
   IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
-  IconPencil,
 } from "@tabler/icons-react";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
@@ -43,35 +39,39 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { useCallback, useEffect, useId, useState } from "react";
-import { errorMessage } from "./api-error.ts";
 import { AppLayout } from "./app-layout.tsx";
 import appLayout from "./app-layout.module.css";
-import { OneOffActions } from "./delete-one-off.tsx";
 import { EditOccurrenceButton } from "./edit-occurrence.tsx";
+import { ExportCsvButton } from "./export-csv-button.tsx";
 import { useFlip } from "./flip.ts";
 import { formatAmount, formatDayAndMonth, formatPeriod } from "./format.ts";
 import classes from "./occurrence-row.module.css";
 import { NewOneOffButton } from "./new-one-off.tsx";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
+import {
+  Amount,
+  FailureNotice,
+  RowMenu,
+  StatusBadge,
+  type Failure,
+  type FailureProps,
+} from "./occurrence-row-parts.tsx";
+import { OccurrenceTable } from "./occurrence-table.tsx";
+import { OccurrenceViewBar, useOccurrenceView } from "./occurrence-view.tsx";
 import { periodQuery } from "./period-query.ts";
 import { monthPickerProps } from "./pickers.ts";
 import { useDocumentTitle } from "./document-title.ts";
-import { RecurrenceActions } from "./recurrence-actions.tsx";
 import type { SaveFailure } from "./session.ts";
 import { useConfirmStatusChanges, useShowSummary } from "./settings.tsx";
 import {
   ConfirmStatusChange,
   needsConfirmation,
   SettleCheckbox,
-  SkipMenuItem,
   useStatusChange,
   type StatusChangeRequest,
 } from "./status-controls.tsx";
 import { UndoToast } from "./undo-toast.tsx";
 import { rememberViewedMonth } from "./viewed-month.ts";
-
-/** A change the API refused, kept until retried or dismissed. */
-type Failure = { request: StatusChangeRequest; error: unknown };
 
 /** The monthly screen: one period's summary and occurrences. */
 export function Month({ period }: { period: string }) {
@@ -129,17 +129,23 @@ export function Month({ period }: { period: string }) {
               )}
             />
           )}
-          <Occurrences
-            payload={data}
-            failures={failures}
-            onDismissFailure={withoutFailure}
-            onRetry={changeStatus}
-            onStatusChange={(request) =>
-              confirmStatusChanges && needsConfirmation(request.change)
-                ? setConfirming(request)
-                : changeStatus(request)
-            }
-          />
+          {/* The bar heads the occurrences it switches and exports. */}
+          <Stack gap="sm">
+            <OccurrenceViewBar>
+              <ExportCsvButton payload={data} />
+            </OccurrenceViewBar>
+            <Occurrences
+              payload={data}
+              failures={failures}
+              onDismissFailure={withoutFailure}
+              onRetry={changeStatus}
+              onStatusChange={(request) =>
+                confirmStatusChanges && needsConfirmation(request.change)
+                  ? setConfirming(request)
+                  : changeStatus(request)
+              }
+            />
+          </Stack>
         </Stack>
       </Stack>
       <ConfirmStatusChange
@@ -178,6 +184,27 @@ function PeriodNavigator() {
     (typeof asked.mes === "string" ? periodOfMonth(asked.mes) : undefined) ??
     currentPeriod();
   const away = target !== currentPeriod();
+  // "Mês atual" sits beside the arrow that points back to the current month.
+  const backSide = target > currentPeriod() ? "start" : "end";
+  const goToCurrent = (
+    <Button
+      variant="subtle"
+      color="gray"
+      size="sm"
+      h={36}
+      miw={36}
+      px={{ base: 9, sm: "xs" }}
+      radius={9999}
+      aria-label="Ir para o mês atual"
+      leftSection={<IconCalendarMonth size={18} aria-hidden="true" />}
+      styles={{ section: { marginInlineEnd: 0 } }}
+      onClick={() => void navigate({ to: "/", search: { mes: undefined } })}
+    >
+      <Text span visibleFrom="sm" ml={8}>
+        Mês atual
+      </Text>
+    </Button>
+  );
   const queryClient = useQueryClient();
   // The month that "Mês" reopens after a visit to another screen.
   // Leaving already changes the URL, which must not read as a return to now.
@@ -227,16 +254,20 @@ function PeriodNavigator() {
       className={appLayout.mobileRule}
       style={{ zIndex: 1 }}
     >
+      {/* Equal side columns that always fit "Mês atual", so the title never shifts. */}
       <Box
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr minmax(0, 400px) 1fr",
+          gridTemplateColumns:
+            "minmax(36px, 1fr) minmax(0, 400px) minmax(36px, 1fr)",
           alignItems: "center",
-          gap: "var(--mantine-spacing-sm)",
+          gap: "var(--mantine-spacing-xs)",
         }}
       >
-        <Box />
-        <Group justify="space-between" wrap="nowrap">
+        <Group justify="flex-end">
+          {away && backSide === "start" && goToCurrent}
+        </Group>
+        <Group justify="space-between" wrap="nowrap" gap="xs">
           <ActionIcon
             variant="surface"
             size={36}
@@ -248,14 +279,24 @@ function PeriodNavigator() {
           </ActionIcon>
           <Popover opened={picking} onChange={setPicking} withArrow>
             <Popover.Target>
-              <Title order={1} ta="center">
+              {/* Shrinks with the row; a long month name wraps (DESIGN.md). */}
+              <Title
+                order={1}
+                ta="center"
+                fz={{ base: 24, xs: 32 }}
+                miw={0}
+                style={{ flex: "0 1 auto" }}
+              >
                 <Button
                   variant="subtle"
                   color="gray"
                   h="auto"
-                  px="xs"
+                  maw="100%"
+                  px={{ base: 4, xs: "xs" }}
                   fz="inherit"
                   fw="inherit"
+                  lh={1.2}
+                  styles={{ label: { whiteSpace: "normal" } }}
                   aria-haspopup="dialog"
                   title="Escolher mês"
                   rightSection={
@@ -286,26 +327,8 @@ function PeriodNavigator() {
             <IconChevronRight size={20} aria-hidden="true" />
           </ActionIcon>
         </Group>
-        <Group justify="flex-end">
-          {/* Out of sight, not out of the layout, so the title never shifts. */}
-          <Button
-            variant="subtle"
-            color="gray"
-            size="sm"
-            h={{ base: 44, sm: 30 }}
-            px="xs"
-            aria-label="Ir para o mês atual"
-            leftSection={<IconCalendarMonth size={18} aria-hidden="true" />}
-            styles={{ section: { marginInlineEnd: 0 } }}
-            style={{ visibility: away ? "visible" : "hidden" }}
-            onClick={() =>
-              void navigate({ to: "/", search: { mes: undefined } })
-            }
-          >
-            <Text span visibleFrom="sm" ml={8}>
-              Mês atual
-            </Text>
-          </Button>
+        <Group justify="flex-start">
+          {away && backSide === "end" && goToCurrent}
         </Group>
       </Box>
     </Box>
@@ -423,12 +446,6 @@ function Figure({ label, cents }: { label: string; cents: number }) {
   );
 }
 
-type FailureProps = {
-  failures: ReadonlyMap<string, Failure>;
-  onDismissFailure: (id: string) => void;
-  onRetry: (request: StatusChangeRequest) => void;
-};
-
 function Occurrences({
   payload,
   onStatusChange,
@@ -437,8 +454,19 @@ function Occurrences({
   payload: PeriodPayload;
   onStatusChange: (request: StatusChangeRequest) => void;
 }) {
+  const [view] = useOccurrenceView();
   const groups = groupOccurrences(payload, today());
   const listRef = useFlip<HTMLDivElement>(payload.period);
+  if (view === "table") {
+    return (
+      <OccurrenceTable
+        payload={payload}
+        empty={<EmptyMonth period={payload.period} />}
+        onStatusChange={onStatusChange}
+        {...failureProps}
+      />
+    );
+  }
   if (groups.length === 0) {
     return <EmptyMonth period={payload.period} />;
   }
@@ -581,7 +609,6 @@ function Row({
   first: boolean;
   onStatusChange: (change: StatusChange) => void;
 }) {
-  const status = statusLabel(item, period);
   return (
     <Box
       component="li"
@@ -617,24 +644,9 @@ function Row({
         </Box>
         <Box className={classes.trail}>
           <Amount item={item} />
-          {status && (
-            <Badge className={classes.badge} {...status.badge}>
-              {status.label}
-            </Badge>
-          )}
+          <StatusBadge item={item} period={period} />
           <Box className={classes.menu}>
-            {item.recurrenceId === null ? (
-              <OneOffActions item={item}>
-                <SkipMenuItem item={item} onChange={onStatusChange} />
-              </OneOffActions>
-            ) : (
-              <RecurrenceActions
-                description={item.description}
-                recurrenceId={item.recurrenceId}
-              >
-                <SkipMenuItem item={item} onChange={onStatusChange} />
-              </RecurrenceActions>
-            )}
+            <RowMenu item={item} onChange={onStatusChange} />
           </Box>
         </Box>
       </Box>
@@ -648,122 +660,4 @@ function Row({
       )}
     </Box>
   );
-}
-
-/** Why a change could not be saved, with a retry and a way to dismiss it. */
-function FailureNotice({
-  error,
-  subject,
-  onRetry,
-  onDismiss,
-}: {
-  error: unknown;
-  /** What the change was to, naming the buttons where several notices may show. */
-  subject?: string;
-  onRetry: () => void;
-  onDismiss: () => void;
-}) {
-  return (
-    <Box role="alert" className={classes.failure}>
-      <Text className={classes.failureText} fz="sm">
-        <Text span fw={600} c="var(--mensal-color-rose-text)">
-          Alteração não salva.
-        </Text>{" "}
-        {errorMessage(error)}
-      </Text>
-      <Group gap={4} wrap="nowrap">
-        <Button
-          variant="subtle"
-          color="var(--mensal-color-rose-text)"
-          size="xs"
-          h={{ base: 44, sm: 30 }}
-          onClick={onRetry}
-          aria-label={subject && `Tentar de novo: ${subject}`}
-        >
-          Tentar de novo
-        </Button>
-        <Button
-          variant="subtle"
-          color="gray"
-          size="xs"
-          h={{ base: 44, sm: 30 }}
-          onClick={onDismiss}
-          aria-label={subject && `Fechar aviso de ${subject}`}
-        >
-          Fechar
-        </Button>
-      </Group>
-    </Box>
-  );
-}
-
-/**
- * The amount, led by a sign and an arrow so direction never rests on colour
- * alone; "A definir" is a button that opens the edit dialog to fill it in.
- */
-function Amount({ item }: { item: PeriodItem }) {
-  const inflow = item.direction === "INFLOW";
-  const direction = (
-    <>
-      <DirectionIcon inflow={inflow} />
-      <VisuallyHidden>{inflow ? "Entrada" : "Saída"}</VisuallyHidden>
-    </>
-  );
-  if (item.amount === null) {
-    return (
-      <EditOccurrenceButton
-        item={item}
-        label={`Definir valor de ${item.description}`}
-        className={classes.pending}
-      >
-        <Group gap={6} wrap="nowrap" className={classes.amount}>
-          {direction}
-          <Text fw={600} c="bright" span className={classes.pendingText}>
-            A definir
-          </Text>
-          <IconPencil
-            size={14}
-            style={{ flex: "none", color: "var(--mantine-color-dimmed)" }}
-            aria-hidden="true"
-          />
-        </Group>
-      </EditOccurrenceButton>
-    );
-  }
-  return (
-    <Group gap={6} wrap="nowrap" className={classes.amount}>
-      {direction}
-      <Text fw={600} c={inflow ? "var(--mensal-color-inflow)" : "bright"} span>
-        <span aria-hidden="true">{inflow ? "+" : "−"}</span>
-        {formatAmount(item.amount)}
-      </Text>
-    </Group>
-  );
-}
-
-function DirectionIcon({ inflow }: { inflow: boolean }) {
-  const Icon = inflow ? IconArrowDownLeft : IconArrowUpRight;
-  return (
-    <Icon
-      size={14}
-      stroke={2.5}
-      color={inflow ? "var(--mensal-color-inflow)" : undefined}
-      style={{ flex: "none", color: "var(--mantine-color-dimmed)" }}
-      aria-hidden="true"
-    />
-  );
-}
-
-// DESIGN.md badge-pill: surface-card; overdue alone stands out in accent-rose.
-const quietBadge = { variant: "default" } as const;
-const overdueBadge = { variant: "overdue" } as const;
-
-// Overdue needs no badge of its own: its group says it.
-function statusLabel(item: PeriodItem, period: string) {
-  if (item.status === "SETTLED")
-    return { label: "Liquidada", badge: quietBadge };
-  if (item.status === "SKIPPED") return { label: "Pulada", badge: quietBadge };
-  if (item.period !== period)
-    return { label: formatPeriod(item.period), badge: overdueBadge };
-  return undefined;
 }

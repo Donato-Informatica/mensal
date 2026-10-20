@@ -138,11 +138,12 @@ Sign-up is open, but a new user cannot use the product until an administrator ap
 
 A user's preferences belong to the account, not the device: every browser they sign in on uses the same values ([ADR-0002](adr/0002-preferences-on-auth-user.md)).
 
-| Preference             | Type                          | Default  | Effect                                                                                                                           |
-| ---------------------- | ----------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `showSummary`          | `boolean`                     | `true`   | Shows the summary bar on the monthly screen. Closing the bar turns it off.                                                       |
-| `confirmStatusChanges` | `boolean`                     | `true`   | Asks for confirmation before settling, skipping or taking an occurrence back to `PENDING`.                                       |
-| `colorScheme`          | `"dark" \| "light" \| "auto"` | `"dark"` | The app's theme (Tema): Escuro, Claro, or Automático, which follows the device's own setting, live. Any other value is rejected. |
+| Preference             | Type                          | Default  | Effect                                                                                                                               |
+| ---------------------- | ----------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `showSummary`          | `boolean`                     | `true`   | Shows the summary bar on the monthly screen. Closing the bar turns it off.                                                           |
+| `confirmStatusChanges` | `boolean`                     | `true`   | Asks for confirmation before settling, skipping or taking an occurrence back to `PENDING`.                                           |
+| `colorScheme`          | `"dark" \| "light" \| "auto"` | `"dark"` | The app's theme (Tema): Escuro, Claro, or Automático, which follows the device's own setting, live. Any other value is rejected.     |
+| `occurrenceView`       | `"list" \| "table"`           | `"list"` | How the monthly screen shows its occurrences (Visualização): Lista, the grouped list, or Tabela (§7.9). Any other value is rejected. |
 
 - Each is a Better-Auth `user.additionalFields` entry with `input: true`, so it travels with the session and is written by Better-Auth's `update-user` endpoint. `approved` stays `input: false` and cannot be written that way.
 - The UI applies a change at once and saves it in the background, rolling back on failure. Other open devices pick the change up the next time they reload the session (on window focus); there is no live push.
@@ -315,6 +316,8 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 6. **Recurrences screen:** a second screen listing recurrences (filter active/all) with edit, end and delete actions. The same actions are reachable from an occurrence row.
 7. **One-off and recurrence dialog:** creating a one-off occurrence or a recurrence from the monthly screen.
 8. **Auth screens:** sign-up, sign-in, and an **"Aguardando aprovação"** screen (with sign-out) shown to unapproved users.
+9. **Table view:** with the `occurrenceView` preference (§3.5) set to Tabela, the block of occurrences of the monthly screen is a table instead of the grouped list; the period navigator, summary bar and "Nova avulsa" do not change. A Lista / Tabela switch in the bar heading the occurrences (beside **Exportar CSV**) and a **Visualização** control in Configurações set it, applied at once and rolled back with a notice on failure; it holds while moving between months. The table has the columns checkbox, Descrição, Vencimento (`DD/MM/AAAA` or "Sem vencimento"), Tipo (Entrada / Saída), Valor, Situação (Atrasada, Vence hoje, A vencer, Liquidada, Pulada), Liquidada em, Origem (Avulsa / Recorrência), Notas (one line, full text on hover) and a row menu. Rows follow the list's group order, include the overdue occurrences of earlier periods on the current period, and mark Atrasada and Vence hoje with the "needs you" yellow. An empty period shows the list's empty-month message.
+10. **CSV export:** **Exportar CSV** on the monthly screen downloads the period as `mensal-AAAA-MM.csv`, generated in the browser from the loaded period (no API route; it never materializes a virtual occurrence). Only the period's own occurrences, in the table's order; overdue occurrences of earlier periods are left out, so joining several months never counts one twice. UTF-8 with a BOM, `;` separator, CRLF line endings, header `Descrição;Vencimento;Tipo;Valor;Situação;Liquidada em;Origem;Notas`. Valor is the absolute amount as `1234,56` (no thousands separator or symbol; empty for "A definir"); dates are `DD/MM/AAAA` (empty when absent); Tipo is Entrada / Saída, Origem is Avulsa / Recorrência, Situação uses the table's labels. Fields containing `;`, `"`, CR or LF are quoted, with `"` doubled. No summary rows. The button is disabled when the period has no occurrences of its own.
 
 ---
 

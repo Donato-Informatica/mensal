@@ -32,6 +32,16 @@ export type ColorScheme = z.infer<typeof ColorSchemeSchema>;
 /** A new account's theme: Escuro, so nothing changes until the user opts in. */
 export const defaultColorScheme: ColorScheme = "dark";
 
+/**
+ * How the monthly screen shows its occurrences, a preference of the account
+ * (PRD §3.5): Lista (grouped) or Tabela.
+ */
+export const OccurrenceViewSchema = z.enum(["list", "table"]);
+export type OccurrenceView = z.infer<typeof OccurrenceViewSchema>;
+
+/** A new account's view: Lista, so nothing changes until the user opts in. */
+export const defaultOccurrenceView: OccurrenceView = "list";
+
 export const DirectionSchema = z.enum(["INFLOW", "OUTFLOW"]);
 export type Direction = z.infer<typeof DirectionSchema>;
 

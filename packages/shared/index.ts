@@ -2,6 +2,8 @@ export { clampDueDate } from "./lib/due-date.ts";
 export {
   ColorSchemeSchema,
   defaultColorScheme,
+  defaultOccurrenceView,
+  OccurrenceViewSchema,
   DirectionSchema,
   NewOneOffSchema,
   NewRecurrenceSchema,
@@ -19,6 +21,7 @@ export {
   type ColorScheme,
   type Direction,
   type NewOneOff,
+  type OccurrenceView,
   type NewRecurrence,
   type Occurrence,
   type OccurrenceEdit,
