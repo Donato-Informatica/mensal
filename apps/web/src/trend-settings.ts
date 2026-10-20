@@ -1,6 +1,6 @@
 import { MAX_SUMMARY_PERIODS } from "@mensal/shared";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { useSyncExternalStore } from "react";
+import { clientStore } from "./client-store.ts";
 
 /**
  * How many periods the trend covers, ending at the period on screen: at most
@@ -25,31 +25,11 @@ interface TrendSettings {
 
 const defaults: TrendSettings = { range: 6, chartType: "lines" };
 
-interface Store {
-  settings: TrendSettings;
-  listeners: Set<() => void>;
-}
-
-const storeByClient = new WeakMap<QueryClient, Store>();
-
-function storeOf(queryClient: QueryClient): Store {
-  const store = storeByClient.get(queryClient) ?? {
-    settings: defaults,
-    listeners: new Set(),
-  };
-  storeByClient.set(queryClient, store);
-  return store;
-}
-
-function write(queryClient: QueryClient, settings: TrendSettings) {
-  const store = storeOf(queryClient);
-  store.settings = settings;
-  store.listeners.forEach((listener) => listener());
-}
+const store = clientStore(defaults);
 
 /** Back to the defaults, as on a fresh load. */
 export function forgetTrendSettings(queryClient: QueryClient) {
-  write(queryClient, defaults);
+  store.write(queryClient, defaults);
 }
 
 /**
@@ -60,17 +40,10 @@ export function useTrendSetting<Key extends keyof TrendSettings>(
   key: Key
 ): [TrendSettings[Key], (value: TrendSettings[Key]) => void] {
   const queryClient = useQueryClient();
-  const store = storeOf(queryClient);
-  const settings = useSyncExternalStore(
-    (listener) => {
-      store.listeners.add(listener);
-      return () => store.listeners.delete(listener);
-    },
-    () => store.settings
-  );
+  const settings = store.useValue();
   return [
     settings[key],
     (value) =>
-      write(queryClient, { ...storeOf(queryClient).settings, [key]: value }),
+      store.write(queryClient, { ...store.read(queryClient), [key]: value }),
   ];
 }
