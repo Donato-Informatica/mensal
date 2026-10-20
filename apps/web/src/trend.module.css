@@ -25,3 +25,50 @@
 .chevron[data-opened] {
   transform: rotate(180deg);
 }
+
+.tooltipAmount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A legend entry is a toggle: a hidden series fades its entry. */
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  border-radius: var(--mantine-radius-sm);
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-text);
+}
+
+.legendItem[aria-pressed="false"] {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+/* Previsto is a solid line or a translucent bar, Realizado a dashed line or a
+   solid bar, as on the chart. */
+.swatch {
+  flex: none;
+  width: 16px;
+}
+
+.swatch[data-shape="line"] {
+  border-top: 3px solid var(--swatch-color);
+}
+
+.swatch[data-shape="line"][data-settled] {
+  border-top-style: dashed;
+}
+
+.swatch[data-shape="bar"] {
+  height: 12px;
+  border-radius: 2px;
+  background: var(--swatch-color);
+  opacity: 0.35;
+}
+
+.swatch[data-shape="bar"][data-settled] {
+  opacity: 1;
+}

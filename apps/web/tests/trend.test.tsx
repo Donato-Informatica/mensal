@@ -269,6 +269,32 @@ describe("the Evolução modal", () => {
     expect(dialog).toHaveAccessibleName("Nov 2025 – Out 2026");
   });
 
+  it("switches the chart between Linhas and Barras, remembering the choice on reopen", async () => {
+    somethingInOctober();
+    openApp(api, "/");
+    let dialog = await openTrend();
+    const chartType = () =>
+      within(dialog).findByRole("radiogroup", { name: "Tipo de gráfico" });
+    expect(
+      within(await chartType()).getByRole("radio", { name: "Linhas" })
+    ).toBeChecked();
+
+    await user.click(
+      within(await chartType()).getByRole("radio", { name: "Barras" })
+    );
+
+    expect(
+      within(await chartType()).getByRole("radio", { name: "Barras" })
+    ).toBeChecked();
+
+    await closeTrend(dialog);
+    dialog = await openTrend();
+
+    expect(
+      within(await chartType()).getByRole("radio", { name: "Barras" })
+    ).toBeChecked();
+  });
+
   it("forgets the range on sign-out", async () => {
     somethingInOctober();
     openApp(api, "/");

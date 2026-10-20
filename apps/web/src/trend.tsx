@@ -11,13 +11,18 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
-import { currentPeriod, shiftPeriod } from "@mensal/shared";
+import {
+  currentPeriod,
+  shiftPeriod,
+  type PeriodRangeItem,
+} from "@mensal/shared";
 import { IconChartLine, IconChevronDown } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useId } from "react";
 import { formatAmount, formatShortPeriod } from "./format.ts";
 import { summariesQuery } from "./summaries-query.ts";
+import { TrendCharts } from "./trend-charts.tsx";
 import classes from "./trend.module.css";
 import { isEmptyTrend, trendRows, type TrendRow } from "./trend-rows.ts";
 import {
@@ -109,9 +114,20 @@ function TrendContent({ from, to }: { from: string; to: string }) {
           Nenhuma conta nesses meses.
         </Text>
       ) : (
-        <TrendValues rows={trendRows(query.data.items, currentPeriod())} />
+        <TrendData items={query.data.items} />
       )}
     </Stack>
+  );
+}
+
+function TrendData({ items }: { items: readonly PeriodRangeItem[] }) {
+  const today = currentPeriod();
+  const rows = trendRows(items, today);
+  return (
+    <>
+      <TrendCharts rows={rows} currentPeriod={today} />
+      <TrendValues rows={rows} />
+    </>
   );
 }
 

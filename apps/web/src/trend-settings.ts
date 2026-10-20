@@ -6,6 +6,9 @@ export type TrendRange = 3 | 6 | 12;
 
 export const trendRanges: readonly TrendRange[] = [3, 6, 12];
 
+/** How the main chart draws its series: Linhas or Barras. */
+export type TrendChartType = "lines" | "bars";
+
 /**
  * The Evolução modal's choices, kept in memory per app like the month on
  * screen (PRD §7.1, §7.11): reopening the modal finds them again, but they are
@@ -13,9 +16,10 @@ export const trendRanges: readonly TrendRange[] = [3, 6, 12];
  */
 interface TrendSettings {
   range: TrendRange;
+  chartType: TrendChartType;
 }
 
-const defaults: TrendSettings = { range: 6 };
+const defaults: TrendSettings = { range: 6, chartType: "lines" };
 
 interface Store {
   settings: TrendSettings;
@@ -63,5 +67,18 @@ export function useTrendRange(): [TrendRange, (range: TrendRange) => void] {
   return [
     settings.range,
     (range) => write(queryClient, { ...storeOf(queryClient).settings, range }),
+  ];
+}
+
+/** The main chart's type (default Linhas) and what changes it. */
+export function useTrendChartType(): [
+  TrendChartType,
+  (chartType: TrendChartType) => void,
+] {
+  const [settings, queryClient] = useTrendSettings();
+  return [
+    settings.chartType,
+    (chartType) =>
+      write(queryClient, { ...storeOf(queryClient).settings, chartType }),
   ];
 }
