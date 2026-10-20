@@ -221,3 +221,10 @@ export const PeriodPayloadSchema = z.object({
   items: z.array(PeriodItemSchema),
   overdueFromPreviousPeriods: z.array(PeriodItemSchema),
 });
+
+/** The body of `GET /summaries?from&to`: each period's summary, ascending (PRD §6.4). */
+export const SummariesPayloadSchema = z.object({
+  items: z.array(
+    z.object({ period: PeriodSchema, summary: PeriodSummarySchema })
+  ),
+});

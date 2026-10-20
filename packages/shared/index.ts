@@ -17,6 +17,7 @@ export {
   RecurrenceListQuerySchema,
   RecurrenceSchema,
   StatusChangeSchema,
+  SummariesPayloadSchema,
   VirtualOccurrenceSchema,
   type ColorScheme,
   type Direction,
@@ -37,11 +38,15 @@ export { monthOf, periodOfMonth, shiftPeriod } from "./lib/period.ts";
 export { isActive, isInEffect } from "./lib/recurrence.ts";
 export {
   resolvePeriod,
+  summarizeRange,
   withStatusChange,
   type PeriodItem,
   type PeriodPayload,
   type PeriodSummary,
   type ResolvePeriodInput,
+  type PeriodRangeItem,
+  type SummariesPayload,
+  type SummarizeRangeInput,
 } from "./lib/resolve-period.ts";
 export { applyStatusChange } from "./lib/status-change.ts";
 export { currentPeriod, today } from "./lib/today.ts";

@@ -8,6 +8,7 @@ import {
   RecurrenceListQuerySchema,
   RecurrenceSchema,
   StatusChangeSchema,
+  SummariesPayloadSchema,
   VirtualOccurrenceSchema,
 } from "@mensal/shared";
 import { z } from "zod";
@@ -147,6 +148,29 @@ export function buildOpenApiSpec() {
         responses: {
           200: ok("The period", output(PeriodPayloadSchema)),
           400: refusal("The month is not a valid YYYY-MM", "INVALID_PERIOD"),
+        },
+      }),
+    },
+    "/api/v1/summaries": {
+      get: secured({
+        tags: ["Summaries"],
+        summary: "Get the summary of each period of a range of up to 12",
+        parameters: ["from", "to"].map((name) => ({
+          name,
+          in: "query" as const,
+          required: true,
+          schema: { type: "string", pattern: "^\\d{4}-\\d{2}$" },
+        })),
+        responses: {
+          200: ok(
+            "Each period's summary, ascending",
+            output(SummariesPayloadSchema)
+          ),
+          400: refusal(
+            "A month is not a valid YYYY-MM, or `from` is after `to` or more than 12 periods before it",
+            "INVALID_PERIOD",
+            "INVALID_PERIOD_RANGE"
+          ),
         },
       }),
     },
