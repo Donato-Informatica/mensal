@@ -1,6 +1,7 @@
 import type { PeriodPayload } from "@mensal/shared";
 import { queryOptions, type QueryClient } from "@tanstack/react-query";
 import type { ApiClient } from "./api-client.ts";
+import { invalidateSummaries } from "./summaries-query.ts";
 
 const periodsKey = ["period"];
 
@@ -12,9 +13,18 @@ export function periodQuery(api: ApiClient, period: string) {
   });
 }
 
-/** Marks every period stale and refetches the one on screen. */
-export function invalidatePeriods(queryClient: QueryClient): Promise<void> {
-  return queryClient.invalidateQueries({ queryKey: periodsKey });
+/**
+ * Marks every period stale and refetches the one on screen. The trend's
+ * summaries are made of periods, so they go stale with them (PRD §7.11): every
+ * occurrence or recurrence change comes through here.
+ */
+export async function invalidatePeriods(
+  queryClient: QueryClient
+): Promise<void> {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: periodsKey }),
+    invalidateSummaries(queryClient),
+  ]);
 }
 
 /**

@@ -13,6 +13,7 @@ import {
 import type { ColorScheme, OccurrenceView } from "@mensal/shared";
 import { unwrap, type AuthResult } from "./api-error.ts";
 import type { AuthClient } from "./auth-client.ts";
+import { forgetTrendSettings } from "./trend-settings.ts";
 import { rememberViewedMonth } from "./viewed-month.ts";
 
 const sessionKey = ["session"];
@@ -164,6 +165,7 @@ export function useSessionChange<Input = void>(
     onSuccess: async () => {
       queryClient.removeQueries({ queryKey: sessionKey });
       rememberViewedMonth(queryClient, undefined);
+      forgetTrendSettings(queryClient);
       await navigate({ to });
     },
   });

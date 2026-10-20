@@ -39,6 +39,17 @@ export function formatPeriodInline(period: string): string {
   return `${monthName.format(new Date(period))} ${period.slice(0, 4)}`;
 }
 
+const shortMonthName = new Intl.DateTimeFormat("pt-BR", {
+  month: "short",
+  timeZone: "UTC",
+});
+
+/** A period ('YYYY-MM-01') with its month abbreviated, e.g. "Out 2026". */
+export function formatShortPeriod(period: string): string {
+  const month = shortMonthName.format(new Date(period)).replace(".", "");
+  return `${month.charAt(0).toUpperCase()}${month.slice(1)} ${period.slice(0, 4)}`;
+}
+
 const fullDate = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
   month: "2-digit",

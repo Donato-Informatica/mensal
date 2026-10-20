@@ -1,0 +1,27 @@
+/* The table scrolls inside the modal, so a phone never scrolls sideways. */
+.scroll {
+  position: relative;
+  overflow-x: auto;
+}
+
+.table {
+  min-width: 48rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.period {
+  white-space: nowrap;
+}
+
+.amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.chevron {
+  transition: transform 150ms ease;
+}
+
+.chevron[data-opened] {
+  transform: rotate(180deg);
+}

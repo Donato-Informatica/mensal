@@ -70,6 +70,7 @@ import {
   useStatusChange,
   type StatusChangeRequest,
 } from "./status-controls.tsx";
+import { TrendButton, TrendModal } from "./trend.tsx";
 import { UndoToast } from "./undo-toast.tsx";
 import { rememberViewedMonth } from "./viewed-month.ts";
 
@@ -112,15 +113,18 @@ export function Month({ period }: { period: string }) {
     statusChange.mutate(request);
   };
   const dismissUndo = useCallback(() => setUndoable(null), []);
+  const [trendOpen, setTrendOpen] = useState(false);
 
   return (
     <AppLayout action={<NewOneOffButton period={period} />}>
       <Stack gap="xl">
-        <PeriodNavigator />
+        {/* The trend does not navigate: ← / → rest while it is open. */}
+        <PeriodNavigator arrowKeys={!trendOpen} />
         <Stack gap="xl" className={classes.content} aria-busy={loading}>
           {showSummary && (
             <Summary
               summary={data.summary}
+              onOpenTrend={() => setTrendOpen(true)}
               onClose={() => setShowSummary(false)}
               // Closing it came back refused: the bar is back, saying so.
               closeFailure={summaryFailure}
@@ -156,6 +160,11 @@ export function Month({ period }: { period: string }) {
         }}
         onCancel={() => setConfirming(null)}
       />
+      <TrendModal
+        period={period}
+        opened={trendOpen}
+        onClose={() => setTrendOpen(false)}
+      />
       <UndoToast
         request={undoable}
         onDismiss={dismissUndo}
@@ -172,8 +181,8 @@ export function Month({ period }: { period: string }) {
   );
 }
 
-/** `< Outubro 2026 >`: one click, or ← / →, moves a month. */
-function PeriodNavigator() {
+/** `< Outubro 2026 >`: one click, or ← / → while `arrowKeys`, moves a month. */
+function PeriodNavigator({ arrowKeys }: { arrowKeys: boolean }) {
   const navigate = useNavigate();
   // The month asked for, which runs ahead of the one on screen while it loads:
   // the title answers a click at once and fast repeats keep stepping.
@@ -231,8 +240,9 @@ function PeriodNavigator() {
   // Inside a dialog, the arrows belong to the dialog (e.g. a month picker).
   const moveUnlessInDialog = (months: number) => (event: KeyboardEvent) => {
     if (
-      event.target instanceof Element &&
-      event.target.closest('[role="dialog"]')
+      !arrowKeys ||
+      (event.target instanceof Element &&
+        event.target.closest('[role="dialog"]'))
     ) {
       return;
     }
@@ -340,8 +350,11 @@ function Summary({
   excluded,
   onClose,
   closeFailure,
+  onOpenTrend,
 }: {
   summary: PeriodSummary;
+  /** Opens Evolução, the trend of the months up to this one. */
+  onOpenTrend: () => void;
   /** Hides the summary; it comes back from the settings. */
   onClose: () => void;
   /** Why hiding the summary could not be saved, if it could not; retried by `onClose`. */
@@ -353,13 +366,10 @@ function Summary({
   const leftOver = summary.inflowExpected - summary.outflowExpected;
   return (
     <Stack gap="md" pos="relative">
-      <CloseButton
-        pos="absolute"
-        top={0}
-        right={0}
-        aria-label="Ocultar resumo"
-        onClick={onClose}
-      />
+      <Group pos="absolute" top={0} right={0} gap={4} style={{ zIndex: 1 }}>
+        <TrendButton onClick={onOpenTrend} />
+        <CloseButton aria-label="Ocultar resumo" onClick={onClose} />
+      </Group>
       <Box component="section" aria-labelledby={id} px="xs">
         <Text id={id} fz="xs" c="dimmed" tt="uppercase" fw={600} lts="1.5px">
           Sobra prevista
