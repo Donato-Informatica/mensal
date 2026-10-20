@@ -5,6 +5,7 @@ export {
   defaultOccurrenceView,
   MAX_SUMMARY_PERIODS,
   OccurrenceViewSchema,
+  parseSummariesQuery,
   DirectionSchema,
   NewOneOffSchema,
   NewRecurrenceSchema,

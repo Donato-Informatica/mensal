@@ -18,7 +18,7 @@ import {
   periodOfMonth,
   resolvePeriod,
   StatusChangeSchema,
-  SummariesQuerySchema,
+  parseSummariesQuery,
   summarizeRange,
   today,
   type Occurrence,
@@ -158,14 +158,12 @@ export function fakeApi() {
   function getSummaries(search: URLSearchParams): Response {
     if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
     if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
-    const query = SummariesQuerySchema.safeParse(Object.fromEntries(search));
-    if (!query.success) {
-      return json(400, { code: query.error.issues[0]!.message });
-    }
+    const parsed = parseSummariesQuery(Object.fromEntries(search));
+    if ("code" in parsed) return json(400, { code: parsed.code });
     return json(
       200,
       summarizeRange({
-        ...query.data,
+        ...parsed.query,
         occurrences: signedIn.occurrences,
         recurrences: signedIn.recurrences,
       })

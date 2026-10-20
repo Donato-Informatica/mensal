@@ -130,6 +130,19 @@ export const SummariesQuerySchema = z
   );
 export type SummariesQuery = z.output<typeof SummariesQuerySchema>;
 
+/**
+ * `input` as the query of `GET /summaries`, or the code its 400 refuses it
+ * with.
+ */
+export function parseSummariesQuery(
+  input: unknown
+): { query: SummariesQuery } | { code: string } {
+  const result = SummariesQuerySchema.safeParse(input);
+  return result.success
+    ? { query: result.data }
+    : { code: result.error.issues[0]!.message };
+}
+
 export const OccurrenceSchema = z.object({
   id: z.uuid(),
   userId: z.string(),

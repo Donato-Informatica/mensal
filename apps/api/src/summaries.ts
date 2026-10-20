@@ -1,5 +1,5 @@
 import { schema, type Database } from "@mensal/database";
-import { SummariesQuerySchema, summarizeRange } from "@mensal/shared";
+import { parseSummariesQuery, summarizeRange } from "@mensal/shared";
 import { and, eq, gte, lte } from "drizzle-orm";
 import { Router } from "express";
 
@@ -8,13 +8,12 @@ export function summariesRouter({ db }: { db: Database }) {
   const router = Router();
 
   router.get("/", async (req, res) => {
-    const query = SummariesQuerySchema.safeParse(req.query);
-    if (!query.success) {
-      // The first issue's message is the refusal's code.
-      res.status(400).json({ code: query.error.issues[0]!.message });
+    const parsed = parseSummariesQuery(req.query);
+    if ("code" in parsed) {
+      res.status(400).json({ code: parsed.code });
       return;
     }
-    const { from, to } = query.data;
+    const { from, to } = parsed.query;
     const { userId } = res.locals;
     // Read-only: virtual occurrences are projected, never materialized
     // (ADR 0001).
