@@ -145,7 +145,7 @@ function TrendChart({
   }
   const commonChartProps = {
     h: 260,
-    data: rows as TrendRow[],
+    data: [...rows],
     dataKey: "period",
     referenceLines,
     connectNulls: false,
