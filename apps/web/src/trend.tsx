@@ -20,14 +20,20 @@ import { IconChartLine, IconChevronDown } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useId } from "react";
-import { formatAmount, formatShortPeriod } from "./format.ts";
+import { formatOptionalAmount, formatShortPeriod } from "./format.ts";
 import { summariesQuery } from "./summaries-query.ts";
 import { TrendCharts } from "./trend-charts.tsx";
 import classes from "./trend.module.css";
-import { isEmptyTrend, trendRows, type TrendRow } from "./trend-rows.ts";
+import {
+  isEmptyTrend,
+  trendLabels,
+  trendRows,
+  type TrendRow,
+  type TrendValue,
+} from "./trend-rows.ts";
 import {
   trendRanges,
-  useTrendRange,
+  useTrendSetting,
   type TrendRange,
 } from "./trend-settings.ts";
 
@@ -63,7 +69,7 @@ export function TrendModal({
 }) {
   const theme = useMantineTheme();
   const phone = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
-  const [range] = useTrendRange();
+  const [range] = useTrendSetting("range");
   const from = shiftPeriod(period, 1 - range);
   return (
     <Modal
@@ -80,7 +86,7 @@ export function TrendModal({
 
 function TrendContent({ from, to }: { from: string; to: string }) {
   const { api } = useRouteContext({ from: rootRouteId });
-  const [range, setRange] = useTrendRange();
+  const [range, setRange] = useTrendSetting("range");
   const query = useQuery(summariesQuery(api, from, to));
   return (
     <Stack gap="lg">
@@ -162,30 +168,19 @@ function TrendValues({ rows }: { rows: readonly TrendRow[] }) {
   );
 }
 
-const trendColumns = [
-  "Competência",
-  "Entradas Previsto",
-  "Entradas Realizado",
-  "Saídas Previsto",
-  "Saídas Realizado",
-  "Sobra prevista",
-  "Sobra acumulada",
-];
+/** The table's value columns, in the order of their labels. */
+const trendValues = Object.keys(trendLabels) as TrendValue[];
 
 function TrendTable({ rows }: { rows: readonly TrendRow[] }) {
-  const settled = (cents: number | null) =>
-    cents === null ? "—" : formatAmount(cents);
   return (
     <div className={classes.scroll} tabIndex={0}>
       <Table className={classes.table}>
         <Table.Thead>
           <Table.Tr>
-            {trendColumns.map((column, index) => (
-              <Table.Th
-                key={column}
-                className={index === 0 ? undefined : classes.amount}
-              >
-                {column}
+            <Table.Th>Competência</Table.Th>
+            {trendValues.map((value) => (
+              <Table.Th key={value} className={classes.amount}>
+                {trendLabels[value]}
               </Table.Th>
             ))}
           </Table.Tr>
@@ -196,24 +191,11 @@ function TrendTable({ rows }: { rows: readonly TrendRow[] }) {
               <Table.Th scope="row" className={classes.period}>
                 {formatShortPeriod(row.period)}
               </Table.Th>
-              <Table.Td className={classes.amount}>
-                {formatAmount(row.inflowExpected)}
-              </Table.Td>
-              <Table.Td className={classes.amount}>
-                {settled(row.inflowSettled)}
-              </Table.Td>
-              <Table.Td className={classes.amount}>
-                {formatAmount(row.outflowExpected)}
-              </Table.Td>
-              <Table.Td className={classes.amount}>
-                {settled(row.outflowSettled)}
-              </Table.Td>
-              <Table.Td className={classes.amount}>
-                {formatAmount(row.leftOver)}
-              </Table.Td>
-              <Table.Td className={classes.amount}>
-                {formatAmount(row.accumulatedLeftOver)}
-              </Table.Td>
+              {trendValues.map((value) => (
+                <Table.Td key={value} className={classes.amount}>
+                  {formatOptionalAmount(row[value])}
+                </Table.Td>
+              ))}
             </Table.Tr>
           ))}
         </Table.Tbody>

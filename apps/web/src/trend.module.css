@@ -48,7 +48,8 @@
 }
 
 /* Previsto is a solid line or a translucent bar, Realizado a dashed line or a
-   solid bar, as on the chart. */
+   solid bar, as on the chart; a Previsto bar's opacity is set inline from the
+   chart's own. */
 .swatch {
   flex: none;
   width: 16px;
@@ -66,9 +67,4 @@
   height: 12px;
   border-radius: 2px;
   background: var(--swatch-color);
-  opacity: 0.35;
-}
-
-.swatch[data-shape="bar"][data-settled] {
-  opacity: 1;
 }

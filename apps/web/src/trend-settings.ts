@@ -1,10 +1,14 @@
+import { MAX_SUMMARY_PERIODS } from "@mensal/shared";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 
-/** How many periods the trend covers, ending at the period on screen. */
-export type TrendRange = 3 | 6 | 12;
+/**
+ * How many periods the trend covers, ending at the period on screen: at most
+ * what one `GET /summaries` may cover.
+ */
+export type TrendRange = 3 | 6 | typeof MAX_SUMMARY_PERIODS;
 
-export const trendRanges: readonly TrendRange[] = [3, 6, 12];
+export const trendRanges: readonly TrendRange[] = [3, 6, MAX_SUMMARY_PERIODS];
 
 /** How the main chart draws its series: Linhas or Barras. */
 export type TrendChartType = "lines" | "bars";
@@ -48,7 +52,13 @@ export function forgetTrendSettings(queryClient: QueryClient) {
   write(queryClient, defaults);
 }
 
-function useTrendSettings(): [TrendSettings, QueryClient] {
+/**
+ * One of the modal's choices (range: default 6; chartType: default Linhas) and
+ * what changes it.
+ */
+export function useTrendSetting<Key extends keyof TrendSettings>(
+  key: Key
+): [TrendSettings[Key], (value: TrendSettings[Key]) => void] {
   const queryClient = useQueryClient();
   const store = storeOf(queryClient);
   const settings = useSyncExternalStore(
@@ -58,27 +68,9 @@ function useTrendSettings(): [TrendSettings, QueryClient] {
     },
     () => store.settings
   );
-  return [settings, queryClient];
-}
-
-/** The trend's range in periods (default 6) and what changes it. */
-export function useTrendRange(): [TrendRange, (range: TrendRange) => void] {
-  const [settings, queryClient] = useTrendSettings();
   return [
-    settings.range,
-    (range) => write(queryClient, { ...storeOf(queryClient).settings, range }),
-  ];
-}
-
-/** The main chart's type (default Linhas) and what changes it. */
-export function useTrendChartType(): [
-  TrendChartType,
-  (chartType: TrendChartType) => void,
-] {
-  const [settings, queryClient] = useTrendSettings();
-  return [
-    settings.chartType,
-    (chartType) =>
-      write(queryClient, { ...storeOf(queryClient).settings, chartType }),
+    settings[key],
+    (value) =>
+      write(queryClient, { ...storeOf(queryClient).settings, [key]: value }),
   ];
 }

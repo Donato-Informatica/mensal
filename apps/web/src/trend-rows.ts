@@ -14,6 +14,22 @@ export interface TrendRow {
   accumulatedLeftOver: number;
 }
 
+/** A value of a trend row: every field but its period. */
+export type TrendValue = Exclude<keyof TrendRow, "period">;
+
+/**
+ * Each value's label, in the order the Ver valores table shows them; the
+ * charts' series and legends use the same labels.
+ */
+export const trendLabels: Readonly<Record<TrendValue, string>> = {
+  inflowExpected: "Entradas Previsto",
+  inflowSettled: "Entradas Realizado",
+  outflowExpected: "Saídas Previsto",
+  outflowSettled: "Saídas Realizado",
+  leftOver: "Sobra prevista",
+  accumulatedLeftOver: "Sobra acumulada",
+};
+
 /**
  * The trend's rows from the summaries of its range (PRD §7.11). Sobra prevista
  * and Sobra acumulada are derived here, never sent by the API.

@@ -13,16 +13,18 @@ import {
 } from "@mantine/core";
 import { useState, type CSSProperties } from "react";
 import {
-  formatAmount,
   formatAxisPeriod,
   formatCompactAmount,
+  formatOptionalAmount,
   formatShortPeriod,
 } from "./format.ts";
 import classes from "./trend.module.css";
-import type { TrendRow } from "./trend-rows.ts";
-import { useTrendChartType, type TrendChartType } from "./trend-settings.ts";
-
-type SeriesName = Exclude<keyof TrendRow, "period">;
+import {
+  trendLabels,
+  type TrendRow,
+  type TrendValue as SeriesName,
+} from "./trend-rows.ts";
+import { useTrendSetting, type TrendChartType } from "./trend-settings.ts";
 
 interface Series {
   name: SeriesName;
@@ -30,6 +32,17 @@ interface Series {
   color: string;
   /** Realizado: a dashed line or a solid bar; Previsto the other way round. */
   settled: boolean;
+  /** A line even when the chart draws bars, e.g. Sobra prevista. */
+  alwaysLine?: boolean;
+}
+
+/** The series of `name`, labelled as everywhere else in the trend. */
+function seriesOf(
+  name: SeriesName,
+  color: string,
+  options: Pick<Series, "settled" | "alwaysLine">
+): Series {
+  return { name, label: trendLabels[name], color, ...options };
 }
 
 // Theme tokens, so both colour schemes resolve them (DESIGN.md). Left over is
@@ -40,46 +53,19 @@ const outflow = "var(--mensal-color-rose)";
 const leftOver = "var(--mensal-color-highlight)";
 
 const mainSeries: readonly Series[] = [
-  {
-    name: "inflowExpected",
-    label: "Entradas Previsto",
-    color: inflow,
-    settled: false,
-  },
-  {
-    name: "inflowSettled",
-    label: "Entradas Realizado",
-    color: inflow,
-    settled: true,
-  },
-  {
-    name: "outflowExpected",
-    label: "Saídas Previsto",
-    color: outflow,
-    settled: false,
-  },
-  {
-    name: "outflowSettled",
-    label: "Saídas Realizado",
-    color: outflow,
-    settled: true,
-  },
+  seriesOf("inflowExpected", inflow, { settled: false }),
+  seriesOf("inflowSettled", inflow, { settled: true }),
+  seriesOf("outflowExpected", outflow, { settled: false }),
+  seriesOf("outflowSettled", outflow, { settled: true }),
   // Last, so in bar mode its line is drawn over the bars.
-  {
-    name: "leftOver",
-    label: "Sobra prevista",
-    color: leftOver,
-    settled: false,
-  },
+  seriesOf("leftOver", leftOver, { settled: false, alwaysLine: true }),
 ];
 
 const accumulatedSeries: readonly Series[] = [
-  {
-    name: "accumulatedLeftOver",
-    label: "Sobra acumulada",
-    color: leftOver,
+  seriesOf("accumulatedLeftOver", leftOver, {
     settled: false,
-  },
+    alwaysLine: true,
+  }),
 ];
 
 const realizadoDash = "6 4";
@@ -96,7 +82,7 @@ export function TrendCharts({
   rows: readonly TrendRow[];
   currentPeriod: string;
 }) {
-  const [chartType, setChartType] = useTrendChartType();
+  const [chartType, setChartType] = useTrendSetting("chartType");
   return (
     <Stack gap="lg">
       <SegmentedControl
@@ -161,7 +147,7 @@ function TrendChart({
       labelPosition: "insideTopLeft",
     });
   }
-  const shared = {
+  const commonChartProps = {
     h: 260,
     data: rows as TrendRow[],
     dataKey: "period",
@@ -186,23 +172,23 @@ function TrendChart({
       />
       {chartType === "bars" ? (
         <CompositeChart
-          {...shared}
+          {...commonChartProps}
           maxBarWidth={24}
-          series={visible.map(({ name, label, color }) => ({
+          series={visible.map(({ name, label, color, alwaysLine }) => ({
             name,
             label,
             color,
-            type: name === "leftOver" ? "line" : "bar",
+            type: alwaysLine ? "line" : "bar",
           }))}
           barProps={(item) =>
-            mainSeries.find(({ name }) => name === item.name)?.settled
+            series.find(({ name }) => name === item.name)?.settled
               ? {}
               : { fillOpacity: previstoBarOpacity }
           }
         />
       ) : (
         <LineChart
-          {...shared}
+          {...commonChartProps}
           series={visible.map(({ name, label, color, settled }) => ({
             name,
             label,
@@ -229,25 +215,32 @@ function TrendLegend({
 }) {
   return (
     <Group gap="xs" wrap="wrap">
-      {series.map(({ name, label, color, settled }) => (
-        <UnstyledButton
-          key={name}
-          className={classes.legendItem}
-          aria-pressed={!hidden.has(name)}
-          onClick={() => onToggle(name)}
-        >
-          <span
-            aria-hidden="true"
-            className={classes.swatch}
-            data-shape={
-              chartType === "bars" && name !== "leftOver" ? "bar" : "line"
-            }
-            data-settled={settled || undefined}
-            style={{ "--swatch-color": color } as CSSProperties}
-          />
-          {label}
-        </UnstyledButton>
-      ))}
+      {series.map(({ name, label, color, settled, alwaysLine }) => {
+        const bar = chartType === "bars" && !alwaysLine;
+        return (
+          <UnstyledButton
+            key={name}
+            className={classes.legendItem}
+            aria-pressed={!hidden.has(name)}
+            onClick={() => onToggle(name)}
+          >
+            <span
+              aria-hidden="true"
+              className={classes.swatch}
+              data-shape={bar ? "bar" : "line"}
+              data-settled={settled || undefined}
+              style={
+                {
+                  "--swatch-color": color,
+                  // A Previsto bar is as translucent as on the chart.
+                  opacity: bar && !settled ? previstoBarOpacity : undefined,
+                } as CSSProperties
+              }
+            />
+            {label}
+          </UnstyledButton>
+        );
+      })}
     </Group>
   );
 }
@@ -270,17 +263,14 @@ function TrendTooltip({
       <Text fw={600} c="bright" mb={4}>
         {formatShortPeriod(String(label ?? row.period))}
       </Text>
-      {series.map(({ name, label: seriesLabel }) => {
-        const cents = row[name];
-        return (
-          <Group key={name} justify="space-between" gap="lg" wrap="nowrap">
-            <Text size="sm">{seriesLabel}</Text>
-            <Text size="sm" className={classes.tooltipAmount}>
-              {cents === null ? "—" : formatAmount(cents)}
-            </Text>
-          </Group>
-        );
-      })}
+      {series.map(({ name, label: seriesLabel }) => (
+        <Group key={name} justify="space-between" gap="lg" wrap="nowrap">
+          <Text size="sm">{seriesLabel}</Text>
+          <Text size="sm" className={classes.tooltipAmount}>
+            {formatOptionalAmount(row[name])}
+          </Text>
+        </Group>
+      ))}
     </Paper>
   );
 }
