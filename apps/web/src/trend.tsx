@@ -75,6 +75,7 @@ export function TrendModal({
     <Modal
       opened={opened}
       onClose={onClose}
+      closeOnClickOutside
       fullScreen={phone}
       size="xl"
       title={`${formatShortPeriod(from)} – ${formatShortPeriod(period)}`}

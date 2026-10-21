@@ -1,0 +1,47 @@
+/* The tokens are one panel of ruled rows (DESIGN.md, Rows-Not-Cards): name over
+   its details, the revoke action at the row's end. */
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-md);
+  padding-block: var(--mantine-spacing-sm);
+}
+
+.row:first-child {
+  padding-top: 0;
+}
+
+.row + .row {
+  border-top: 1px solid var(--mensal-color-hairline);
+}
+
+.details {
+  min-width: 0;
+  flex: 1;
+}
+
+.snippetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-sm);
+}
+
+/* A command to copy, wrapped rather than scrolled so all of it is seen. */
+.snippet {
+  margin: 0;
+  padding: var(--mantine-spacing-sm);
+  border: 1px solid var(--mensal-color-hairline-strong);
+  border-radius: var(--mantine-radius-md);
+  font-family: var(--mantine-font-family-monospace);
+  font-size: var(--mantine-font-size-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

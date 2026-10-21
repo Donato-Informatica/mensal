@@ -1,7 +1,10 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { chooseFromAccountMenu } from "./account-menu.ts";
+import {
+  chooseFromAccountMenu,
+  expectClickOutsideToKeepDialog,
+} from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
 
@@ -43,6 +46,57 @@ async function changePassword({
 }
 
 describe("changing the password", () => {
+  it("offers to revoke other devices and access tokens, both checked", async () => {
+    const dialog = await openChangePassword();
+
+    for (const label of [
+      "Desconectar dos outros dispositivos",
+      "Revogar todos os tokens de acesso",
+    ])
+      expect(within(dialog).getByLabelText(label)).toBeChecked();
+  });
+
+  it.each([
+    [true, true],
+    [true, false],
+    [false, true],
+    [false, false],
+  ])("sends the choice (sessions %s, tokens %s)", async (sessions, tokens) => {
+    const user = userEvent.setup();
+    const dialog = await openChangePassword();
+    if (!sessions)
+      await user.click(
+        within(dialog).getByLabelText("Desconectar dos outros dispositivos")
+      );
+    if (!tokens)
+      await user.click(
+        within(dialog).getByLabelText("Revogar todos os tokens de acesso")
+      );
+
+    await changePassword({ current: "old-horse", next: "new-horse" });
+
+    await within(dialog).findByText(/Senha alterada/);
+    expect(api.passwordChanges()).toEqual([
+      { revokeOtherSessions: sessions, revokeAccessTokens: tokens },
+    ]);
+  });
+
+  it("says what was revoked once the password is changed", async () => {
+    const user = userEvent.setup();
+    const dialog = await openChangePassword();
+    await user.click(
+      within(dialog).getByLabelText("Desconectar dos outros dispositivos")
+    );
+
+    await changePassword({ current: "old-horse", next: "new-horse" });
+
+    expect(
+      await within(dialog).findByText(
+        "Senha alterada. Os tokens de acesso foram revogados."
+      )
+    ).toBeInTheDocument();
+  });
+
   it("is opened from the header, and the new password is the one to sign in with", async () => {
     const user = userEvent.setup();
     const dialog = await openChangePassword();
@@ -50,7 +104,7 @@ describe("changing the password", () => {
     await changePassword({ current: "old-horse", next: "new-horse" });
     expect(
       await within(dialog).findByText(
-        "Senha alterada. Nos outros dispositivos, entre de novo com a nova senha."
+        "Senha alterada. Nos outros dispositivos, entre de novo com a nova senha. Os tokens de acesso foram revogados."
       )
     ).toBeInTheDocument();
     // The text one, not the modal's own "Fechar" ×.
@@ -85,6 +139,21 @@ describe("changing the password", () => {
         await screen.findByRole("dialog", { name: "Alterar senha" })
       ).getByLabelText("Senha atual")
     ).toHaveValue("");
+  });
+
+  it("stays open on a click outside, and closes from Cancelar", async () => {
+    const user = userEvent.setup();
+    const dialog = await openChangePassword();
+    await user.type(within(dialog).getByLabelText("Senha atual"), "old-horse");
+
+    await expectClickOutsideToKeepDialog(user);
+    expect(within(dialog).getByLabelText("Senha atual")).toHaveValue(
+      "old-horse"
+    );
+
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(api.passwordChanges()).toEqual([]);
   });
 
   it("says when the current password is wrong", async () => {

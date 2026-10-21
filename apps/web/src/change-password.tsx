@@ -1,15 +1,16 @@
 import {
   Alert,
   Button,
+  Checkbox,
   Modal,
   PasswordInput,
   Stack,
-  Text,
 } from "@mantine/core";
 import { useIsMutating, useMutation } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { ApiError, errorMessage, unwrap } from "./api-error.ts";
+import { DialogActions } from "./dialog-actions.tsx";
 import { useSession } from "./session.ts";
 
 const changePasswordKey = ["change-password"];
@@ -50,9 +51,30 @@ function retype(input: HTMLInputElement | null) {
   input?.select();
 }
 
+/** What the user asked a password change to revoke. */
+interface Revocation {
+  revokeOtherSessions: boolean;
+  revokeAccessTokens: boolean;
+}
+
+function changedMessage({
+  revokeOtherSessions,
+  revokeAccessTokens,
+}: Revocation) {
+  return [
+    "Senha alterada.",
+    revokeOtherSessions &&
+      "Nos outros dispositivos, entre de novo com a nova senha.",
+    revokeAccessTokens && "Os tokens de acesso foram revogados.",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 /**
- * Replaces the password, proven with the current one. The API then signs the
- * user out of their other devices and keeps this one (PRD §8.2).
+ * Replaces the password, proven with the current one, and revokes what the
+ * user chose: the other devices and the access tokens. This device always
+ * stays signed in (PRD §8.2).
  */
 function ChangePasswordForm({ onDone }: { onDone: () => void }) {
   const { authClient } = useRouteContext({ from: rootRouteId });
@@ -62,16 +84,9 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
   const [mismatch, setMismatch] = useState(false);
   const change = useMutation({
     mutationKey: changePasswordKey,
-    mutationFn: async (passwords: {
-      currentPassword: string;
-      newPassword: string;
-    }) =>
-      unwrap(
-        await authClient.changePassword({
-          ...passwords,
-          revokeOtherSessions: true,
-        })
-      ),
+    mutationFn: async (
+      change: Revocation & { currentPassword: string; newPassword: string }
+    ) => unwrap(await authClient.changePassword(change)),
     onError: (error) => {
       if (isWrongCurrentPassword(error)) retype(currentPassword.current);
     },
@@ -83,8 +98,7 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
     return (
       <Stack gap="md">
         <Alert color="green" variant="light">
-          Senha alterada. Nos outros dispositivos, entre de novo com a nova
-          senha.
+          {changedMessage(change.variables)}
         </Alert>
         <Button onClick={onDone} fullWidth>
           Fechar
@@ -107,6 +121,8 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
         change.mutate({
           currentPassword: String(form.get("currentPassword")),
           newPassword,
+          revokeOtherSessions: form.get("revokeOtherSessions") === "on",
+          revokeAccessTokens: form.get("revokeAccessTokens") === "on",
         });
       }}
     >
@@ -120,9 +136,6 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
         hidden
       />
       <Stack gap="md">
-        <Text c="dimmed" fz="sm">
-          Seus outros dispositivos serão desconectados.
-        </Text>
         {change.error && !wrongCurrentPassword && (
           <Alert color="red" variant="light">
             {errorMessage(change.error)}
@@ -159,9 +172,28 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
           aria-invalid={mismatch}
           onChange={() => setMismatch(false)}
         />
-        <Button type="submit" loading={change.isPending} fullWidth mt="xs">
-          Salvar senha
-        </Button>
+        <Checkbox
+          label="Desconectar dos outros dispositivos"
+          name="revokeOtherSessions"
+          defaultChecked
+        />
+        <Checkbox
+          label="Revogar todos os tokens de acesso"
+          name="revokeAccessTokens"
+          defaultChecked
+        />
+        <DialogActions>
+          <Button
+            variant="default"
+            onClick={onDone}
+            disabled={change.isPending}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" loading={change.isPending}>
+            Salvar senha
+          </Button>
+        </DialogActions>
       </Stack>
     </form>
   );

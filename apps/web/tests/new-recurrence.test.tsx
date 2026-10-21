@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { expectClickOutsideToKeepDialog } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
 
@@ -53,6 +54,19 @@ async function submit(dialog: HTMLElement) {
 }
 
 describe("creating a recurrence", () => {
+  it("stays open on a click outside, and closes from Cancelar", async () => {
+    openApp(api, "/recorrencias");
+    const dialog = await openDialog();
+    await user.type(within(dialog).getByLabelText("Descrição"), "Internet");
+
+    await expectClickOutsideToKeepDialog(user);
+    expect(within(dialog).getByLabelText("Descrição")).toHaveValue("Internet");
+
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    expect(api.recurrencesOf(email)).toEqual([]);
+  });
+
   it("shows its occurrence in the month without a reload", async () => {
     openApp(api, "/recorrencias");
     const dialog = await openDialog();

@@ -194,7 +194,12 @@ export function ConfirmStatusChange({
   if (request !== null && request !== shown) setShown(request);
   const copy = shown && confirmationCopy(shown);
   return (
-    <Modal opened={request !== null} onClose={onCancel} title={copy?.title}>
+    <Modal
+      opened={request !== null}
+      onClose={onCancel}
+      closeOnClickOutside
+      title={copy?.title}
+    >
       {shown && copy && (
         <Stack gap="md">
           <Text>

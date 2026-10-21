@@ -1,3 +1,4 @@
+import { apiKey } from "@better-auth/api-key";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { schema, type Database } from "@mensal/database";
 import {
@@ -6,6 +7,7 @@ import {
   defaultOccurrenceView,
   OccurrenceViewSchema,
 } from "@mensal/shared";
+import { eq } from "drizzle-orm";
 import { betterAuth } from "better-auth";
 import { createAuthMiddleware, getIP, isAPIError } from "better-auth/api";
 import { openAPI } from "better-auth/plugins";
@@ -14,12 +16,23 @@ import {
   consoleActivity,
   type Activity,
   type PasswordAction,
+  type Revocable,
   type RecordActivity,
   type SessionAction,
 } from "./activity.ts";
 import { consoleEmail, type Email, type SendEmail } from "./email.ts";
 import { passwordChangedEmail, resetPasswordEmail } from "./emails.ts";
 import type { Log } from "./log.ts";
+
+/** What every access token starts with, so a leaked one is recognizable. */
+export const accessTokenPrefix = "mensal_";
+
+/**
+ * How often a current password may be tried (it could be guessed with a stolen
+ * session): `max` per `window` seconds. Better-Auth enforces it per IP on
+ * `/change-password`; `/access-tokens` applies it per user.
+ */
+export const passwordGuessLimit = { window: 60, max: 5 };
 
 export interface AuthOptions {
   db: Database;
@@ -44,7 +57,7 @@ export interface AuthOptions {
 /**
  * Better-Auth on the app's own `db`: email + password, sessions in HttpOnly
  * SameSite=Lax cookies, and password-reset links sent by `email` (PRD §8.2,
- * ADR-0003); a reset signs the user out everywhere. The anonymous endpoints are
+ * ADR-0003); a reset signs the user out everywhere and revokes every access token, while a password change revokes what the user chose (PRD §8.2). The anonymous endpoints are
  * rate limited per client IP, read from the proxy's `X-Forwarded-For`
  * (PRD §8.6). Sign-ups, sign-ins and failed sign-ins go to the activity log
  * (PRD §8.7).
@@ -72,20 +85,35 @@ export function createAuth({
       );
     });
   }
-  /** Logs and alerts a password replaced by a change or a reset (PRD §8.2). */
+  /**
+   * Logs and alerts a password replaced by a change or a reset, with what that
+   * revoked (PRD §8.2).
+   */
   function passwordReplaced(
     user: { id: string; email: string; name: string },
-    action: PasswordAction
+    action: PasswordAction,
+    revoked: Revocable[]
   ) {
-    record({ user: user.id, action });
+    if (action === "user.password-changed") {
+      record({ user: user.id, action, revoked });
+    } else {
+      record({ user: user.id, action });
+    }
     sendInBackground(
       passwordChangedEmail({
         to: user.email,
         name: user.name,
         at: now(),
         forgotPasswordURL: `${baseURL}/esqueci-a-senha`,
+        revoked,
+        reset: action === "user.password-reset",
       })
     );
+  }
+  async function revokeAccessTokens(userId: string) {
+    await db
+      .delete(schema.apikeys)
+      .where(eq(schema.apikeys.referenceId, userId));
   }
   return betterAuth({
     baseURL,
@@ -99,7 +127,12 @@ export function createAuth({
         );
       },
       onPasswordReset: async ({ user }) => {
-        passwordReplaced(user, "user.password-reset");
+        // How a user takes a stolen account back (PRD §8.9).
+        await revokeAccessTokens(user.id);
+        passwordReplaced(user, "user.password-reset", [
+          "sessions",
+          "access-tokens",
+        ]);
       },
       revokeSessionsOnPasswordReset: true,
     },
@@ -113,7 +146,7 @@ export function createAuth({
         "/sign-up/email": { window: 3600, max: 3 },
         "/request-password-reset": { window: 3600, max: 3 },
         // It checks the current password, so a stolen session could guess it.
-        "/change-password": { window: 60, max: 5 },
+        "/change-password": passwordGuessLimit,
       },
     },
     user: {
@@ -160,7 +193,38 @@ export function createAuth({
     },
     // Describes the sign-in routes for /api/openapi.json; its own reference
     // page loads scripts from a CDN, so it is off.
-    plugins: [openAPI({ disableDefaultReference: true })],
+    plugins: [
+      openAPI({ disableDefaultReference: true }),
+      // Access tokens (PRD §8.9, ADR-0004), hashed in the `apikeys` table.
+      // `enableSessionForAPIKeys` stays off: a token never becomes a session.
+      apiKey({
+        defaultPrefix: accessTokenPrefix,
+        // Prefix plus four characters, to tell tokens apart in the list.
+        startingCharactersConfig: {
+          shouldStore: true,
+          charactersLength: accessTokenPrefix.length + 4,
+        },
+        maximumNameLength: 32,
+        requireName: true,
+        enableSessionForAPIKeys: false,
+        rateLimit: {
+          enabled: true,
+          timeWindow: 60_000,
+          maxRequests: 120,
+        },
+      }),
+    ],
+    // The plugin's own HTTP routes would let a session mint a token without
+    // the password the app's `/access-tokens` routes ask for; they stay
+    // reachable only through `auth.api`.
+    disabledPaths: [
+      "/api-key/create",
+      "/api-key/get",
+      "/api-key/update",
+      "/api-key/delete",
+      "/api-key/list",
+      "/api-key/delete-all-expired-api-keys",
+    ],
     advanced: {
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax" },
       // Own cookie name: another app on a sibling subdomain can set a
@@ -173,20 +237,23 @@ export function createAuth({
       ipAddress: { ipAddressHeaders: ["x-forwarded-for"] },
     },
     hooks: {
-      // A password change always signs the user's other devices out, whatever
-      // the client asks (PRD §8.2).
-      before: createAuthMiddleware(async (ctx) => {
-        if (ctx.path !== "/change-password") return;
-        return {
-          context: { body: { ...ctx.body, revokeOtherSessions: true } },
-        };
-      }),
       after: createAuthMiddleware(async (ctx) => {
         if (ctx.path === "/change-password") {
-          // Forced to revoke the other sessions, it always starts a new one.
-          const user = ctx.context.newSession?.user;
-          if (user && !isAPIError(ctx.context.returned))
-            passwordReplaced(user, "user.password-changed");
+          if (isAPIError(ctx.context.returned)) return;
+          // Revoking the other sessions starts a new one for this device.
+          const user = (ctx.context.newSession ?? ctx.context.session)?.user;
+          if (!user) return;
+          const body = ctx.body as {
+            revokeOtherSessions?: boolean;
+            revokeAccessTokens?: boolean;
+          };
+          const revoked: Revocable[] = [];
+          if (body.revokeOtherSessions === true) revoked.push("sessions");
+          if (body.revokeAccessTokens === true) {
+            await revokeAccessTokens(user.id);
+            revoked.push("access-tokens");
+          }
+          passwordReplaced(user, "user.password-changed", revoked);
           return;
         }
         const action = sessionActions[ctx.path];

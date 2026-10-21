@@ -6,7 +6,14 @@ import { createApp } from "../src/app.ts";
 import type { Auth } from "../src/auth.ts";
 import { buildOpenApiSpec } from "../src/openapi.ts";
 import { mountedOperations } from "./openapi-routes.ts";
-import { approve, request, signUp, startApi, type TestApi } from "./api.ts";
+import {
+  approve,
+  password,
+  request,
+  signUp,
+  startApi,
+  type TestApi,
+} from "./api.ts";
 
 let api: TestApi;
 beforeAll(async () => {
@@ -46,15 +53,16 @@ describe("the API description", () => {
 
     const { operations, unresolved } = mountedOperations(
       app,
-      Object.keys(spec.paths)
+      // The MCP endpoint is mounted but described by its own tools (§8.9).
+      [...Object.keys(spec.paths), "/api/mcp"]
     );
 
     // Better-Auth documents its own routes (merged into the spec), and the
-    // documentation endpoints do not describe themselves.
+    // documentation endpoints do not describe themselves, nor does /api/mcp.
     const ours = operations.filter(
       (operation) =>
         !operation.includes(" /api/auth/") &&
-        !/ \/api\/(openapi\.json|docs(\/scalar\.js)?)$/.test(operation)
+        !/ \/api\/(openapi\.json|docs(\/scalar\.js)?|mcp)$/.test(operation)
     );
     expect(unresolved).toBe(0);
     expect(ours.sort()).toEqual(documented.sort());
@@ -169,6 +177,27 @@ describe("the API description's responses", () => {
       204
     );
     await call("GET /api/v1/me", "/api/v1/me", 200);
+    const token = await call(
+      "POST /api/v1/access-tokens",
+      "/api/v1/access-tokens",
+      201,
+      { name: "Claude Code", currentPassword: password }
+    );
+    await call("POST /api/v1/access-tokens", "/api/v1/access-tokens", 400, {
+      name: "Claude Code",
+      currentPassword: "wrong",
+    });
+    await call("GET /api/v1/access-tokens", "/api/v1/access-tokens", 200);
+    await call(
+      "DELETE /api/v1/access-tokens/{id}",
+      `/api/v1/access-tokens/${token.id}`,
+      204
+    );
+    await call(
+      "DELETE /api/v1/access-tokens/{id}",
+      `/api/v1/access-tokens/${token.id}`,
+      404
+    );
     await call(
       "GET /api/v1/recurrences/{id}",
       `/api/v1/recurrences/${randomUUID()}`,

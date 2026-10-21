@@ -8,6 +8,7 @@ import {
   editRefusal,
   isActive,
   isInEffect,
+  NewAccessTokenSchema,
   NewOneOffSchema,
   NewRecurrenceSchema,
   OccurrenceViewSchema,
@@ -21,6 +22,7 @@ import {
   parseSummariesQuery,
   summarizeRange,
   today,
+  type CreatedAccessToken,
   type Occurrence,
   type Recurrence,
 } from "@mensal/shared";
@@ -384,6 +386,65 @@ export function fakeApi() {
     };
   }
 
+  /** The access tokens of each account, by account id, newest first. */
+  const accessTokens = new Map<string, FakeAccessToken[]>();
+
+  function tokensOf(account: Account): FakeAccessToken[] {
+    let tokens = accessTokens.get(account.id);
+    if (!tokens) {
+      tokens = [];
+      accessTokens.set(account.id, tokens);
+    }
+    return tokens;
+  }
+
+  /** What `/api/v1/access-tokens` shows of a token: never the secret. */
+  function describeToken({
+    id,
+    name,
+    prefix,
+    createdAt,
+    lastUsedAt,
+  }: FakeAccessToken) {
+    return { id, name, prefix, createdAt, lastUsedAt };
+  }
+
+  /** GET /api/v1/access-tokens, behind the approval gate. */
+  function getAccessTokens(): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    return json(200, tokensOf(signedIn).map(describeToken));
+  }
+
+  /** POST /api/v1/access-tokens: needs the current password (PRD §8.9). */
+  function postAccessToken(body: unknown): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const input = NewAccessTokenSchema.safeParse(body);
+    if (!input.success) return json(400, { code: "INVALID_INPUT" });
+    if (input.data.currentPassword !== signedIn.password) {
+      return json(400, { code: "INVALID_PASSWORD" });
+    }
+    const created = newAccessToken({ name: input.data.name });
+    tokensOf(signedIn).unshift(created);
+    return json(201, created);
+  }
+
+  /** DELETE /api/v1/access-tokens/:id, behind the approval gate. */
+  function deleteAccessToken(id: string): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const tokens = tokensOf(signedIn);
+    const token = tokens.find((candidate) => candidate.id === id);
+    if (!token) return json(404, { code: "ACCESS_TOKEN_NOT_FOUND" });
+    tokens.splice(tokens.indexOf(token), 1);
+    return new Response(null, { status: 204 });
+  }
+
+  const passwordChanges: {
+    revokeOtherSessions: boolean;
+    revokeAccessTokens: boolean;
+  }[] = [];
   const handlers: Record<string, (body: Record<string, string>) => Response> = {
     "GET /api/auth/get-session": () =>
       json(200, signedIn ? sessionOf(signedIn) : null),
@@ -448,7 +509,8 @@ export function fakeApi() {
       return json(200, { status: true });
     },
     // Other devices are not modelled: there is only ever this one.
-    "POST /api/auth/change-password": ({ currentPassword, newPassword }) => {
+    "POST /api/auth/change-password": (body) => {
+      const { currentPassword, newPassword } = body;
       if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
       if (currentPassword !== signedIn.password) {
         return json(400, {
@@ -463,6 +525,12 @@ export function fakeApi() {
         });
       }
       signedIn.password = newPassword!;
+      // The booleans arrive as such over the wire, whatever the handlers' type.
+      const asked = body as unknown as Record<string, unknown>;
+      passwordChanges.push({
+        revokeOtherSessions: asked.revokeOtherSessions === true,
+        revokeAccessTokens: asked.revokeAccessTokens === true,
+      });
       return json(200, { token: null, user: sessionOf(signedIn).user });
     },
     "POST /api/auth/sign-out": () => {
@@ -499,6 +567,15 @@ export function fakeApi() {
       if (request.method === "DELETE" && recurrenceMatch) {
         return deleteRecurrence(decodeURIComponent(recurrenceMatch[1]!));
       }
+      if (request.method === "GET" && pathname === "/api/v1/access-tokens") {
+        return getAccessTokens();
+      }
+      const accessTokenMatch = /^\/api\/v1\/access-tokens\/([^/]+)$/.exec(
+        pathname
+      );
+      if (request.method === "DELETE" && accessTokenMatch) {
+        return deleteAccessToken(decodeURIComponent(accessTokenMatch[1]!));
+      }
       const periodMatch = /^\/api\/v1\/periods\/([^/]+)$/.exec(pathname);
       if (request.method === "GET" && periodMatch) {
         return getPeriod(decodeURIComponent(periodMatch[1]!));
@@ -507,6 +584,9 @@ export function fakeApi() {
       const body = text ? JSON.parse(text) : {};
       if (request.method === "POST" && pathname === "/api/auth/update-user") {
         return updateUser(body);
+      }
+      if (request.method === "POST" && pathname === "/api/v1/access-tokens") {
+        return postAccessToken(body);
       }
       if (request.method === "POST" && pathname === "/api/v1/recurrences") {
         return postRecurrence(body);
@@ -571,9 +651,31 @@ export function fakeApi() {
       return resetLinks.get(email);
     },
 
+    /** What each accepted password change asked to revoke, oldest first. */
+    passwordChanges(): readonly {
+      revokeOtherSessions: boolean;
+      revokeAccessTokens: boolean;
+    }[] {
+      return passwordChanges;
+    },
     /** The account's password as it stands, to tell whether it changed. */
     passwordOf(email: string): string | undefined {
       return accounts.get(email)?.password;
+    },
+
+    /** Seeds an access token for the account. */
+    addAccessToken(
+      email: string,
+      overrides: Partial<FakeAccessToken> = {}
+    ): FakeAccessToken {
+      const token = newAccessToken(overrides);
+      tokensOf(accounts.get(email)!).push(token);
+      return token;
+    },
+
+    /** The account's access tokens, secrets included, as the database holds them. */
+    accessTokensOf(email: string): readonly FakeAccessToken[] {
+      return tokensOf(accounts.get(email)!);
     },
 
     /** Seeds a recurrence for the account, as through Drizzle Studio. */
@@ -678,6 +780,22 @@ export function fakeApi() {
 }
 
 export type FakeApi = ReturnType<typeof fakeApi>;
+
+/** An access token with its secret, which only the create ever returns. */
+type FakeAccessToken = CreatedAccessToken;
+
+function newAccessToken(overrides: Partial<FakeAccessToken>): FakeAccessToken {
+  const id = uuid();
+  return {
+    id,
+    name: "Agente",
+    prefix: `mns_${id.slice(-4)}`,
+    createdAt: "2026-10-01T12:00:00.000Z",
+    lastUsedAt: null,
+    token: `mns_${id}_secret`,
+    ...overrides,
+  };
+}
 
 let sequence = 0;
 

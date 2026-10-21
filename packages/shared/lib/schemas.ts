@@ -10,8 +10,11 @@ const PeriodSchema = z.iso
   .date()
   .regex(/-01$/, "A period is the 1st of a month");
 
+/** What every amount field's description says (PRD §8.9). */
+const CENTS = "integer BRL cents (R$ 50,00 = 5000)";
+
 /** An amount in BRL cents, greater than zero. */
-const AmountSchema = z.int().positive();
+const AmountSchema = z.int().positive().describe(`Amount in ${CENTS}`);
 
 /** A description the user types: not blank, at most 120 characters. */
 const DescriptionInputSchema = z.string().trim().min(1).max(120);
@@ -245,12 +248,15 @@ export const PeriodItemSchema = z.object({
   overdue: z.boolean(),
 });
 
+/** A total in BRL cents. */
+const TotalSchema = z.int().describe(`Total in ${CENTS}`);
+
 /** Totals in BRL cents per direction; skipped occurrences never count. */
 export const PeriodSummarySchema = z.object({
-  inflowExpected: z.int(),
-  inflowSettled: z.int(),
-  outflowExpected: z.int(),
-  outflowSettled: z.int(),
+  inflowExpected: TotalSchema,
+  inflowSettled: TotalSchema,
+  outflowExpected: TotalSchema,
+  outflowSettled: TotalSchema,
 });
 
 /** The body of `GET /periods/:yyyy-mm` (PRD §4, §6.2). */
@@ -267,3 +273,32 @@ export const SummariesPayloadSchema = z.object({
     z.object({ period: PeriodSchema, summary: PeriodSummarySchema })
   ),
 });
+
+/** The longest name an access token can have (PRD §8.9). */
+export const MAX_ACCESS_TOKEN_NAME_LENGTH = 32;
+
+/**
+ * An access token as the list shows it (PRD §8.9): never its secret, only the
+ * `prefix` that tells tokens apart.
+ */
+export const AccessTokenSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  prefix: z.string(),
+  createdAt: z.iso.datetime(),
+  lastUsedAt: z.iso.datetime().nullable(),
+});
+export type AccessToken = z.infer<typeof AccessTokenSchema>;
+
+/** A new access token: the only response that carries the full `token`. */
+export const CreatedAccessTokenSchema = AccessTokenSchema.extend({
+  token: z.string(),
+});
+export type CreatedAccessToken = z.infer<typeof CreatedAccessTokenSchema>;
+
+/** The body of `POST /access-tokens`. */
+export const NewAccessTokenSchema = z.strictObject({
+  name: z.string().trim().min(1).max(MAX_ACCESS_TOKEN_NAME_LENGTH),
+  currentPassword: z.string().min(1),
+});
+export type NewAccessToken = z.output<typeof NewAccessTokenSchema>;

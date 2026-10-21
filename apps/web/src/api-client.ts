@@ -1,5 +1,8 @@
 import {
   monthOf,
+  type AccessToken,
+  type CreatedAccessToken,
+  type NewAccessToken,
   type NewOneOff,
   type NewRecurrence,
   type Occurrence,
@@ -45,6 +48,19 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
   }
 
   return {
+    /** The user's access tokens, never their secrets (PRD §8.9). */
+    accessTokens: () => send<AccessToken[]>("/access-tokens"),
+
+    /** Creates a token, proven with the current password; the only call that returns its secret. */
+    createAccessToken: (token: NewAccessToken) =>
+      sendJson<CreatedAccessToken>("POST", "/access-tokens", token),
+
+    /** Revokes access token `id` for good. */
+    revokeAccessToken: (id: string) =>
+      send<void>(`/access-tokens/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      }),
+
     /** The payload of `period` ('YYYY-MM-01'). */
     period: (period: string) =>
       send<PeriodPayload>(`/periods/${monthOf(period)}`),

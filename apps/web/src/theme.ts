@@ -197,6 +197,8 @@ export const theme = createTheme({
       defaultProps: {
         centered: true,
         padding: "lg",
+        // A click outside would lose what was typed; confirmations opt back in.
+        closeOnClickOutside: false,
         overlayProps: { backgroundOpacity: 0.75 },
         closeButtonProps: { "aria-label": "Fechar" },
       },

@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import type { ActivityEvent } from "../src/activity.ts";
 import type { Email } from "../src/email.ts";
 import {
   approve,
@@ -11,11 +12,13 @@ import {
 } from "./api.ts";
 
 const sent: Email[] = [];
+const events: ActivityEvent[] = [];
 let api: TestApi;
 beforeAll(async () => {
   api = await startApi({
     // 14:03 in São Paulo.
     now: () => new Date("2026-10-17T17:03:00.000Z"),
+    activity: (event) => events.push(event),
     email: async (email) => {
       sent.push(email);
     },
@@ -26,6 +29,7 @@ afterAll(async () => {
 });
 beforeEach(() => {
   sent.length = 0;
+  events.length = 0;
 });
 
 function signIn(email: string, withPassword: string) {
@@ -90,21 +94,124 @@ describe("changing the password", () => {
     expect(sent[0]?.html).toContain(`${api.url}/esqueci-a-senha`);
   });
 
-  it("signs the user out of their other devices, keeping this one, even when not asked to", async () => {
-    const { email } = await signUp(api);
-    const here = cookieFrom(await signIn(email, password));
-    const elsewhere = cookieFrom(await signIn(email, password));
+  describe("what it revokes, as the user chooses", () => {
+    const next = "a brand new passphrase";
 
-    const response = await changePassword(here, {
-      currentPassword: password,
-      newPassword: "a brand new passphrase",
-      revokeOtherSessions: false,
+    /** A user with a second device and two access tokens. */
+    async function withDeviceAndTokens() {
+      const { email, userId } = await signUp(api);
+      await approve(api, email);
+      const here = cookieFrom(await signIn(email, password));
+      const elsewhere = cookieFrom(await signIn(email, password));
+      for (const name of ["one", "two"]) {
+        const created = await request(api, "/api/v1/access-tokens", {
+          cookie: here,
+          body: { name, currentPassword: password },
+        });
+        expect(created.status).toBe(201);
+      }
+      return { email, userId, here, elsewhere };
+    }
+
+    async function tokensOf(userId: string): Promise<number> {
+      const { rows } = await api.db.$client.query(
+        "SELECT count(*)::int AS n FROM apikeys WHERE reference_id = $1",
+        [userId]
+      );
+      return rows[0].n;
+    }
+
+    const combinations = [
+      { sessions: true, tokens: true, revoked: ["sessions", "access-tokens"] },
+      { sessions: true, tokens: false, revoked: ["sessions"] },
+      { sessions: false, tokens: true, revoked: ["access-tokens"] },
+      { sessions: false, tokens: false, revoked: [] },
+    ];
+    it.each(combinations)(
+      "sessions $sessions, tokens $tokens: only that is revoked, this device stays signed in, and the activity says so",
+      async ({ sessions, tokens, revoked }) => {
+        const { email, userId, here, elsewhere } = await withDeviceAndTokens();
+
+        const response = await changePassword(here, {
+          currentPassword: password,
+          newPassword: next,
+          revokeOtherSessions: sessions,
+          revokeAccessTokens: tokens,
+        });
+
+        expect(response.status).toBe(200);
+        const current = response.headers.get("set-cookie")
+          ? cookieFrom(response)
+          : here;
+        expect(await sessionOf(current)).toMatchObject({ user: { email } });
+        expect((await sessionOf(elsewhere)) === null).toBe(sessions);
+        expect(await tokensOf(userId)).toBe(tokens ? 0 : 2);
+        expect(
+          events.filter((event) => event.action === "user.password-changed")
+        ).toEqual([
+          expect.objectContaining({
+            user: userId,
+            action: "user.password-changed",
+            revoked,
+          }),
+        ]);
+      }
+    );
+
+    it.each([
+      [
+        true,
+        true,
+        "desconectados os outros dispositivos e revogados todos os tokens de acesso",
+      ],
+      [true, false, "desconectados os outros dispositivos"],
+      [false, true, "revogados todos os tokens de acesso"],
+      [false, false, "Nada foi revogado"],
+    ])(
+      "emails what was revoked (sessions %s, tokens %s)",
+      async (sessions, tokens, phrase) => {
+        const { here } = await withDeviceAndTokens();
+        sent.length = 0;
+
+        await changePassword(here, {
+          currentPassword: password,
+          newPassword: next,
+          revokeOtherSessions: sessions,
+          revokeAccessTokens: tokens,
+        });
+
+        expect(sent).toHaveLength(1);
+        expect(sent[0]?.text).toContain(phrase);
+        expect(sent[0]?.html).toContain(phrase);
+        expect(sent[0]?.text).toContain(`${api.url}/esqueci-a-senha`);
+      }
+    );
+
+    it("revokes nothing unless asked", async () => {
+      const { userId, here, elsewhere, email } = await withDeviceAndTokens();
+
+      await changePassword(here, {
+        currentPassword: password,
+        newPassword: next,
+      });
+
+      expect(await sessionOf(elsewhere)).toMatchObject({ user: { email } });
+      expect(await tokensOf(userId)).toBe(2);
     });
 
-    expect(response.status).toBe(200);
-    expect(await sessionOf(cookieFrom(response))).toMatchObject({
-      user: { email },
+    it("keeps everything when the current password is wrong", async () => {
+      const { userId, here, elsewhere, email } = await withDeviceAndTokens();
+
+      const response = await changePassword(here, {
+        currentPassword: "not my password",
+        newPassword: next,
+        revokeOtherSessions: true,
+        revokeAccessTokens: true,
+      });
+
+      expect(response.status).toBe(400);
+      expect(await sessionOf(elsewhere)).toMatchObject({ user: { email } });
+      expect(await tokensOf(userId)).toBe(2);
     });
-    expect(await sessionOf(elsewhere)).toBeNull();
   });
 });

@@ -473,7 +473,7 @@ Users can connect their own agents (Claude Code, Codex, any MCP client that send
 - **Contract:** inputs and outputs follow §6 exactly, built from the same Zod schemas of `@mensal/shared`.
   - Amounts are integer BRL cents. Every amount field's description says so (R$ 50,00 = `5000`).
   - Periods are `YYYY-MM`.
-  - Every read result also carries `today`, the date in `America/Sao_Paulo`, because agents often don't know it.
+  - Every read result also carries `today`, the date in `America/Sao_Paulo`, because agents often don't know it. A list is wrapped to make room for it: `list_recurrences` returns `{ "items": [...], "today": "..." }`, not REST's bare array.
 - **Descriptions:** in English, using GLOSSARY terms followed by their pt-BR UI term in parentheses (e.g. "Settle (Liquidar)", "One-off occurrence (Avulsa)"). This lets a request written in Portuguese reach the right tool. Each description also states the rules the tool enforces.
 - **Results:** a success returns the same JSON as the REST response, in `structuredContent` and as text.
   - A refusal (any §6 error code, or `INVALID_INPUT` with its `fields`) is a tool result with `isError: true`.

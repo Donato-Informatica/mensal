@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useState } from "react";
 import { errorMessage } from "./api-error.ts";
+import { DialogActions } from "./dialog-actions.tsx";
 import { invalidatePeriods } from "./period-query.ts";
 import { monthPickerProps } from "./pickers.ts";
 import { invalidateRecurrences } from "./recurrence-query.ts";
@@ -16,9 +17,11 @@ import { invalidateRecurrences } from "./recurrence-query.ts";
 export function EndRecurrenceForm({
   recurrence,
   onEnded,
+  onCancel,
 }: {
   recurrence: Recurrence;
   onEnded: () => void;
+  onCancel: () => void;
 }) {
   const { api } = useRouteContext({ from: rootRouteId });
   const queryClient = useQueryClient();
@@ -68,9 +71,14 @@ export function EndRecurrenceForm({
           withAsterisk={false}
           {...monthPickerProps}
         />
-        <Button type="submit" loading={end.isPending} fullWidth mt="xs">
-          Encerrar
-        </Button>
+        <DialogActions>
+          <Button variant="default" onClick={onCancel} disabled={end.isPending}>
+            Cancelar
+          </Button>
+          <Button type="submit" loading={end.isPending}>
+            Encerrar
+          </Button>
+        </DialogActions>
       </Stack>
     </form>
   );

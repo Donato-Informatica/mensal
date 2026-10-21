@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { expectClickOutsideToKeepDialog } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
 
@@ -56,6 +57,17 @@ async function act(description: string, name: string) {
 }
 
 describe("deleting a recurrence", () => {
+  it("keeps it when dismissed by a click outside", async () => {
+    api.addRecurrence(email, { description: "Aluguel" });
+    openApp(api, "/recorrencias");
+
+    const dialog = await act("Aluguel", "Excluir recorrência");
+    await user.click(document.querySelector(".mantine-Modal-overlay")!);
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+
+    expect(api.recurrencesOf(email)).toHaveLength(1);
+  });
+
   it("deletes one without history, once confirmed", async () => {
     api.addRecurrence(email, { description: "Aluguel" });
     api.addRecurrence(email, { description: "Internet" });
@@ -124,6 +136,23 @@ describe("deleting a recurrence with history", () => {
 });
 
 describe("ending a recurrence", () => {
+  it("stays open on a click outside, and closes from Cancelar", async () => {
+    api.addRecurrence(email, {
+      description: "Aluguel",
+      startPeriod: "2026-08-01",
+    });
+    openApp(api, "/recorrencias");
+    const dialog = await act("Aluguel", "Encerrar recorrência");
+
+    await expectClickOutsideToKeepDialog(user);
+
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    expect(api.recurrencesOf(email)).toEqual([
+      expect.objectContaining({ endPeriod: null }),
+    ]);
+  });
+
   it("ends it in the current period by default", async () => {
     api.addRecurrence(email, {
       description: "Aluguel",

@@ -16,9 +16,8 @@ export type ActivityReport = ItemReport | AccountReport;
  * One line of the operator's activity log: a report stamped with when it
  * happened (UTC ISO) and, for an item, the kind its action names.
  */
-export type ActivityEvent = { at: string } & (
-  AccountReport | (ItemReport & { kind: ItemKind })
-);
+export type ActivityEvent = { at: string } & ExtraFields &
+  (AccountReport | (ItemReport & { kind: ItemKind }));
 
 /** Where activity events go: the console unless a caller redirects them. */
 export type Activity = (event: ActivityEvent) => void;
@@ -39,11 +38,12 @@ export const consoleActivity: Activity = (event) => {
 export function activityRecorder(
   activity: Activity,
   now: () => Date,
-  log: Log
+  log: Log,
+  extra: ExtraFields = {}
 ): RecordActivity {
   return (report) => {
     try {
-      activity(stamped(report, now()));
+      activity(stamped(report, now(), extra));
     } catch (error) {
       log(
         `Activity log failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`
@@ -52,13 +52,32 @@ export function activityRecorder(
   };
 }
 
-function stamped(report: ActivityReport, date: Date): ActivityEvent {
+function stamped(
+  report: ActivityReport,
+  date: Date,
+  extra: ExtraFields
+): ActivityEvent {
   const at = date.toISOString();
-  if (!("id" in report)) return { at, ...report };
+  if (!isItemReport(report)) return { at, ...extra, ...report };
   const kind = report.action.startsWith("recurrence.")
     ? "recurrence"
     : "occurrence";
-  return { at, ...report, kind };
+  return { at, ...extra, ...report, kind };
+}
+
+/**
+ * Fields a caller adds to every event it logs: `via` names the channel a
+ * write came through other than the REST API (the MCP server, PRD §8.9).
+ */
+export interface ExtraFields {
+  via?: "mcp";
+}
+
+function isItemReport(report: ActivityReport): report is ItemReport {
+  return (
+    report.action.startsWith("occurrence.") ||
+    report.action.startsWith("recurrence.")
+  );
 }
 
 type ItemKind = "occurrence" | "recurrence";
@@ -97,13 +116,23 @@ export type SessionAction = "user.sign-up" | "user.sign-in";
 /** The account actions that replace the user's password. */
 export type PasswordAction = "user.password-changed" | "user.password-reset";
 
+/** What a password change can revoke besides the password itself. */
+export type Revocable = "sessions" | "access-tokens";
+
+/** The account actions on one access token (PRD §8.9). */
+export type AccessTokenAction =
+  "user.access-token-created" | "user.access-token-revoked";
+
 /**
- * Signing up or in, or replacing the password, by the user's id. A failed
+ * Signing up or in, replacing the password, or creating or revoking an access
+ * token (named by its id, never its secret), by the user's id. A failed
  * sign-in has no user: it names the attempted email and the client's address
  * instead, to spot credential stuffing.
  */
 type AccountReport =
-  | { user: string; action: SessionAction | PasswordAction }
+  | { user: string; action: SessionAction | "user.password-reset" }
+  | { user: string; action: "user.password-changed"; revoked: Revocable[] }
+  | { user: string; action: AccessTokenAction; id: string }
   | {
       action: "user.sign-in-failed";
       email: string;

@@ -34,7 +34,12 @@ export function SignOutModal({
   onClose: () => void;
 }) {
   return (
-    <Modal opened={opened} onClose={onClose} title="Sair da conta">
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      closeOnClickOutside
+      title="Sair da conta"
+    >
       <ConfirmSignOut onCancel={onClose} />
     </Modal>
   );

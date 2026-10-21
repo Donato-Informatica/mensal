@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { expectClickOutsideToKeepDialog } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
 
@@ -137,6 +138,27 @@ async function save(dialog: HTMLElement) {
 }
 
 describe("editing a recurrence", () => {
+  it("stays open on a click outside, and closes from Cancelar", async () => {
+    api.addRecurrence(email, { description: "Aluguel" });
+    openApp(api, "/recorrencias");
+    await user.click(
+      await screen.findByRole("button", { name: "Editar Aluguel" })
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Editar recorrência",
+    });
+    await replace(within(dialog).getByLabelText("Descrição"), "Moradia");
+
+    await expectClickOutsideToKeepDialog(user);
+    expect(within(dialog).getByLabelText("Descrição")).toHaveValue("Moradia");
+
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    expect(api.recurrencesOf(email)).toEqual([
+      expect.objectContaining({ description: "Aluguel" }),
+    ]);
+  });
+
   it("changes its virtual occurrences but none already materialized", async () => {
     const rent = api.addRecurrence(email, {
       description: "Aluguel",

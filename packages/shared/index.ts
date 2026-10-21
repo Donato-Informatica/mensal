@@ -1,6 +1,10 @@
 export { clampDueDate } from "./lib/due-date.ts";
 export {
+  AccessTokenSchema,
   ColorSchemeSchema,
+  CreatedAccessTokenSchema,
+  MAX_ACCESS_TOKEN_NAME_LENGTH,
+  NewAccessTokenSchema,
   defaultColorScheme,
   defaultOccurrenceView,
   MAX_SUMMARY_PERIODS,
@@ -22,7 +26,10 @@ export {
   SummariesPayloadSchema,
   SummariesQuerySchema,
   VirtualOccurrenceSchema,
+  type AccessToken,
   type ColorScheme,
+  type CreatedAccessToken,
+  type NewAccessToken,
   type Direction,
   type NewOneOff,
   type OccurrenceView,
