@@ -36,7 +36,14 @@ export interface Tool<Input extends ZodType = ZodType> {
 /** A tool whatever its input, as the registry holds it. */
 export type AnyTool = Tool<ZodType>;
 
-/** Declares a tool; checks that `run` takes what `input` parses to. */
+/**
+ * Declares a tool. The type check happens at the call: `Input` is inferred
+ * from `input`, so TypeScript rejects a `run` whose second argument is not
+ * what that schema parses to. Past that point the registry holds the tool
+ * with its input type widened, which no type can express safely, so the one
+ * cast below only forgets what was just checked; `mcp.ts` parses the
+ * arguments with `tool.input` before it calls `run`.
+ */
 export function defineTool<Input extends ZodType>(tool: Tool<Input>): AnyTool {
   return tool as unknown as AnyTool;
 }

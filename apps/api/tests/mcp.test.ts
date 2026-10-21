@@ -164,6 +164,42 @@ describe("the MCP endpoint's authentication", () => {
   });
 });
 
+/** Every property named like an amount, anywhere in a JSON Schema. */
+function amountProperties(schema: unknown, found: unknown[] = []): unknown[] {
+  if (Array.isArray(schema)) {
+    for (const item of schema) amountProperties(item, found);
+  } else if (schema && typeof schema === "object") {
+    for (const [key, value] of Object.entries(schema)) {
+      if (/amount/i.test(key) && value && typeof value === "object") {
+        found.push(value);
+      }
+      amountProperties(value, found);
+    }
+  }
+  return found;
+}
+
+describe("the tools' amount fields", () => {
+  it("every one, in any input or output schema, says it is integer BRL cents", async () => {
+    const { token } = await agentUser();
+    const client = await connect(token);
+
+    const { tools } = await client.listTools();
+
+    const amounts = tools.flatMap((tool) => [
+      ...amountProperties(tool.inputSchema),
+      ...amountProperties(tool.outputSchema),
+    ]);
+    expect(amounts.length).toBeGreaterThan(8);
+    for (const amount of amounts) {
+      expect(JSON.stringify(amount)).toContain(
+        "integer BRL cents (R$ 50,00 = 5000)"
+      );
+    }
+    await client.close();
+  });
+});
+
 describe("the read tools", () => {
   it("lists the four, all read-only, with English descriptions", async () => {
     const { token } = await agentUser();

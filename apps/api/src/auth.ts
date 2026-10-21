@@ -27,6 +27,13 @@ import type { Log } from "./log.ts";
 /** What every access token starts with, so a leaked one is recognizable. */
 export const accessTokenPrefix = "mensal_";
 
+/**
+ * How often a current password may be tried (it could be guessed with a stolen
+ * session): `max` per `window` seconds. Better-Auth enforces it per IP on
+ * `/change-password`; `/access-tokens` applies it per user.
+ */
+export const passwordGuessLimit = { window: 60, max: 5 };
+
 export interface AuthOptions {
   db: Database;
   /** Public origin the API is served from, e.g. `https://mensal.example`. */
@@ -139,7 +146,7 @@ export function createAuth({
         "/sign-up/email": { window: 3600, max: 3 },
         "/request-password-reset": { window: 3600, max: 3 },
         // It checks the current password, so a stolen session could guess it.
-        "/change-password": { window: 60, max: 5 },
+        "/change-password": passwordGuessLimit,
       },
     },
     user: {

@@ -5,14 +5,13 @@ import { fromNodeHeaders } from "better-auth/node";
 import { and, desc, eq } from "drizzle-orm";
 import { Router } from "express";
 import type { RecordActivity } from "./activity.ts";
-import type { Auth } from "./auth.ts";
+import { passwordGuessLimit, type Auth } from "./auth.ts";
 import { invalidInput } from "./invalid-input.ts";
 
 const { apikeys } = schema;
 
-/** Wrong current passwords one user may send in a window before a `429`. */
-const MAX_WRONG_PASSWORDS = 5;
-const WRONG_PASSWORD_WINDOW_MS = 60_000;
+const MAX_WRONG_PASSWORDS = passwordGuessLimit.max;
+const WRONG_PASSWORD_WINDOW_MS = passwordGuessLimit.window * 1000;
 
 /**
  * `/access-tokens`: the user's access tokens (PRD §8.9), cookie-only. Creating
@@ -35,17 +34,22 @@ export function accessTokensRouter({
   /** When each user last sent a wrong password (epoch ms). */
   const wrongPasswords = new Map<string, number[]>();
 
-  /** Counts a wrong password; true when the user is over the limit. */
-  function throttled(userId: string, wrong: boolean): boolean {
+  /** The user's wrong passwords still inside the window. */
+  function recentWrongPasswords(userId: string): number[] {
     const since = now().getTime() - WRONG_PASSWORD_WINDOW_MS;
-    const recent = (wrongPasswords.get(userId) ?? []).filter(
-      (at) => at > since
-    );
-    if (recent.length >= MAX_WRONG_PASSWORDS) return true;
-    if (wrong) recent.push(now().getTime());
-    if (recent.length > 0) wrongPasswords.set(userId, recent);
-    else wrongPasswords.delete(userId);
-    return false;
+    return (wrongPasswords.get(userId) ?? []).filter((at) => at > since);
+  }
+
+  /** True when the user has sent too many wrong passwords lately. */
+  function isThrottled(userId: string): boolean {
+    return recentWrongPasswords(userId).length >= MAX_WRONG_PASSWORDS;
+  }
+
+  function recordWrongPassword(userId: string): void {
+    wrongPasswords.set(userId, [
+      ...recentWrongPasswords(userId),
+      now().getTime(),
+    ]);
   }
 
   router.get("/", async (_req, res) => {
@@ -64,7 +68,7 @@ export function accessTokensRouter({
       return;
     }
     const { userId } = res.locals;
-    if (throttled(userId, false)) {
+    if (isThrottled(userId)) {
       res.status(429).json({ code: "TOO_MANY_ATTEMPTS" });
       return;
     }
@@ -75,7 +79,7 @@ export function accessTokensRouter({
       });
     } catch (error) {
       if (isAPIError(error) && error.body?.code === "INVALID_PASSWORD") {
-        throttled(userId, true);
+        recordWrongPassword(userId);
         res.status(400).json({ code: "INVALID_PASSWORD" });
         return;
       }

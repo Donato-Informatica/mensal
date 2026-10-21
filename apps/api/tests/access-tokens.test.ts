@@ -102,6 +102,26 @@ describe("creating an access token", () => {
     expect(events).toEqual([]);
   });
 
+  it("answers 429 TOO_MANY_ATTEMPTS after 5 wrong passwords in a minute, even for the right one, and only for that user", async () => {
+    const { cookie, userId } = await approvedUser();
+    const other = await approvedUser();
+
+    const statuses: number[] = [];
+    for (let i = 0; i < 5; i++) {
+      statuses.push(
+        (await createToken(cookie, { currentPassword: "not my password" }))
+          .status
+      );
+    }
+    const blocked = await createToken(cookie);
+
+    expect(statuses).toEqual([400, 400, 400, 400, 400]);
+    expect(blocked.status).toBe(429);
+    expect(await blocked.json()).toEqual({ code: "TOO_MANY_ATTEMPTS" });
+    expect(await tokensOf(userId)).toBe(0);
+    expect((await createToken(other.cookie)).status).toBe(201);
+  });
+
   it("refuses a name that is missing, empty or too long with 400 INVALID_INPUT", async () => {
     const { cookie, userId } = await approvedUser();
 
