@@ -23,6 +23,7 @@ const Today = z
 export const readTools = [
   defineTool({
     name: "get_period",
+    operation: "GET /api/v1/periods/{month}",
     title: "Get a period",
     description:
       "Reads one Period (Competência): its summary (Expected = Previsto and Settled = Realizado totals per direction, Inflow = Entrada and Outflow = Saída), its occurrences (Ocorrências, persisted and Virtual occurrences merged) and, for the current period only, the Overdue (Atrasada) occurrences from earlier periods. Defaults to the current period (Mês atual). Reading never changes anything.",
@@ -43,6 +44,7 @@ export const readTools = [
   }),
   defineTool({
     name: "get_trend",
+    operation: "GET /api/v1/summaries",
     title: "Get the trend",
     description:
       "Reads the Trend (Evolução): the summary of every Period (Competência) from `from` to `to`, both inclusive and in ascending order, with zeros for a period without occurrences. At most 12 periods; future periods are allowed. Overdue (Atrasada) occurrences from earlier periods never enter a summary. Reading never changes anything.",
@@ -58,6 +60,7 @@ export const readTools = [
   }),
   defineTool({
     name: "list_recurrences",
+    operation: "GET /api/v1/recurrences",
     title: "List recurrences",
     description:
       "Lists the Recurrences (Recorrências), monthly commitments that give rise to one occurrence per Period (Competência), ordered by description. `active` (default) leaves out those ended before the current period; `all` includes them. Reading never changes anything.",
@@ -72,6 +75,7 @@ export const readTools = [
   }),
   defineTool({
     name: "get_recurrence",
+    operation: "GET /api/v1/recurrences/{id}",
     title: "Get a recurrence",
     description:
       "Reads one Recurrence (Recorrência) by id: direction (Entrada or Saída), description, default amount, due day (Vencimento), start and end Period (Competência) and notes. Reading never changes anything.",
