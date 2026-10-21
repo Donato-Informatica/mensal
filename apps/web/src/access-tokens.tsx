@@ -73,12 +73,7 @@ export function AccessTokensModal({
   onClose: () => void;
 }) {
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      closeOnClickOutside={false}
-      title="Tokens de acesso"
-    >
+    <Modal opened={opened} onClose={onClose} title="Tokens de acesso">
       <AccessTokens onClose={onClose} />
     </Modal>
   );

@@ -41,12 +41,7 @@ export function SettingsModal({
   onClose: () => void;
 }) {
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      closeOnClickOutside={false}
-      title="Configurações"
-    >
+    <Modal opened={opened} onClose={onClose} title="Configurações">
       <SettingsForm />
       <DialogActions>
         <Button variant="default" onClick={onClose}>

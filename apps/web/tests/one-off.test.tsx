@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { expectClickOutsideToKeepDialog } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
 
@@ -64,6 +65,19 @@ async function act(description: string, name: string) {
 }
 
 describe("creating a one-off occurrence", () => {
+  it("stays open on a click outside, and closes from Cancelar", async () => {
+    openApp(api, "/");
+    const dialog = await openDialog();
+    await user.type(within(dialog).getByLabelText("Descrição"), "Presente");
+
+    await expectClickOutsideToKeepDialog(user);
+    expect(within(dialog).getByLabelText("Descrição")).toHaveValue("Presente");
+
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    expect(api.occurrencesOf(email)).toEqual([]);
+  });
+
   it("shows it in the month without a reload", async () => {
     openApp(api, "/");
     const dialog = await openDialog();
@@ -183,6 +197,18 @@ describe("deleting a one-off occurrence", () => {
     expect(api.occurrencesOf(email)).toEqual([
       expect.objectContaining({ description: "Presente" }),
     ]);
+  });
+
+  it("keeps it when the deletion is dismissed by a click outside", async () => {
+    api.addOccurrence(email, { description: "Conserto do carro" });
+    openApp(api, "/");
+
+    await act("Conserto do carro", "Excluir");
+    const dialog = await screen.findByRole("dialog", { name: "Excluir conta" });
+    await user.click(document.querySelector(".mantine-Modal-overlay")!);
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+
+    expect(api.occurrencesOf(email)).toHaveLength(1);
   });
 
   it("keeps it when the deletion is cancelled", async () => {

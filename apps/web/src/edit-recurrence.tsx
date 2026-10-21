@@ -18,6 +18,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { errorMessage } from "./api-error.ts";
+import { DialogActions } from "./dialog-actions.tsx";
 import { formatPeriodInline } from "./format.ts";
 import { invalidatePeriods } from "./period-query.ts";
 import { monthPickerProps } from "./pickers.ts";
@@ -42,7 +43,11 @@ export function EditRecurrenceButton({
         {children}
       </UnstyledButton>
       <Modal opened={opened} onClose={close} title="Editar recorrência">
-        <EditRecurrenceForm recurrence={recurrence} onSaved={close} />
+        <EditRecurrenceForm
+          recurrence={recurrence}
+          onSaved={close}
+          onCancel={close}
+        />
       </Modal>
     </>
   );
@@ -55,9 +60,11 @@ export function EditRecurrenceButton({
 export function EditRecurrenceForm({
   recurrence,
   onSaved,
+  onCancel,
 }: {
   recurrence: Recurrence;
   onSaved: () => void;
+  onCancel: () => void;
 }) {
   const { api } = useRouteContext({ from: rootRouteId });
   const queryClient = useQueryClient();
@@ -176,9 +183,18 @@ export function EditRecurrenceForm({
           autosize
           minRows={2}
         />
-        <Button type="submit" loading={save.isPending} fullWidth mt="xs">
-          Salvar
-        </Button>
+        <DialogActions>
+          <Button
+            variant="default"
+            onClick={onCancel}
+            disabled={save.isPending}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" loading={save.isPending}>
+            Salvar
+          </Button>
+        </DialogActions>
       </Stack>
     </form>
   );

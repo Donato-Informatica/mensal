@@ -18,6 +18,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useState } from "react";
 import { errorMessage } from "./api-error.ts";
+import { DialogActions } from "./dialog-actions.tsx";
 import { formatPeriod } from "./format.ts";
 import { invalidatePeriods } from "./period-query.ts";
 import { datePickerProps } from "./pickers.ts";
@@ -30,7 +31,7 @@ export function NewOneOffButton({ period }: { period: string }) {
     <>
       <PrimaryActionButton onClick={open}>Nova avulsa</PrimaryActionButton>
       <Modal opened={opened} onClose={close} title="Nova conta avulsa">
-        <NewOneOffForm period={period} onCreated={close} />
+        <NewOneOffForm period={period} onCreated={close} onCancel={close} />
       </Modal>
     </>
   );
@@ -43,9 +44,11 @@ export function NewOneOffButton({ period }: { period: string }) {
 function NewOneOffForm({
   period,
   onCreated,
+  onCancel,
 }: {
   period: string;
   onCreated: () => void;
+  onCancel: () => void;
 }) {
   const { api } = useRouteContext({ from: rootRouteId });
   const queryClient = useQueryClient();
@@ -152,15 +155,22 @@ function NewOneOffForm({
           autosize
           minRows={2}
         />
-        <Button
-          type="submit"
-          loading={create.isPending}
-          disabled={cents !== null && !(cents > 0)}
-          fullWidth
-          mt="xs"
-        >
-          Criar conta
-        </Button>
+        <DialogActions>
+          <Button
+            variant="default"
+            onClick={onCancel}
+            disabled={create.isPending}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            loading={create.isPending}
+            disabled={cents !== null && !(cents > 0)}
+          >
+            Criar conta
+          </Button>
+        </DialogActions>
       </Stack>
     </form>
   );

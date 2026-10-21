@@ -21,6 +21,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useState } from "react";
 import { errorMessage } from "./api-error.ts";
+import { DialogActions } from "./dialog-actions.tsx";
 import { invalidatePeriods } from "./period-query.ts";
 import { monthPickerProps } from "./pickers.ts";
 import { PrimaryActionButton } from "./primary-action-button.tsx";
@@ -33,14 +34,20 @@ export function NewRecurrenceButton() {
     <>
       <PrimaryActionButton onClick={open}>Nova recorrência</PrimaryActionButton>
       <Modal opened={opened} onClose={close} title="Nova recorrência">
-        <NewRecurrenceForm onCreated={close} />
+        <NewRecurrenceForm onCreated={close} onCancel={close} />
       </Modal>
     </>
   );
 }
 
 /** The form starts on the current period (PRD §5.10: never earlier). */
-function NewRecurrenceForm({ onCreated }: { onCreated: () => void }) {
+function NewRecurrenceForm({
+  onCreated,
+  onCancel,
+}: {
+  onCreated: () => void;
+  onCancel: () => void;
+}) {
   const { api } = useRouteContext({ from: rootRouteId });
   const queryClient = useQueryClient();
   const [direction, setDirection] = useState<Direction>("OUTFLOW");
@@ -174,9 +181,18 @@ function NewRecurrenceForm({ onCreated }: { onCreated: () => void }) {
           autosize
           minRows={2}
         />
-        <Button type="submit" loading={create.isPending} fullWidth mt="xs">
-          Criar recorrência
-        </Button>
+        <DialogActions>
+          <Button
+            variant="default"
+            onClick={onCancel}
+            disabled={create.isPending}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" loading={create.isPending}>
+            Criar recorrência
+          </Button>
+        </DialogActions>
       </Stack>
     </form>
   );

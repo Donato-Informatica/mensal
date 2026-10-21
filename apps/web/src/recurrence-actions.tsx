@@ -72,7 +72,12 @@ export function RecurrenceActions({
           </Menu.Item>
         </Menu.Dropdown>
       </Menu>
-      <Modal opened={opened} onClose={close} title={titles[action]}>
+      <Modal
+        opened={opened}
+        onClose={close}
+        closeOnClickOutside={action === "delete"}
+        title={titles[action]}
+      >
         <LoadedRecurrence id={recurrenceId}>
           {(recurrence) =>
             action === "edit" ? (
@@ -82,9 +87,14 @@ export function RecurrenceActions({
                 key={recurrence.updatedAt}
                 recurrence={recurrence}
                 onSaved={close}
+                onCancel={close}
               />
             ) : action === "end" ? (
-              <EndRecurrenceForm recurrence={recurrence} onEnded={close} />
+              <EndRecurrenceForm
+                recurrence={recurrence}
+                onEnded={close}
+                onCancel={close}
+              />
             ) : (
               <ConfirmRecurrenceDeletion
                 recurrence={recurrence}

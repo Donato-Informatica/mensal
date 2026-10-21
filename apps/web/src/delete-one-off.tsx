@@ -52,7 +52,12 @@ export function OneOffActions({
           </Menu.Item>
         </Menu.Dropdown>
       </Menu>
-      <Modal opened={opened} onClose={close} title="Excluir conta">
+      <Modal
+        opened={opened}
+        onClose={close}
+        closeOnClickOutside
+        title="Excluir conta"
+      >
         <ConfirmDeletion item={item} onCancel={close} onDeleted={close} />
       </Modal>
     </>

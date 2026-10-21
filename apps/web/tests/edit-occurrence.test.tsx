@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { expectClickOutsideToKeepDialog } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
 
@@ -57,6 +58,22 @@ async function replace(field: HTMLElement, text: string) {
 }
 
 describe("editing an occurrence", () => {
+  it("stays open on a click outside, and closes from Cancelar", async () => {
+    api.addOccurrence(email, { description: "Conserto do carro" });
+    openApp(api, "/");
+    const dialog = await openEdit("Conserto do carro");
+    await replace(within(dialog).getByLabelText("Descrição"), "Oficina");
+
+    await expectClickOutsideToKeepDialog(user);
+    expect(within(dialog).getByLabelText("Descrição")).toHaveValue("Oficina");
+
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    expect(api.occurrencesOf(email)).toEqual([
+      expect.objectContaining({ description: "Conserto do carro" }),
+    ]);
+  });
+
   it("edits a virtual occurrence, materializing it and leaving the recurrence as it was", async () => {
     const power = api.addRecurrence(email, {
       description: "Energia",

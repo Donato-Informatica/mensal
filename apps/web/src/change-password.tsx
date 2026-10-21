@@ -33,7 +33,6 @@ export function ChangePasswordModal({
       onClose={() => {
         if (!pending) onClose();
       }}
-      closeOnClickOutside={false}
       title="Alterar senha"
     >
       <ChangePasswordForm onDone={onClose} />
