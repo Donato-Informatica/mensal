@@ -384,6 +384,10 @@ export function fakeApi() {
     };
   }
 
+  const passwordChanges: {
+    revokeOtherSessions: boolean;
+    revokeAccessTokens: boolean;
+  }[] = [];
   const handlers: Record<string, (body: Record<string, string>) => Response> = {
     "GET /api/auth/get-session": () =>
       json(200, signedIn ? sessionOf(signedIn) : null),
@@ -448,7 +452,8 @@ export function fakeApi() {
       return json(200, { status: true });
     },
     // Other devices are not modelled: there is only ever this one.
-    "POST /api/auth/change-password": ({ currentPassword, newPassword }) => {
+    "POST /api/auth/change-password": (body) => {
+      const { currentPassword, newPassword } = body;
       if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
       if (currentPassword !== signedIn.password) {
         return json(400, {
@@ -463,6 +468,12 @@ export function fakeApi() {
         });
       }
       signedIn.password = newPassword!;
+      // The booleans arrive as such over the wire, whatever the handlers' type.
+      const asked = body as unknown as Record<string, unknown>;
+      passwordChanges.push({
+        revokeOtherSessions: asked.revokeOtherSessions === true,
+        revokeAccessTokens: asked.revokeAccessTokens === true,
+      });
       return json(200, { token: null, user: sessionOf(signedIn).user });
     },
     "POST /api/auth/sign-out": () => {
@@ -571,6 +582,13 @@ export function fakeApi() {
       return resetLinks.get(email);
     },
 
+    /** What each accepted password change asked to revoke, oldest first. */
+    passwordChanges(): readonly {
+      revokeOtherSessions: boolean;
+      revokeAccessTokens: boolean;
+    }[] {
+      return passwordChanges;
+    },
     /** The account's password as it stands, to tell whether it changed. */
     passwordOf(email: string): string | undefined {
       return accounts.get(email)?.password;
