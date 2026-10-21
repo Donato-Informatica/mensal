@@ -12,6 +12,12 @@ import type { OperationContext } from "./operations.ts";
 export interface Tool<Input extends ZodType = ZodType> {
   /** snake_case, as in the PRD §8.9 table. */
   name: string;
+  /**
+   * The `/api/v1` operation this tool is the twin of, e.g.
+   * `GET /api/v1/recurrences/{id}`. The coverage guard test fails for a
+   * mounted operation no tool names.
+   */
+  operation: string;
   title: string;
   /**
    * English, with GLOSSARY terms followed by their pt-BR UI term in

@@ -17,7 +17,7 @@ const sentences: Record<string, string> = {
   ONLY_ONE_OFF_DELETABLE:
     "Only a one-off occurrence can be deleted; skip this one with change_occurrence_status instead.",
   AMOUNT_REQUIRED_TO_SETTLE:
-    "A settled occurrence needs an amount; pass the amount in integer BRL cents.",
+    "A settled occurrence needs an amount above zero; set it first with update_occurrence (integer BRL cents), or pass amount along with the SETTLED status.",
   START_PERIOD_IN_PAST:
     "A recurrence cannot start before the current period; record earlier history as one-off occurrences.",
   END_PERIOD_BEFORE_START:

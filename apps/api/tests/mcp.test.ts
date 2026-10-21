@@ -169,7 +169,9 @@ describe("the read tools", () => {
     const { token } = await agentUser();
     const client = await connect(token);
 
-    const { tools } = await client.listTools();
+    const tools = (await client.listTools()).tools.filter(
+      ({ annotations }) => annotations?.readOnlyHint
+    );
 
     expect(tools.map(({ name }) => name).sort()).toEqual([
       "get_period",
