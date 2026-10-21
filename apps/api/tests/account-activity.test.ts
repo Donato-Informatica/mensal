@@ -100,7 +100,7 @@ describe("account events in the activity log (PRD §8.7)", () => {
     );
 
     expect(logged).toEqual([
-      { at, user: userId, action: "user.password-changed" },
+      { at, user: userId, action: "user.password-changed", revoked: [] },
     ]);
   });
 

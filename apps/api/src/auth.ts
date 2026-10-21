@@ -16,6 +16,7 @@ import {
   consoleActivity,
   type Activity,
   type PasswordAction,
+  type Revocable,
   type RecordActivity,
   type SessionAction,
 } from "./activity.ts";
@@ -49,7 +50,7 @@ export interface AuthOptions {
 /**
  * Better-Auth on the app's own `db`: email + password, sessions in HttpOnly
  * SameSite=Lax cookies, and password-reset links sent by `email` (PRD §8.2,
- * ADR-0003); a reset signs the user out everywhere. The anonymous endpoints are
+ * ADR-0003); a reset signs the user out everywhere and revokes every access token, while a password change revokes what the user chose (PRD §8.2). The anonymous endpoints are
  * rate limited per client IP, read from the proxy's `X-Forwarded-For`
  * (PRD §8.6). Sign-ups, sign-ins and failed sign-ins go to the activity log
  * (PRD §8.7).
@@ -77,20 +78,35 @@ export function createAuth({
       );
     });
   }
-  /** Logs and alerts a password replaced by a change or a reset (PRD §8.2). */
+  /**
+   * Logs and alerts a password replaced by a change or a reset, with what that
+   * revoked (PRD §8.2).
+   */
   function passwordReplaced(
     user: { id: string; email: string; name: string },
-    action: PasswordAction
+    action: PasswordAction,
+    revoked: Revocable[]
   ) {
-    record({ user: user.id, action });
+    if (action === "user.password-changed") {
+      record({ user: user.id, action, revoked });
+    } else {
+      record({ user: user.id, action });
+    }
     sendInBackground(
       passwordChangedEmail({
         to: user.email,
         name: user.name,
         at: now(),
         forgotPasswordURL: `${baseURL}/esqueci-a-senha`,
+        revoked,
+        reset: action === "user.password-reset",
       })
     );
+  }
+  async function revokeAccessTokens(userId: string) {
+    await db
+      .delete(schema.apikeys)
+      .where(eq(schema.apikeys.referenceId, userId));
   }
   return betterAuth({
     baseURL,
@@ -105,10 +121,11 @@ export function createAuth({
       },
       onPasswordReset: async ({ user }) => {
         // How a user takes a stolen account back (PRD §8.9).
-        await db
-          .delete(schema.apikeys)
-          .where(eq(schema.apikeys.referenceId, user.id));
-        passwordReplaced(user, "user.password-reset");
+        await revokeAccessTokens(user.id);
+        passwordReplaced(user, "user.password-reset", [
+          "sessions",
+          "access-tokens",
+        ]);
       },
       revokeSessionsOnPasswordReset: true,
     },
@@ -213,20 +230,23 @@ export function createAuth({
       ipAddress: { ipAddressHeaders: ["x-forwarded-for"] },
     },
     hooks: {
-      // A password change always signs the user's other devices out, whatever
-      // the client asks (PRD §8.2).
-      before: createAuthMiddleware(async (ctx) => {
-        if (ctx.path !== "/change-password") return;
-        return {
-          context: { body: { ...ctx.body, revokeOtherSessions: true } },
-        };
-      }),
       after: createAuthMiddleware(async (ctx) => {
         if (ctx.path === "/change-password") {
-          // Forced to revoke the other sessions, it always starts a new one.
-          const user = ctx.context.newSession?.user;
-          if (user && !isAPIError(ctx.context.returned))
-            passwordReplaced(user, "user.password-changed");
+          if (isAPIError(ctx.context.returned)) return;
+          // Revoking the other sessions starts a new one for this device.
+          const user = (ctx.context.newSession ?? ctx.context.session)?.user;
+          if (!user) return;
+          const body = ctx.body as {
+            revokeOtherSessions?: boolean;
+            revokeAccessTokens?: boolean;
+          };
+          const revoked: Revocable[] = [];
+          if (body.revokeOtherSessions === true) revoked.push("sessions");
+          if (body.revokeAccessTokens === true) {
+            await revokeAccessTokens(user.id);
+            revoked.push("access-tokens");
+          }
+          passwordReplaced(user, "user.password-changed", revoked);
           return;
         }
         const action = sessionActions[ctx.path];
