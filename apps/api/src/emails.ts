@@ -1,3 +1,4 @@
+import type { Revocable } from "./activity.ts";
 import type { Email } from "./email.ts";
 
 /** The reset link (PRD §8.2); it expires an hour after it was asked for. */
@@ -41,26 +42,44 @@ export function passwordChangedEmail({
   name,
   at,
   forgotPasswordURL,
+  revoked,
+  reset,
 }: {
   to: string;
   name: string;
   at: Date;
   forgotPasswordURL: string;
+  /** What the change signed out or revoked; a reset always revokes both. */
+  revoked: Revocable[];
+  reset: boolean;
 }): Email {
   const when = `${saoPaulo(at, { dateStyle: "short" })} às ${saoPaulo(at, { timeStyle: "short" })}`;
   const changed = `A senha da sua conta no Mensal foi alterada em ${when} (horário de Brasília).`;
+  const sessions = revoked.includes("sessions");
+  const tokens = revoked.includes("access-tokens");
+  const revocation = reset
+    ? "Por segurança, todos os dispositivos foram desconectados e todos os tokens de acesso foram revogados."
+    : sessions && tokens
+      ? "Foram desconectados os outros dispositivos e revogados todos os tokens de acesso."
+      : sessions
+        ? "Foram desconectados os outros dispositivos. Os tokens de acesso continuam valendo."
+        : tokens
+          ? "Foram revogados todos os tokens de acesso. Os outros dispositivos continuam conectados."
+          : "Nada foi revogado: os outros dispositivos continuam conectados e os tokens de acesso continuam valendo.";
   return {
     to,
     subject: "Sua senha do Mensal foi alterada",
     text: [
       `Olá, ${name}.`,
       changed,
+      revocation,
       "Se foi você, não precisa fazer nada. Se não foi, redefina sua senha agora:",
       forgotPasswordURL,
     ].join("\n\n"),
     html: layout([
       paragraph(`Olá, ${escape(name)}.`),
       paragraph(changed),
+      paragraph(revocation),
       paragraph(
         "Se foi você, não precisa fazer nada. Se não foi, redefina sua senha agora:"
       ),
