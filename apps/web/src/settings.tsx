@@ -1,6 +1,7 @@
 import {
   Alert,
   Box,
+  Button,
   Group,
   Modal,
   SegmentedControl,
@@ -10,6 +11,7 @@ import {
 import { OccurrenceViewSchema, type ColorScheme } from "@mensal/shared";
 import { useId } from "react";
 import { errorMessage } from "./api-error.ts";
+import { DialogActions } from "./dialog-actions.tsx";
 import { usePreference, type Preference, type SaveFailure } from "./session.ts";
 import { occurrenceViews } from "./occurrence-view.tsx";
 import classes from "./settings.module.css";
@@ -39,8 +41,18 @@ export function SettingsModal({
   onClose: () => void;
 }) {
   return (
-    <Modal opened={opened} onClose={onClose} title="Configurações">
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      closeOnClickOutside={false}
+      title="Configurações"
+    >
       <SettingsForm />
+      <DialogActions>
+        <Button variant="default" onClick={onClose}>
+          Fechar
+        </Button>
+      </DialogActions>
     </Modal>
   );
 }

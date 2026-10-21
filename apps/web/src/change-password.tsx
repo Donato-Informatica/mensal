@@ -10,6 +10,7 @@ import { useIsMutating, useMutation } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { ApiError, errorMessage, unwrap } from "./api-error.ts";
+import { DialogActions } from "./dialog-actions.tsx";
 import { useSession } from "./session.ts";
 
 const changePasswordKey = ["change-password"];
@@ -32,6 +33,7 @@ export function ChangePasswordModal({
       onClose={() => {
         if (!pending) onClose();
       }}
+      closeOnClickOutside={false}
       title="Alterar senha"
     >
       <ChangePasswordForm onDone={onClose} />
@@ -181,9 +183,18 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
           name="revokeAccessTokens"
           defaultChecked
         />
-        <Button type="submit" loading={change.isPending} fullWidth mt="xs">
-          Salvar senha
-        </Button>
+        <DialogActions>
+          <Button
+            variant="default"
+            onClick={onDone}
+            disabled={change.isPending}
+          >
+            Cancelar
+          </Button>
+          <Button type="submit" loading={change.isPending}>
+            Salvar senha
+          </Button>
+        </DialogActions>
       </Stack>
     </form>
   );

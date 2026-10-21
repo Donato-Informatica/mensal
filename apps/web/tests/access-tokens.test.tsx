@@ -1,7 +1,10 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
-import { chooseFromAccountMenu } from "./account-menu.ts";
+import {
+  chooseFromAccountMenu,
+  expectClickOutsideToKeepDialog,
+} from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
 
@@ -68,6 +71,18 @@ describe("access tokens", () => {
     expect(
       within(dialog).getByRole("button", { name: "Criar token" })
     ).toBeInTheDocument();
+  });
+
+  it("stays open on a click outside, and closes from Fechar", async () => {
+    const user = userEvent.setup();
+    const dialog = await openAccessTokens(user);
+    await within(dialog).findByRole("button", { name: "Criar token" });
+
+    await expectClickOutsideToKeepDialog(user);
+
+    // The text one, not the modal's own "Fechar" ×.
+    await user.click(within(dialog).getByText("Fechar"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });
 
   it("shows a new token once, with both snippets and the app's MCP URL", async () => {

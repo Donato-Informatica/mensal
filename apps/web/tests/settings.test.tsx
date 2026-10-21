@@ -1,7 +1,10 @@
 import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { chooseFromAccountMenu } from "./account-menu.ts";
+import {
+  chooseFromAccountMenu,
+  expectClickOutsideToKeepDialog,
+} from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp, settle } from "./open-app.tsx";
 
@@ -30,6 +33,19 @@ async function openSummarySwitch(user: UserEvent) {
 }
 
 describe("settings", () => {
+  it("stays open on a click outside, and closes from Fechar", async () => {
+    const user = userEvent.setup();
+    openApp(api, "/");
+    await chooseFromAccountMenu("Configurações", user);
+    const dialog = await screen.findByRole("dialog", { name: "Configurações" });
+
+    await expectClickOutsideToKeepDialog(user);
+
+    // The text one, not the modal's own "Fechar" ×.
+    await user.click(within(dialog).getByText("Fechar"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
   it("toggles the month's summary cards from the header", async () => {
     const user = userEvent.setup();
     openApp(api, "/");

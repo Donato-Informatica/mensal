@@ -73,7 +73,12 @@ export function AccessTokensModal({
   onClose: () => void;
 }) {
   return (
-    <Modal opened={opened} onClose={onClose} title="Tokens de acesso">
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      closeOnClickOutside={false}
+      title="Tokens de acesso"
+    >
       <AccessTokens onClose={onClose} />
     </Modal>
   );
@@ -93,6 +98,7 @@ function AccessTokens({ onClose }: { onClose: () => void }) {
     case "list":
       return (
         <TokenList
+          onClose={onClose}
           onCreate={() => setView({ name: "create" })}
           onRevoke={(token) => setView({ name: "revoke", token })}
         />
@@ -118,9 +124,11 @@ function AccessTokens({ onClose }: { onClose: () => void }) {
 }
 
 function TokenList({
+  onClose,
   onCreate,
   onRevoke,
 }: {
+  onClose: () => void;
   onCreate: () => void;
   onRevoke: (token: AccessToken) => void;
 }) {
@@ -175,9 +183,12 @@ function TokenList({
           ))}
         </ul>
       )}
-      <Button onClick={onCreate} fullWidth>
-        Criar token
-      </Button>
+      <DialogActions>
+        <Button variant="default" onClick={onClose}>
+          Fechar
+        </Button>
+        <Button onClick={onCreate}>Criar token</Button>
+      </DialogActions>
     </Stack>
   );
 }

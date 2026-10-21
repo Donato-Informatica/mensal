@@ -1,7 +1,10 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { chooseFromAccountMenu } from "./account-menu.ts";
+import {
+  chooseFromAccountMenu,
+  expectClickOutsideToKeepDialog,
+} from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
 
@@ -136,6 +139,21 @@ describe("changing the password", () => {
         await screen.findByRole("dialog", { name: "Alterar senha" })
       ).getByLabelText("Senha atual")
     ).toHaveValue("");
+  });
+
+  it("stays open on a click outside, and closes from Cancelar", async () => {
+    const user = userEvent.setup();
+    const dialog = await openChangePassword();
+    await user.type(within(dialog).getByLabelText("Senha atual"), "old-horse");
+
+    await expectClickOutsideToKeepDialog(user);
+    expect(within(dialog).getByLabelText("Senha atual")).toHaveValue(
+      "old-horse"
+    );
+
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(api.passwordChanges()).toEqual([]);
   });
 
   it("says when the current password is wrong", async () => {
