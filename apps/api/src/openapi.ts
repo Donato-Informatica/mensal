@@ -1,5 +1,8 @@
 import {
+  AccessTokenSchema,
+  CreatedAccessTokenSchema,
   MAX_SUMMARY_PERIODS,
+  NewAccessTokenSchema,
   NewOneOffSchema,
   NewRecurrenceSchema,
   OccurrenceEditSchema,
@@ -141,6 +144,52 @@ export function buildOpenApiSpec() {
             required: ["userId"],
             properties: { userId: { type: "string" } },
           }),
+        },
+      }),
+    },
+    "/api/v1/access-tokens": {
+      get: secured({
+        tags: ["Access tokens"],
+        summary: "List the user's access tokens, never their secrets",
+        responses: {
+          200: ok("The access tokens", {
+            type: "array",
+            items: output(AccessTokenSchema),
+          }),
+        },
+      }),
+      post: secured({
+        tags: ["Access tokens"],
+        summary:
+          "Create an access token; its secret is returned only in this response",
+        requestBody: body(NewAccessTokenSchema),
+        responses: {
+          201: ok(
+            "The access token and its secret",
+            output(CreatedAccessTokenSchema)
+          ),
+          400: ok("The input is invalid, or the current password is wrong", {
+            oneOf: [
+              invalidInput.content!["application/json"].schema,
+              refusal("", "INVALID_PASSWORD").content!["application/json"]
+                .schema,
+            ],
+          }),
+          429: refusal(
+            "Too many wrong passwords in a minute",
+            "TOO_MANY_ATTEMPTS"
+          ),
+        },
+      }),
+    },
+    "/api/v1/access-tokens/{id}": {
+      delete: secured({
+        tags: ["Access tokens"],
+        summary: "Revoke (delete) one of the user's access tokens",
+        parameters: [idParameter],
+        responses: {
+          204: noContent,
+          404: notFound("ACCESS_TOKEN_NOT_FOUND"),
         },
       }),
     },

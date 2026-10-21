@@ -6,7 +6,14 @@ import { createApp } from "../src/app.ts";
 import type { Auth } from "../src/auth.ts";
 import { buildOpenApiSpec } from "../src/openapi.ts";
 import { mountedOperations } from "./openapi-routes.ts";
-import { approve, request, signUp, startApi, type TestApi } from "./api.ts";
+import {
+  approve,
+  password,
+  request,
+  signUp,
+  startApi,
+  type TestApi,
+} from "./api.ts";
 
 let api: TestApi;
 beforeAll(async () => {
@@ -169,6 +176,27 @@ describe("the API description's responses", () => {
       204
     );
     await call("GET /api/v1/me", "/api/v1/me", 200);
+    const token = await call(
+      "POST /api/v1/access-tokens",
+      "/api/v1/access-tokens",
+      201,
+      { name: "Claude Code", currentPassword: password }
+    );
+    await call("POST /api/v1/access-tokens", "/api/v1/access-tokens", 400, {
+      name: "Claude Code",
+      currentPassword: "wrong",
+    });
+    await call("GET /api/v1/access-tokens", "/api/v1/access-tokens", 200);
+    await call(
+      "DELETE /api/v1/access-tokens/{id}",
+      `/api/v1/access-tokens/${token.id}`,
+      204
+    );
+    await call(
+      "DELETE /api/v1/access-tokens/{id}",
+      `/api/v1/access-tokens/${token.id}`,
+      404
+    );
     await call(
       "GET /api/v1/recurrences/{id}",
       `/api/v1/recurrences/${randomUUID()}`,

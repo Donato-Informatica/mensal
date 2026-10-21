@@ -267,3 +267,32 @@ export const SummariesPayloadSchema = z.object({
     z.object({ period: PeriodSchema, summary: PeriodSummarySchema })
   ),
 });
+
+/** The longest name an access token can have (PRD §8.9). */
+export const MAX_ACCESS_TOKEN_NAME_LENGTH = 32;
+
+/**
+ * An access token as the list shows it (PRD §8.9): never its secret, only the
+ * `prefix` that tells tokens apart.
+ */
+export const AccessTokenSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  prefix: z.string(),
+  createdAt: z.iso.datetime(),
+  lastUsedAt: z.iso.datetime().nullable(),
+});
+export type AccessToken = z.infer<typeof AccessTokenSchema>;
+
+/** A new access token: the only response that carries the full `token`. */
+export const CreatedAccessTokenSchema = AccessTokenSchema.extend({
+  token: z.string(),
+});
+export type CreatedAccessToken = z.infer<typeof CreatedAccessTokenSchema>;
+
+/** The body of `POST /access-tokens`. */
+export const NewAccessTokenSchema = z.strictObject({
+  name: z.string().trim().min(1).max(MAX_ACCESS_TOKEN_NAME_LENGTH),
+  currentPassword: z.string().min(1),
+});
+export type NewAccessToken = z.output<typeof NewAccessTokenSchema>;
