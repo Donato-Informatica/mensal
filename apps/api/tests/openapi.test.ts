@@ -53,15 +53,16 @@ describe("the API description", () => {
 
     const { operations, unresolved } = mountedOperations(
       app,
-      Object.keys(spec.paths)
+      // The MCP endpoint is mounted but described by its own tools (§8.9).
+      [...Object.keys(spec.paths), "/api/mcp"]
     );
 
     // Better-Auth documents its own routes (merged into the spec), and the
-    // documentation endpoints do not describe themselves.
+    // documentation endpoints do not describe themselves, nor does /api/mcp.
     const ours = operations.filter(
       (operation) =>
         !operation.includes(" /api/auth/") &&
-        !/ \/api\/(openapi\.json|docs(\/scalar\.js)?)$/.test(operation)
+        !/ \/api\/(openapi\.json|docs(\/scalar\.js)?|mcp)$/.test(operation)
     );
     expect(unresolved).toBe(0);
     expect(ours.sort()).toEqual(documented.sort());
