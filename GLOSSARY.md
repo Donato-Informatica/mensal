@@ -19,6 +19,11 @@ To replace a forgotten password through a link sent to the user's email, without
 _UI (pt-BR)_: Redefinir senha (requested from "Esqueci a senha")
 _Avoid_: recover password, change password
 
+**Access token**:
+A secret a user creates to let an agent of their own act on their data on their behalf; it can be revoked at any time.
+_UI (pt-BR)_: Token de acesso
+_Avoid_: API key, secret, password, credential
+
 **Preference**:
 A choice a user makes about how the product behaves for them, shared by every device they sign in on; it never changes their data.
 _UI (pt-BR)_: Configurações
