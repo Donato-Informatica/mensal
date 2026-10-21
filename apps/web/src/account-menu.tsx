@@ -1,11 +1,13 @@
 import { Avatar, Menu, Text, UnstyledButton } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
+  IconKey,
   IconLock,
   IconLogout,
   IconSettings,
   IconUser,
 } from "@tabler/icons-react";
+import { AccessTokensModal } from "./access-tokens.tsx";
 import classes from "./account-menu.module.css";
 import { ChangePasswordModal } from "./change-password.tsx";
 import { useSession } from "./session.ts";
@@ -20,6 +22,7 @@ export function AccountMenu() {
   const { name, email } = useSession().user;
   const [settings, settingsHandlers] = useDisclosure(false);
   const [password, passwordHandlers] = useDisclosure(false);
+  const [tokens, tokensHandlers] = useDisclosure(false);
   const [signOut, signOutHandlers] = useDisclosure(false);
 
   return (
@@ -64,6 +67,12 @@ export function AccountMenu() {
           >
             Alterar senha
           </Menu.Item>
+          <Menu.Item
+            leftSection={<IconKey size={18} aria-hidden="true" />}
+            onClick={tokensHandlers.open}
+          >
+            Tokens de acesso
+          </Menu.Item>
           <Menu.Divider />
           <Menu.Item
             leftSection={<IconLogout size={18} aria-hidden="true" />}
@@ -75,6 +84,7 @@ export function AccountMenu() {
       </Menu>
       <SettingsModal opened={settings} onClose={settingsHandlers.close} />
       <ChangePasswordModal opened={password} onClose={passwordHandlers.close} />
+      <AccessTokensModal opened={tokens} onClose={tokensHandlers.close} />
       <SignOutModal opened={signOut} onClose={signOutHandlers.close} />
     </>
   );
