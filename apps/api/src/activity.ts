@@ -58,7 +58,7 @@ function stamped(
   extra: ExtraFields
 ): ActivityEvent {
   const at = date.toISOString();
-  if (!("id" in report)) return { at, ...extra, ...report };
+  if (!isItemReport(report)) return { at, ...extra, ...report };
   const kind = report.action.startsWith("recurrence.")
     ? "recurrence"
     : "occurrence";
@@ -71,6 +71,13 @@ function stamped(
  */
 export interface ExtraFields {
   via?: "mcp";
+}
+
+function isItemReport(report: ActivityReport): report is ItemReport {
+  return (
+    report.action.startsWith("occurrence.") ||
+    report.action.startsWith("recurrence.")
+  );
 }
 
 type ItemKind = "occurrence" | "recurrence";
@@ -109,13 +116,19 @@ export type SessionAction = "user.sign-up" | "user.sign-in";
 /** The account actions that replace the user's password. */
 export type PasswordAction = "user.password-changed" | "user.password-reset";
 
+/** The account actions on one access token (PRD §8.9). */
+export type AccessTokenAction =
+  "user.access-token-created" | "user.access-token-revoked";
+
 /**
- * Signing up or in, or replacing the password, by the user's id. A failed
+ * Signing up or in, replacing the password, or creating or revoking an access
+ * token (named by its id, never its secret), by the user's id. A failed
  * sign-in has no user: it names the attempted email and the client's address
  * instead, to spot credential stuffing.
  */
 type AccountReport =
   | { user: string; action: SessionAction | PasswordAction }
+  | { user: string; action: AccessTokenAction; id: string }
   | {
       action: "user.sign-in-failed";
       email: string;

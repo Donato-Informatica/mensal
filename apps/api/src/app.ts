@@ -7,6 +7,7 @@ import {
   consoleActivity,
   type Activity,
 } from "./activity.ts";
+import { accessTokensRouter } from "./access-tokens.ts";
 import type { Auth } from "./auth.ts";
 import { docsRouter } from "./docs.ts";
 import { errorHandler } from "./error-handler.ts";
@@ -57,6 +58,7 @@ export function createApp({
   v1.get("/me", (_req, res) => {
     res.json({ userId: res.locals.userId });
   });
+  v1.use("/access-tokens", accessTokensRouter({ auth, db, now, record }));
   v1.use("/occurrences", occurrencesRouter({ db, now, record }));
   v1.use("/periods", periodsRouter({ db, now, record }));
   v1.use("/recurrences", recurrencesRouter({ db, now, record }));

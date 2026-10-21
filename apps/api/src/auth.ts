@@ -1,3 +1,4 @@
+import { apiKey } from "@better-auth/api-key";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { schema, type Database } from "@mensal/database";
 import {
@@ -6,6 +7,7 @@ import {
   defaultOccurrenceView,
   OccurrenceViewSchema,
 } from "@mensal/shared";
+import { eq } from "drizzle-orm";
 import { betterAuth } from "better-auth";
 import { createAuthMiddleware, getIP, isAPIError } from "better-auth/api";
 import { openAPI } from "better-auth/plugins";
@@ -20,6 +22,9 @@ import {
 import { consoleEmail, type Email, type SendEmail } from "./email.ts";
 import { passwordChangedEmail, resetPasswordEmail } from "./emails.ts";
 import type { Log } from "./log.ts";
+
+/** What every access token starts with, so a leaked one is recognizable. */
+export const accessTokenPrefix = "mensal_";
 
 export interface AuthOptions {
   db: Database;
@@ -99,6 +104,10 @@ export function createAuth({
         );
       },
       onPasswordReset: async ({ user }) => {
+        // How a user takes a stolen account back (PRD §8.9).
+        await db
+          .delete(schema.apikeys)
+          .where(eq(schema.apikeys.referenceId, user.id));
         passwordReplaced(user, "user.password-reset");
       },
       revokeSessionsOnPasswordReset: true,
@@ -160,7 +169,38 @@ export function createAuth({
     },
     // Describes the sign-in routes for /api/openapi.json; its own reference
     // page loads scripts from a CDN, so it is off.
-    plugins: [openAPI({ disableDefaultReference: true })],
+    plugins: [
+      openAPI({ disableDefaultReference: true }),
+      // Access tokens (PRD §8.9, ADR-0004), hashed in the `apikeys` table.
+      // `enableSessionForAPIKeys` stays off: a token never becomes a session.
+      apiKey({
+        defaultPrefix: accessTokenPrefix,
+        // Prefix plus four characters, to tell tokens apart in the list.
+        startingCharactersConfig: {
+          shouldStore: true,
+          charactersLength: accessTokenPrefix.length + 4,
+        },
+        maximumNameLength: 32,
+        requireName: true,
+        enableSessionForAPIKeys: false,
+        rateLimit: {
+          enabled: true,
+          timeWindow: 60_000,
+          maxRequests: 120,
+        },
+      }),
+    ],
+    // The plugin's own HTTP routes would let a session mint a token without
+    // the password the app's `/access-tokens` routes ask for; they stay
+    // reachable only through `auth.api`.
+    disabledPaths: [
+      "/api-key/create",
+      "/api-key/get",
+      "/api-key/update",
+      "/api-key/delete",
+      "/api-key/list",
+      "/api-key/delete-all-expired-api-keys",
+    ],
     advanced: {
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax" },
       // Own cookie name: another app on a sibling subdomain can set a
