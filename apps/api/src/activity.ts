@@ -16,9 +16,8 @@ export type ActivityReport = ItemReport | AccountReport;
  * One line of the operator's activity log: a report stamped with when it
  * happened (UTC ISO) and, for an item, the kind its action names.
  */
-export type ActivityEvent = { at: string } & (
-  AccountReport | (ItemReport & { kind: ItemKind })
-);
+export type ActivityEvent = { at: string } & ExtraFields &
+  (AccountReport | (ItemReport & { kind: ItemKind }));
 
 /** Where activity events go: the console unless a caller redirects them. */
 export type Activity = (event: ActivityEvent) => void;
@@ -39,11 +38,12 @@ export const consoleActivity: Activity = (event) => {
 export function activityRecorder(
   activity: Activity,
   now: () => Date,
-  log: Log
+  log: Log,
+  extra: ExtraFields = {}
 ): RecordActivity {
   return (report) => {
     try {
-      activity(stamped(report, now()));
+      activity(stamped(report, now(), extra));
     } catch (error) {
       log(
         `Activity log failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`
@@ -52,13 +52,25 @@ export function activityRecorder(
   };
 }
 
-function stamped(report: ActivityReport, date: Date): ActivityEvent {
+function stamped(
+  report: ActivityReport,
+  date: Date,
+  extra: ExtraFields
+): ActivityEvent {
   const at = date.toISOString();
-  if (!isItemReport(report)) return { at, ...report };
+  if (!isItemReport(report)) return { at, ...extra, ...report };
   const kind = report.action.startsWith("recurrence.")
     ? "recurrence"
     : "occurrence";
-  return { at, ...report, kind };
+  return { at, ...extra, ...report, kind };
+}
+
+/**
+ * Fields a caller adds to every event it logs: `via` names the channel a
+ * write came through other than the REST API (the MCP server, PRD §8.9).
+ */
+export interface ExtraFields {
+  via?: "mcp";
 }
 
 function isItemReport(report: ActivityReport): report is ItemReport {
