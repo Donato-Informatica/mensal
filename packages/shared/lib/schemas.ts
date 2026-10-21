@@ -10,8 +10,11 @@ const PeriodSchema = z.iso
   .date()
   .regex(/-01$/, "A period is the 1st of a month");
 
+/** What every amount field's description says (PRD §8.9). */
+const CENTS = "integer BRL cents (R$ 50,00 = 5000)";
+
 /** An amount in BRL cents, greater than zero. */
-const AmountSchema = z.int().positive();
+const AmountSchema = z.int().positive().describe(`Amount in ${CENTS}`);
 
 /** A description the user types: not blank, at most 120 characters. */
 const DescriptionInputSchema = z.string().trim().min(1).max(120);
@@ -245,12 +248,15 @@ export const PeriodItemSchema = z.object({
   overdue: z.boolean(),
 });
 
+/** A total in BRL cents. */
+const TotalSchema = z.int().describe(`Total in ${CENTS}`);
+
 /** Totals in BRL cents per direction; skipped occurrences never count. */
 export const PeriodSummarySchema = z.object({
-  inflowExpected: z.int(),
-  inflowSettled: z.int(),
-  outflowExpected: z.int(),
-  outflowSettled: z.int(),
+  inflowExpected: TotalSchema,
+  inflowSettled: TotalSchema,
+  outflowExpected: TotalSchema,
+  outflowSettled: TotalSchema,
 });
 
 /** The body of `GET /periods/:yyyy-mm` (PRD §4, §6.2). */

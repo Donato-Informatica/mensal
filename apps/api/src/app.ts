@@ -13,6 +13,7 @@ import { docsRouter } from "./docs.ts";
 import { errorHandler } from "./error-handler.ts";
 import { healthRouter } from "./health.ts";
 import type { Log } from "./log.ts";
+import { mcpRouter } from "./mcp.ts";
 import { occurrencesRouter } from "./occurrences.ts";
 import { periodsRouter } from "./periods.ts";
 import { recurrencesRouter } from "./recurrences.ts";
@@ -51,6 +52,18 @@ export function createApp({
 
   // Unauthenticated: the API description and its reference UI.
   app.use("/api", docsRouter({ auth }));
+
+  // Authenticated by access token, not by session (PRD §8.9, ADR-0004).
+  app.use(
+    "/api/mcp",
+    mcpRouter({
+      auth,
+      db,
+      now,
+      log,
+      record: activityRecorder(activity, now, log, { via: "mcp" }),
+    })
+  );
 
   const v1 = express.Router();
   v1.use(requireApprovedUser(auth));
