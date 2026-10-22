@@ -585,6 +585,8 @@ export function fakeApi() {
         });
       }
       accounts.delete(signedIn.email);
+      signedIn.recurrences = [];
+      signedIn.occurrences = [];
       accessTokens.delete(signedIn.id);
       signedIn = undefined;
       return json(200, { success: true, message: "User deleted" });
@@ -747,9 +749,13 @@ export function fakeApi() {
       return token;
     },
 
-    /** The account's access tokens, secrets included, as the database holds them. */
+    /**
+     * The account's access tokens, secrets included, as the database holds
+     * them: none once the account is deleted.
+     */
     accessTokensOf(email: string): readonly FakeAccessToken[] {
-      return tokensOf(accounts.get(email)!);
+      const account = accounts.get(email);
+      return account ? tokensOf(account) : [];
     },
 
     /** Seeds a recurrence for the account, as through Drizzle Studio. */
@@ -784,14 +790,14 @@ export function fakeApi() {
       return { ...accounts.get(email)!.preferences };
     },
 
-    /** The account's recurrences, as the database holds them. */
+    /** The account's recurrences, as the database holds them: none once it is deleted. */
     recurrencesOf(email: string): readonly Recurrence[] {
-      return accounts.get(email)!.recurrences;
+      return accounts.get(email)?.recurrences ?? [];
     },
 
-    /** The account's persisted occurrences, as the database holds them. */
+    /** The account's persisted occurrences, as the database holds them: none once it is deleted. */
     occurrencesOf(email: string): readonly Occurrence[] {
-      return accounts.get(email)!.occurrences;
+      return accounts.get(email)?.occurrences ?? [];
     },
 
     /** Seeds an occurrence for the account, as through Drizzle Studio. */
