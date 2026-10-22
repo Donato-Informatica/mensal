@@ -1,6 +1,6 @@
 import type { Database } from "@mensal/database";
 import { Router } from "express";
-import type { Log } from "./log.ts";
+import { describeError, type Log } from "./log.ts";
 
 const PING_TIMEOUT_MS = 2000;
 
@@ -26,9 +26,7 @@ export function healthRouter({ db, log }: { db: Database; log: Log }): Router {
       ]);
       res.json({ status: "ok" });
     } catch (error) {
-      log(
-        error instanceof Error ? (error.stack ?? error.message) : String(error)
-      );
+      log(describeError(error));
       res.status(503).json({ status: "unavailable" });
     } finally {
       clearTimeout(timer);

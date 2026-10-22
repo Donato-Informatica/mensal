@@ -3,7 +3,7 @@ import type {
   OccurrenceStatus,
   RecurrenceEdit,
 } from "@mensal/shared";
-import type { Log } from "./log.ts";
+import { describeError, type Log } from "./log.ts";
 
 /**
  * Who did what to which item (PRD §8.7), as the write reports it. Only ids and
@@ -45,9 +45,7 @@ export function activityRecorder(
     try {
       activity(stamped(report, now(), extra));
     } catch (error) {
-      log(
-        `Activity log failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`
-      );
+      log(`Activity log failed: ${describeError(error)}`);
     }
   };
 }

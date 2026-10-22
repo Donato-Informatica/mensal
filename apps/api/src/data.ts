@@ -3,7 +3,7 @@ import type { Database } from "@mensal/database";
 import { today } from "@mensal/shared";
 import { Router } from "express";
 import { dataArchive, dataArchiveName } from "./data-archive.ts";
-import type { Log } from "./log.ts";
+import { describeError, type Log } from "./log.ts";
 
 /** `GET /data`: the user's own data as a ZIP download (PRD §6.5). */
 export function dataRouter({
@@ -31,11 +31,7 @@ export function dataRouter({
       // pipeline has already cut it off. A client that leaves early is no
       // fault of ours.
       if ((error as { code?: unknown }).code !== "ERR_STREAM_PREMATURE_CLOSE") {
-        log(
-          error instanceof Error
-            ? (error.stack ?? error.message)
-            : String(error)
-        );
+        log(describeError(error));
       }
     }
   });
