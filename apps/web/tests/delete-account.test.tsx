@@ -141,3 +141,52 @@ describe("deleting the account (PRD §7.15)", () => {
     expect(api.hasAccount(email)).toBe(true);
   });
 });
+
+describe("downloading the data before deleting the account", () => {
+  let downloads: string[];
+  beforeEach(() => {
+    downloads = [];
+    URL.createObjectURL = () => "blob:mensal";
+    URL.revokeObjectURL = () => {};
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+      this: HTMLAnchorElement
+    ) {
+      downloads.push(this.download);
+    });
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("is offered to an approved user, and downloads the archive without deleting anything", async () => {
+    const user = userEvent.setup();
+    const dialog = await openFromMenu();
+
+    await user.click(
+      within(dialog).getByRole("button", { name: "Baixar meus dados" })
+    );
+
+    await waitFor(() =>
+      expect(downloads).toEqual(["mensal-dados-2026-10-12.zip"])
+    );
+    expect(api.dataDownloads()).toBe(1);
+    expect(screen.getByRole("dialog", { name: "Excluir conta" })).toBe(dialog);
+    expect(api.hasAccount(email)).toBe(true);
+  });
+
+  it("is not offered to a user awaiting approval, who has no data to take", async () => {
+    const user = userEvent.setup();
+    signedIn({ approved: false });
+    openApp(api, "/aguardando-aprovacao");
+
+    await user.click(
+      await screen.findByRole("button", { name: "Excluir conta" })
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Excluir conta" });
+
+    expect(within(dialog).getByLabelText("Senha atual")).toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole("button", { name: "Baixar meus dados" })
+    ).toBeNull();
+  });
+});

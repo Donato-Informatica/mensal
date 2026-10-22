@@ -9,6 +9,7 @@ export async function chooseFromAccountMenu(
     | "Alterar nome"
     | "Alterar senha"
     | "Tokens de acesso"
+    | "Baixar meus dados"
     | "Sair"
     | "Excluir conta",
   user: UserEvent = userEvent.setup()

@@ -1,6 +1,7 @@
-import { Avatar, Menu, Text, UnstyledButton } from "@mantine/core";
+import { Avatar, Loader, Menu, Text, UnstyledButton } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
+  IconDownload,
   IconKey,
   IconLock,
   IconLogout,
@@ -14,6 +15,7 @@ import classes from "./account-menu.module.css";
 import { ChangeNameModal } from "./change-name.tsx";
 import { ChangePasswordModal } from "./change-password.tsx";
 import { DeleteAccountModal } from "./delete-account.tsx";
+import { DataDownloadFailure, useDataDownload } from "./download-data.tsx";
 import { useSession } from "./session.ts";
 import { SettingsModal } from "./settings.tsx";
 import { SignOutModal } from "./sign-out-button.tsx";
@@ -21,10 +23,14 @@ import { SignOutModal } from "./sign-out-button.tsx";
 /**
  * The header's account menu: an avatar with the user icon, which opens their name and
  * email over Configurações, Alterar nome, Alterar senha, Tokens de acesso,
- * Sair and, last, Excluir conta. Each item opens its modal.
+ * Baixar meus dados, Sair and, last, Excluir conta. Each item opens its
+ * modal, but Baixar meus dados, which keeps the menu open with a loader until
+ * the archive arrives.
  */
 export function AccountMenu() {
   const { name, email } = useSession().user;
+  const [menu, menuHandlers] = useDisclosure(false);
+  const download = useDataDownload();
   const [settings, settingsHandlers] = useDisclosure(false);
   const [rename, renameHandlers] = useDisclosure(false);
   const [password, passwordHandlers] = useDisclosure(false);
@@ -34,7 +40,15 @@ export function AccountMenu() {
 
   return (
     <>
-      <Menu position="bottom-end" width={260} hideDetached={false}>
+      <Menu
+        position="bottom-end"
+        width={260}
+        hideDetached={false}
+        opened={menu}
+        onChange={(opened) =>
+          opened ? menuHandlers.open() : menuHandlers.close()
+        }
+      >
         <Menu.Target>
           <UnstyledButton
             className={classes.trigger}
@@ -86,6 +100,21 @@ export function AccountMenu() {
           >
             Tokens de acesso
           </Menu.Item>
+          <Menu.Item
+            leftSection={
+              download.building ? (
+                <Loader size={18} aria-hidden="true" />
+              ) : (
+                <IconDownload size={18} aria-hidden="true" />
+              )
+            }
+            closeMenuOnClick={false}
+            disabled={download.building}
+            aria-busy={download.building}
+            onClick={() => download.start(menuHandlers.close)}
+          >
+            Baixar meus dados
+          </Menu.Item>
           <Menu.Divider />
           <Menu.Item
             leftSection={<IconLogout size={18} aria-hidden="true" />}
@@ -108,6 +137,7 @@ export function AccountMenu() {
       <AccessTokensModal opened={tokens} onClose={tokensHandlers.close} />
       <SignOutModal opened={signOut} onClose={signOutHandlers.close} />
       <DeleteAccountModal opened={remove} onClose={deleteHandlers.close} />
+      <DataDownloadFailure download={download} />
     </>
   );
 }
