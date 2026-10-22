@@ -47,6 +47,11 @@ export {
   type SummariesQuery,
   type VirtualOccurrence,
 } from "./lib/schemas.ts";
+export {
+  directionLabel,
+  occurrenceColumns,
+  originLabel,
+} from "./lib/labels.ts";
 export { editRefusal } from "./lib/occurrence-edit.ts";
 export { monthOf, periodOfMonth, shiftPeriod } from "./lib/period.ts";
 export { isActive, isInEffect } from "./lib/recurrence.ts";

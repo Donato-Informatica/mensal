@@ -4,6 +4,9 @@ import {
   csvAmount,
   csvDate,
   csvPeriod,
+  directionLabel,
+  occurrenceColumns,
+  originLabel,
   situationOf,
   toCsv,
   today,
@@ -12,9 +15,6 @@ import { asc, eq, sql } from "drizzle-orm";
 import { strToU8, Zip, ZipDeflate } from "fflate";
 
 const { occurrences, recurrences, users } = schema;
-
-const directionLabel = (direction: "INFLOW" | "OUTFLOW") =>
-  direction === "INFLOW" ? "Entrada" : "Saída";
 
 /** The archive's file name on `date` ('YYYY-MM-DD' in America/Sao_Paulo). */
 export function dataArchiveName(date: string): string {
@@ -85,7 +85,7 @@ export async function dataArchive(
       userRecurrences.map((recurrence) => [
         recurrence.id,
         recurrence.description,
-        directionLabel(recurrence.direction),
+        directionLabel(recurrence),
         csvAmount(recurrence.defaultAmount),
         recurrence.dueDay === null ? "" : String(recurrence.dueDay),
         csvPeriod(recurrence.startPeriod),
@@ -94,29 +94,30 @@ export async function dataArchive(
       ])
     ),
     "ocorrencias.csv": toCsv(
+      // The table's columns, with what identifies each occurrence.
       [
         "ID",
         "Competência",
-        "Descrição",
-        "Vencimento",
-        "Tipo",
-        "Valor",
-        "Situação",
-        "Liquidada em",
-        "Origem",
+        occurrenceColumns.description,
+        occurrenceColumns.dueDate,
+        occurrenceColumns.direction,
+        occurrenceColumns.amount,
+        occurrenceColumns.situation,
+        occurrenceColumns.settledAt,
+        occurrenceColumns.origin,
         "Recorrência (ID)",
-        "Notas",
+        occurrenceColumns.notes,
       ],
       userOccurrences.map((occurrence) => [
         occurrence.id,
         csvPeriod(occurrence.period),
         occurrence.description,
         csvDate(occurrence.dueDate),
-        directionLabel(occurrence.direction),
+        directionLabel(occurrence),
         csvAmount(occurrence.amount),
         situationOf(occurrence, date),
         csvDate(occurrence.settledAt),
-        occurrence.recurrenceId === null ? "Avulsa" : "Recorrência",
+        originLabel(occurrence),
         occurrence.recurrenceId ?? "",
         occurrence.notes ?? "",
       ])

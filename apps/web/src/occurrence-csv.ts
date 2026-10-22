@@ -1,5 +1,12 @@
-import { csvAmount, csvDate, toCsv, type PeriodPayload } from "@mensal/shared";
-import { columns, directionLabel, originLabel } from "./occurrence-labels.ts";
+import {
+  csvAmount,
+  csvDate,
+  directionLabel,
+  occurrenceColumns,
+  originLabel,
+  toCsv,
+  type PeriodPayload,
+} from "@mensal/shared";
 import { occurrenceRows } from "./occurrence-rows.ts";
 
 /** The period's own occurrences, in table order (PRD §7.9). */
@@ -14,7 +21,7 @@ export function periodCsvRows(payload: PeriodPayload, today: string) {
  */
 export function occurrenceCsv(payload: PeriodPayload, today: string): string {
   return toCsv(
-    Object.values(columns),
+    Object.values(occurrenceColumns),
     periodCsvRows(payload, today).map(({ item, situation }) => [
       item.description,
       csvDate(item.dueDate),
