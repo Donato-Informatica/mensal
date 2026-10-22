@@ -3,6 +3,7 @@ import {
   clampDueDate,
   ColorSchemeSchema,
   currentPeriod,
+  dataArchiveName,
   defaultColorScheme,
   defaultOccurrenceView,
   editRefusal,
@@ -205,7 +206,7 @@ export function fakeApi() {
       status: 200,
       headers: {
         "content-type": "application/zip",
-        "content-disposition": `attachment; filename="mensal-dados-${today()}.zip"`,
+        "content-disposition": `attachment; filename="${dataArchiveName(today())}"`,
       },
     });
   }

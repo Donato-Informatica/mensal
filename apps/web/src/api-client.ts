@@ -1,5 +1,7 @@
 import {
+  dataArchiveName,
   monthOf,
+  today,
   type AccessToken,
   type CreatedAccessToken,
   type NewAccessToken,
@@ -75,14 +77,14 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
 
     /**
      * The archive of everything the user entered (PRD §6.5), with the file
-     * name the API gives it.
+     * name the API gives it, or, should it give none, the one it gives today.
      */
     downloadData: async (): Promise<DownloadedFile> => {
       const response = await fetchOk("/data");
       const fileName =
         /filename="([^"]+)"/.exec(
           response.headers.get("content-disposition") ?? ""
-        )?.[1] ?? "mensal-dados.zip";
+        )?.[1] ?? dataArchiveName(today());
       return { blob: await response.blob(), fileName };
     },
 

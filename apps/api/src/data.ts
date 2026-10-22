@@ -1,8 +1,8 @@
 import { pipeline } from "node:stream/promises";
 import type { Database } from "@mensal/database";
-import { today } from "@mensal/shared";
+import { dataArchiveName, today } from "@mensal/shared";
 import { Router } from "express";
-import { dataArchive, dataArchiveName } from "./data-archive.ts";
+import { dataArchive } from "./data-archive.ts";
 import { describeError, type Log } from "./log.ts";
 
 /** `GET /data`: the user's own data as a ZIP download (PRD §6.5). */

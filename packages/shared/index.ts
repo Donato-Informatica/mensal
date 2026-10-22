@@ -1,3 +1,4 @@
+export { dataArchiveName } from "./lib/archive-name.ts";
 export { csvAmount, csvDate, csvPeriod, toCsv } from "./lib/csv.ts";
 export { clampDueDate } from "./lib/due-date.ts";
 export {

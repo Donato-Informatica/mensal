@@ -16,11 +16,6 @@ import { strToU8, Zip, ZipDeflate } from "fflate";
 
 const { occurrences, recurrences, users } = schema;
 
-/** The archive's file name on `date` ('YYYY-MM-DD' in America/Sao_Paulo). */
-export function dataArchiveName(date: string): string {
-  return `mensal-dados-${date}.zip`;
-}
-
 /**
  * Everything user `userId` entered, as a ZIP stream of three CSV files
  * (PRD §6.5): `perfil.csv`, `recorrencias.csv` and `ocorrencias.csv`, each
