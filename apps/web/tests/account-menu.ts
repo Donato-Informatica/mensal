@@ -10,7 +10,8 @@ export async function chooseFromAccountMenu(
     | "Alterar senha"
     | "Tokens de acesso"
     | "Baixar meus dados"
-    | "Sair",
+    | "Sair"
+    | "Excluir conta",
   user: UserEvent = userEvent.setup()
 ) {
   await user.click(await screen.findByRole("button", { name: "Conta" }));

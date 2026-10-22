@@ -53,8 +53,7 @@ export function passwordChangedEmail({
   revoked: Revocable[];
   reset: boolean;
 }): Email {
-  const when = `${saoPaulo(at, { dateStyle: "short" })} às ${saoPaulo(at, { timeStyle: "short" })}`;
-  const changed = `A senha da sua conta no Mensal foi alterada em ${when} (horário de Brasília).`;
+  const changed = `A senha da sua conta no Mensal foi alterada em ${when(at)} (horário de Brasília).`;
   const sessions = revoked.includes("sessions");
   const tokens = revoked.includes("access-tokens");
   const revocation = reset
@@ -86,6 +85,43 @@ export function passwordChangedEmail({
       button("Redefinir senha", forgotPasswordURL),
     ]),
   };
+}
+
+/**
+ * The goodbye after an account is deleted (PRD §8.2), so a deletion by an
+ * intruder does not go unnoticed (ADR-0005). It has no links: there is
+ * nothing left to sign in to.
+ */
+export function accountDeletedEmail({
+  to,
+  name,
+  at,
+}: {
+  to: string;
+  name: string;
+  at: Date;
+}): Email {
+  const deleted = `Sua conta no Mensal foi excluída em ${when(at)} (horário de Brasília).`;
+  const erased =
+    "Todas as suas recorrências, contas e tokens de acesso foram apagados e não podem ser recuperados.";
+  const notYou =
+    "Se foi você, não precisa fazer nada. Se não foi você, responda este e-mail.";
+  return {
+    to,
+    subject: "Sua conta do Mensal foi excluída",
+    text: [`Olá, ${name}.`, deleted, erased, notYou].join("\n\n"),
+    html: layout([
+      paragraph(`Olá, ${escape(name)}.`),
+      paragraph(deleted),
+      paragraph(erased),
+      paragraph(notYou),
+    ]),
+  };
+}
+
+/** A moment as São Paulo reads it, e.g. "17/10/2026 às 14:03". */
+function when(at: Date): string {
+  return `${saoPaulo(at, { dateStyle: "short" })} às ${saoPaulo(at, { timeStyle: "short" })}`;
 }
 
 function saoPaulo(date: Date, style: Intl.DateTimeFormatOptions): string {

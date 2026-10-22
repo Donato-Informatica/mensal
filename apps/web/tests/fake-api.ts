@@ -573,6 +573,21 @@ export function fakeApi() {
       });
       return json(200, { token: null, user: sessionOf(signedIn).user });
     },
+    // Immediate and permanent, with the current password (ADR-0005); its
+    // recurrences, occurrences and access tokens go with it.
+    "POST /api/auth/delete-user": ({ password }) => {
+      if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+      if (!password || password !== signedIn.password) {
+        return json(400, {
+          code: "INVALID_PASSWORD",
+          message: "Invalid password",
+        });
+      }
+      accounts.delete(signedIn.email);
+      accessTokens.delete(signedIn.id);
+      signedIn = undefined;
+      return json(200, { success: true, message: "User deleted" });
+    },
     "POST /api/auth/sign-out": () => {
       signedIn = undefined;
       return json(200, { success: true });
@@ -684,6 +699,11 @@ export function fakeApi() {
 
     signIn(email: string) {
       signedIn = accounts.get(email);
+    },
+
+    /** Whether an account with this email exists, e.g. not yet deleted. */
+    hasAccount(email: string): boolean {
+      return accounts.has(email);
     },
 
     /**
