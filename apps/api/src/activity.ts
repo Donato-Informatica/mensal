@@ -125,15 +125,19 @@ export type AccessTokenAction =
 
 /**
  * Signing up or in, replacing the password, changing the name (never naming
- * it), or creating or revoking an access token (named by its id, never its
- * secret), by the user's id. A failed
+ * it), creating or revoking an access token (named by its id, never its
+ * secret), or deleting the account, by the user's id. A failed
  * sign-in has no user: it names the attempted email and the client's address
  * instead, to spot credential stuffing.
  */
 type AccountReport =
   | {
       user: string;
-      action: SessionAction | "user.password-reset" | "user.name-changed";
+      action:
+        | SessionAction
+        | "user.password-reset"
+        | "user.name-changed"
+        | "user.deleted";
     }
   | { user: string; action: "user.password-changed"; revoked: Revocable[] }
   | { user: string; action: AccessTokenAction; id: string }

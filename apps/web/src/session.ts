@@ -9,6 +9,7 @@ import {
   rootRouteId,
   useNavigate,
   useRouteContext,
+  type HistoryState,
 } from "@tanstack/react-router";
 import type { ColorScheme, OccurrenceView } from "@mensal/shared";
 import { unwrap, type AuthResult } from "./api-error.ts";
@@ -149,24 +150,33 @@ export function usePreference<P extends Preference>(preference: P) {
   return [value, setValue, failure] as const;
 }
 
+declare module "@tanstack/history" {
+  interface HistoryState {
+    /** Set on the way to the sign-in screen after the account was deleted. */
+    accountDeleted?: boolean;
+  }
+}
+
 /**
- * A mutation that changes who is signed in, then goes to `to` so the route
- * guards place the user afresh.
+ * A mutation that changes who is signed in, then goes to `to`, carrying
+ * `state`, so the route guards place the user afresh.
  */
 export function useSessionChange<Input = void>(
   change: (authClient: AuthClient, input: Input) => Promise<AuthResult>,
-  to: "/" | "/entrar"
+  to: "/" | "/entrar",
+  { state, mutationKey }: { state?: HistoryState; mutationKey?: string[] } = {}
 ) {
   const { authClient } = useRouteContext({ from: rootRouteId });
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   return useMutation({
+    ...(mutationKey && { mutationKey }),
     mutationFn: async (input: Input) => unwrap(await change(authClient, input)),
     onSuccess: async () => {
       queryClient.removeQueries({ queryKey: sessionKey });
       rememberViewedMonth(queryClient, undefined);
       forgetTrendSettings(queryClient);
-      await navigate({ to });
+      await navigate({ to, ...(state && { state }) });
     },
   });
 }
