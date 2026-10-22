@@ -7,10 +7,12 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
+import { IconDownload } from "@tabler/icons-react";
 import { useIsMutating } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { ApiError, errorMessage } from "./api-error.ts";
 import { DialogActions } from "./dialog-actions.tsx";
+import { DataDownloadFailure, useDataDownload } from "./download-data.tsx";
 import { useSession, useSessionChange } from "./session.ts";
 
 const deleteAccountKey = ["delete-account"];
@@ -41,6 +43,27 @@ export function DeleteAccountModal({
   );
 }
 
+/**
+ * "Baixar meus dados", offered before the account goes (PRD §7.15): a loader
+ * while the archive is built, a notice with "Tentar novamente" if it fails.
+ */
+function DownloadDataFirst() {
+  const download = useDataDownload();
+  return (
+    <>
+      <Button
+        variant="default"
+        leftSection={<IconDownload size={18} aria-hidden="true" />}
+        loading={download.building}
+        onClick={() => download.start()}
+      >
+        Baixar meus dados
+      </Button>
+      <DataDownloadFailure download={download} />
+    </>
+  );
+}
+
 /** Whether a failure is the password not being the account's. */
 function isWrongPassword(error: unknown) {
   return error instanceof ApiError && error.code === "INVALID_PASSWORD";
@@ -56,7 +79,7 @@ function sameEmail(typed: string, email: string) {
  * email typed out (ADR-0005), then lands on the sign-in screen with a notice.
  */
 function DeleteAccountForm({ onCancel }: { onCancel: () => void }) {
-  const { email } = useSession().user;
+  const { email, approved } = useSession().user;
   const password = useRef<HTMLInputElement>(null);
   const [typedEmail, setTypedEmail] = useState("");
   const remove = useSessionChange(
@@ -102,6 +125,8 @@ function DeleteAccountForm({ onCancel }: { onCancel: () => void }) {
           Sua conta e todas as suas recorrências, contas e tokens de acesso
           serão apagados para sempre. Isso não pode ser desfeito.
         </Text>
+        {/* Only an approved user has data to take (PRD §7.15). */}
+        {approved && <DownloadDataFirst />}
         <PasswordInput
           ref={password}
           label="Senha atual"
