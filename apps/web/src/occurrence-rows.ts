@@ -1,9 +1,5 @@
-import type { PeriodItem, PeriodPayload } from "@mensal/shared";
+import type { PeriodItem, PeriodPayload, Situation } from "@mensal/shared";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
-
-/** Where an occurrence stands, as the table and the CSV name it (PRD §7.4). */
-export type Situation =
-  "Atrasada" | "Vence hoje" | "A vencer" | "Liquidada" | "Pulada";
 
 export interface OccurrenceRow {
   item: PeriodItem;

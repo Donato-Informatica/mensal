@@ -1,3 +1,4 @@
+export { csvAmount, csvDate, csvPeriod, toCsv } from "./lib/csv.ts";
 export { clampDueDate } from "./lib/due-date.ts";
 export {
   AccessTokenSchema,
@@ -61,6 +62,7 @@ export {
   type SummariesPayload,
   type SummarizeRangeInput,
 } from "./lib/resolve-period.ts";
+export { situationOf, type Situation } from "./lib/situation.ts";
 export { applyStatusChange } from "./lib/status-change.ts";
 export { currentPeriod, today } from "./lib/today.ts";
 export { parseVirtualId } from "./lib/virtual-id.ts";
