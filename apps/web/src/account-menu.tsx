@@ -36,7 +36,7 @@ export function AccountMenu() {
   const [password, passwordHandlers] = useDisclosure(false);
   const [tokens, tokensHandlers] = useDisclosure(false);
   const [signOut, signOutHandlers] = useDisclosure(false);
-  const [remove, deleteHandlers] = useDisclosure(false);
+  const [deleting, deletingHandlers] = useDisclosure(false);
 
   return (
     <>
@@ -125,7 +125,7 @@ export function AccountMenu() {
           <Menu.Item
             color="red"
             leftSection={<IconTrash size={18} aria-hidden="true" />}
-            onClick={deleteHandlers.open}
+            onClick={deletingHandlers.open}
           >
             Excluir conta
           </Menu.Item>
@@ -136,7 +136,7 @@ export function AccountMenu() {
       <ChangePasswordModal opened={password} onClose={passwordHandlers.close} />
       <AccessTokensModal opened={tokens} onClose={tokensHandlers.close} />
       <SignOutModal opened={signOut} onClose={signOutHandlers.close} />
-      <DeleteAccountModal opened={remove} onClose={deleteHandlers.close} />
+      <DeleteAccountModal opened={deleting} onClose={deletingHandlers.close} />
       <DataDownloadFailure download={download} />
     </>
   );
