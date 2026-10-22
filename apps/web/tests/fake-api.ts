@@ -59,6 +59,8 @@ interface Account {
  */
 export function fakeApi() {
   const accounts = new Map<string, Account>();
+  /** How many accounts were ever made, so a deleted one's id is never reused. */
+  let accountsMade = 0;
   let signedIn: Account | undefined;
   /** Reset tokens not yet used, by token, to the email they reset. */
   const resetTokens = new Map<string, string>();
@@ -687,7 +689,7 @@ export function fakeApi() {
     }: Pick<Account, "name" | "email" | "password"> &
       Partial<Pick<Account, "approved"> & Preferences>): Account {
       const created = {
-        id: `user-${accounts.size + 1}`,
+        id: `user-${++accountsMade}`,
         name,
         email,
         password,
