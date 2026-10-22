@@ -1,5 +1,10 @@
-import type { PeriodItem, PeriodPayload, Situation } from "@mensal/shared";
-import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
+import {
+  situationOf,
+  type PeriodItem,
+  type PeriodPayload,
+  type Situation,
+} from "@mensal/shared";
+import { groupOccurrences } from "./occurrence-groups.ts";
 
 export interface OccurrenceRow {
   item: PeriodItem;
@@ -22,27 +27,11 @@ export function occurrenceRows(
   const source = includePreviousPeriods
     ? payload
     : { ...payload, overdueFromPreviousPeriods: [] };
-  return groupOccurrences(source, today).flatMap(({ key, title, items }) =>
+  return groupOccurrences(source, today).flatMap(({ title, items }) =>
     items.map((item) => ({
       item,
       group: title,
-      situation: situationOf(key, item),
+      situation: situationOf(item, today),
     }))
   );
-}
-
-function situationOf(
-  group: OccurrenceGroup["key"],
-  item: PeriodItem
-): Situation {
-  switch (group) {
-    case "overdue":
-      return "Atrasada";
-    case "today":
-      return "Vence hoje";
-    case "upcoming":
-      return "A vencer";
-    case "closed":
-      return item.status === "SKIPPED" ? "Pulada" : "Liquidada";
-  }
 }
