@@ -141,6 +141,37 @@ describe("account events in the activity log (PRD §8.7)", () => {
     ]);
   });
 
+  it("logs a name change with the user's id, never the name", async () => {
+    const { cookie, userId } = await signUp(api);
+
+    const logged = await loggedBy(() =>
+      request(api, "/api/auth/update-user", {
+        cookie,
+        body: { name: "Ana Paula" },
+      })
+    );
+
+    expect(logged).toEqual([{ at, user: userId, action: "user.name-changed" }]);
+  });
+
+  it("logs nothing for a name changed to itself or refused", async () => {
+    const { cookie } = await signUp(api);
+
+    const statuses: number[] = [];
+    const logged = await loggedBy(async () => {
+      for (const name of ["Test User", " Test User ", "  "]) {
+        const response = await request(api, "/api/auth/update-user", {
+          cookie,
+          body: { name },
+        });
+        statuses.push(response.status);
+      }
+    });
+
+    expect(statuses).toEqual([200, 200, 400]);
+    expect(logged).toEqual([]);
+  });
+
   it("logs nothing for a sign-in refused before any credential is checked", async () => {
     const statuses: number[] = [];
 

@@ -6,9 +6,11 @@ import {
   IconLogout,
   IconSettings,
   IconUser,
+  IconUserEdit,
 } from "@tabler/icons-react";
 import { AccessTokensModal } from "./access-tokens.tsx";
 import classes from "./account-menu.module.css";
+import { ChangeNameModal } from "./change-name.tsx";
 import { ChangePasswordModal } from "./change-password.tsx";
 import { useSession } from "./session.ts";
 import { SettingsModal } from "./settings.tsx";
@@ -16,11 +18,13 @@ import { SignOutModal } from "./sign-out-button.tsx";
 
 /**
  * The header's account menu: an avatar with the user icon, which opens their name and
- * email over Configurações, Alterar senha and Sair. Each item opens its modal.
+ * email over Configurações, Alterar nome, Alterar senha, Tokens de acesso and
+ * Sair. Each item opens its modal.
  */
 export function AccountMenu() {
   const { name, email } = useSession().user;
   const [settings, settingsHandlers] = useDisclosure(false);
+  const [rename, renameHandlers] = useDisclosure(false);
   const [password, passwordHandlers] = useDisclosure(false);
   const [tokens, tokensHandlers] = useDisclosure(false);
   const [signOut, signOutHandlers] = useDisclosure(false);
@@ -62,6 +66,12 @@ export function AccountMenu() {
             Configurações
           </Menu.Item>
           <Menu.Item
+            leftSection={<IconUserEdit size={18} aria-hidden="true" />}
+            onClick={renameHandlers.open}
+          >
+            Alterar nome
+          </Menu.Item>
+          <Menu.Item
             leftSection={<IconLock size={18} aria-hidden="true" />}
             onClick={passwordHandlers.open}
           >
@@ -83,6 +93,7 @@ export function AccountMenu() {
         </Menu.Dropdown>
       </Menu>
       <SettingsModal opened={settings} onClose={settingsHandlers.close} />
+      <ChangeNameModal opened={rename} onClose={renameHandlers.close} />
       <ChangePasswordModal opened={password} onClose={passwordHandlers.close} />
       <AccessTokensModal opened={tokens} onClose={tokensHandlers.close} />
       <SignOutModal opened={signOut} onClose={signOutHandlers.close} />

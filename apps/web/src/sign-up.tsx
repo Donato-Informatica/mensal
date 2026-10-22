@@ -8,6 +8,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
+import { MAX_NAME_LENGTH } from "@mensal/shared";
 import { errorMessage } from "./api-error.ts";
 import { CardScreen } from "./card-screen.tsx";
 import { useSessionChange } from "./session.ts";
@@ -40,7 +41,13 @@ export function SignUp() {
               {errorMessage(signUp.error)}
             </Alert>
           )}
-          <TextInput label="Nome" name="name" autoComplete="name" required />
+          <TextInput
+            label="Nome"
+            name="name"
+            autoComplete="name"
+            maxLength={MAX_NAME_LENGTH}
+            required
+          />
           <TextInput
             label="E-mail"
             name="email"

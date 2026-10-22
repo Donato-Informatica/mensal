@@ -8,6 +8,7 @@ import {
   editRefusal,
   isActive,
   isInEffect,
+  NameSchema,
   NewAccessTokenSchema,
   NewOneOffSchema,
   NewRecurrenceSchema,
@@ -62,6 +63,8 @@ export function fakeApi() {
   const resetTokens = new Map<string, string>();
   /** The reset screen each emailed link leads to, by email. */
   const resetLinks = new Map<string, string>();
+  /** Every name update-user accepted, trimmed, oldest first. */
+  const nameUpdates: string[] = [];
   let down = false;
   /**
    * While stalled, the requests held unanswered, in the order they came; each
@@ -112,13 +115,20 @@ export function fakeApi() {
         };
   }
 
+  /** The 400 the API answers a name `NameSchema` refuses (PRD §8.2). */
+  function invalidName() {
+    return json(400, { code: "INVALID_NAME", message: "Invalid name" });
+  }
+
   /**
-   * POST /api/auth/update-user: the user's own preferences. Anything else,
-   * such as `approved`, is ignored, as Better-Auth does for fields that are
-   * not `input`.
+   * POST /api/auth/update-user: the user's name, trimmed, and their own
+   * preferences. Anything else, such as `approved`, is ignored, as
+   * Better-Auth does for fields that are not `input`.
    */
   function updateUser(body: Record<string, unknown>): Response {
     if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    const name = NameSchema.optional().safeParse(body.name);
+    if (!name.success) return invalidName();
     const { rejected } = colorSchemeIn(body);
     if (rejected) return rejected;
     // The API's validator: absent, or list or table.
@@ -132,6 +142,10 @@ export function fakeApi() {
       if (typeof value === typeof defaultPreferences[preference]) {
         Object.assign(signedIn.preferences, { [preference]: value });
       }
+    }
+    if (name.data !== undefined) {
+      signedIn.name = name.data;
+      nameUpdates.push(name.data);
     }
     return json(200, { status: true });
   }
@@ -469,10 +483,12 @@ export function fakeApi() {
           message: "User already exists. Use another email.",
         });
       }
+      const trimmed = NameSchema.safeParse(name);
+      if (!trimmed.success) return invalidName();
       const { colorScheme, rejected } = colorSchemeIn(body);
       if (rejected) return rejected;
       signedIn = api.addAccount({
-        name: name ?? "",
+        name: trimmed.data,
         email: email ?? "",
         password: password ?? "",
         ...(colorScheme && { colorScheme }),
@@ -658,6 +674,11 @@ export function fakeApi() {
     }[] {
       return passwordChanges;
     },
+    /** Every name update-user accepted, trimmed, oldest first. */
+    nameUpdates(): readonly string[] {
+      return nameUpdates;
+    },
+
     /** The account's password as it stands, to tell whether it changed. */
     passwordOf(email: string): string | undefined {
       return accounts.get(email)?.password;

@@ -14,6 +14,11 @@ To replace one's password while signed in, proving it with the current one.
 _UI (pt-BR)_: Alterar senha
 _Avoid_: update password, edit password
 
+**Change name**:
+To replace the name a user is addressed by; it never affects how they sign in.
+_UI (pt-BR)_: Alterar nome
+_Avoid_: edit profile, rename, update name, display name
+
 **Reset password**:
 To replace a forgotten password through a link sent to the user's email, without signing in.
 _UI (pt-BR)_: Redefinir senha (requested from "Esqueci a senha")

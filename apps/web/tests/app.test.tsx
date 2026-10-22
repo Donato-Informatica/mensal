@@ -107,6 +107,17 @@ describe("signing up", () => {
     ).toBeInTheDocument();
     expect(window.location.pathname).toBe("/aguardando-aprovacao");
   });
+
+  it("refuses a blank name", async () => {
+    openApp("/cadastro");
+
+    await signUp("   ", "bia@example.com", "correct-horse");
+
+    expect(
+      await screen.findByText("Informe um nome de até 100 caracteres.")
+    ).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/cadastro");
+  });
 });
 
 describe("awaiting approval", () => {

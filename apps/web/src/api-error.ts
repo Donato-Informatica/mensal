@@ -31,6 +31,8 @@ const messages = new Map<string, string>([
   ["PASSWORD_TOO_LONG", "A senha deve ter no máximo 128 caracteres."],
   ["INVALID_TOKEN", "Este link é inválido ou expirou. Peça um novo."],
   ["INVALID_PASSWORD", "Senha atual incorreta."],
+  // Better-Auth, from the API's own name check (PRD §8.2)
+  ["INVALID_NAME", "Informe um nome de até 100 caracteres."],
   // /api/v1
   ["UNAUTHENTICATED", "Sua sessão expirou. Entre novamente."],
   ["USER_NOT_APPROVED", "Sua conta ainda aguarda aprovação."],

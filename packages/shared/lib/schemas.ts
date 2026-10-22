@@ -26,6 +26,15 @@ const NotesInputSchema = z
   .nullable()
   .transform((notes) => notes || null);
 
+/** How long the user's name may be (PRD §8.2). */
+export const MAX_NAME_LENGTH = 100;
+
+/**
+ * The name the user is addressed by, asked at sign-up and changed from the
+ * account menu (PRD §8.2): not blank, at most `MAX_NAME_LENGTH` characters.
+ */
+export const NameSchema = z.string().trim().min(1).max(MAX_NAME_LENGTH);
+
 /**
  * The app's theme, a preference of the account (PRD §3.5): Escuro, Claro, or
  * Automático, which follows the device's own setting.

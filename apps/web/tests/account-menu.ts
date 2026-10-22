@@ -4,7 +4,12 @@ import { expect } from "vitest";
 
 /** Opens the header's account menu ("Conta") and picks one of its items. */
 export async function chooseFromAccountMenu(
-  name: "Configurações" | "Alterar senha" | "Tokens de acesso" | "Sair",
+  name:
+    | "Configurações"
+    | "Alterar nome"
+    | "Alterar senha"
+    | "Tokens de acesso"
+    | "Sair",
   user: UserEvent = userEvent.setup()
 ) {
   await user.click(await screen.findByRole("button", { name: "Conta" }));

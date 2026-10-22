@@ -5,11 +5,18 @@ import {
   ColorSchemeSchema,
   defaultColorScheme,
   defaultOccurrenceView,
+  MAX_NAME_LENGTH,
+  NameSchema,
   OccurrenceViewSchema,
 } from "@mensal/shared";
 import { eq } from "drizzle-orm";
 import { betterAuth } from "better-auth";
-import { createAuthMiddleware, getIP, isAPIError } from "better-auth/api";
+import {
+  APIError,
+  createAuthMiddleware,
+  getIP,
+  isAPIError,
+} from "better-auth/api";
 import { openAPI } from "better-auth/plugins";
 import {
   activityRecorder,
@@ -59,8 +66,8 @@ export interface AuthOptions {
  * SameSite=Lax cookies, and password-reset links sent by `email` (PRD §8.2,
  * ADR-0003); a reset signs the user out everywhere and revokes every access token, while a password change revokes what the user chose (PRD §8.2). The anonymous endpoints are
  * rate limited per client IP, read from the proxy's `X-Forwarded-For`
- * (PRD §8.6). Sign-ups, sign-ins and failed sign-ins go to the activity log
- * (PRD §8.7).
+ * (PRD §8.6). The user's name is trimmed and checked (PRD §8.2). Sign-ups,
+ * sign-ins, failed sign-ins and name changes go to the activity log (PRD §8.7).
  */
 export function createAuth({
   db,
@@ -237,7 +244,36 @@ export function createAuth({
       ipAddress: { ipAddressHeaders: ["x-forwarded-for"] },
     },
     hooks: {
+      // The name, trimmed, must be NameSchema's (PRD §8.2): at sign-up, and on
+      // an update-user that changes it.
+      before: createAuthMiddleware(async (ctx) => {
+        const body = ctx.body as { name?: unknown } | undefined;
+        if (
+          ctx.path !== "/sign-up/email" &&
+          !(ctx.path === "/update-user" && body?.name !== undefined)
+        ) {
+          return;
+        }
+        const name = NameSchema.safeParse(body?.name);
+        if (!name.success) {
+          throw new APIError("BAD_REQUEST", {
+            code: "INVALID_NAME",
+            message: `Name must be 1 to ${MAX_NAME_LENGTH} characters`,
+          });
+        }
+        return { context: { ...ctx, body: { ...body, name: name.data } } };
+      }),
       after: createAuthMiddleware(async (ctx) => {
+        if (ctx.path === "/update-user") {
+          if (isAPIError(ctx.context.returned)) return;
+          const { name } = ctx.body as { name?: string };
+          // The session as it was before the change.
+          const user = ctx.context.session?.user;
+          if (user && name !== undefined && name !== user.name) {
+            record({ user: user.id, action: "user.name-changed" });
+          }
+          return;
+        }
         if (ctx.path === "/change-password") {
           if (isAPIError(ctx.context.returned)) return;
           // Revoking the other sessions starts a new one for this device.
@@ -279,7 +315,8 @@ export type Auth = ReturnType<typeof createAuth>;
 
 /**
  * The endpoints whose new session the activity log reports. Others that also
- * set a session cookie (a session refresh, update-user) log nothing.
+ * set a session cookie (a session refresh, update-user) log nothing, but for
+ * an update-user that changes the name.
  */
 const sessionActions: Record<string, SessionAction | undefined> = {
   "/sign-up/email": "user.sign-up",
