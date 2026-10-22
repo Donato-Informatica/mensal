@@ -1,6 +1,6 @@
 import type { ErrorRequestHandler } from "express";
 import { invalidInput } from "./invalid-input.ts";
-import type { Log } from "./log.ts";
+import { describeError, type Log } from "./log.ts";
 
 /**
  * The last middleware: every error left unanswered becomes JSON, and an
@@ -20,9 +20,7 @@ export function errorHandler(log: Log): ErrorRequestHandler {
       res.status(413).json({ code: "PAYLOAD_TOO_LARGE" });
       return;
     }
-    log(
-      error instanceof Error ? (error.stack ?? error.message) : String(error)
-    );
+    log(describeError(error));
     res.status(500).json({ code: "INTERNAL_ERROR" });
   };
 }

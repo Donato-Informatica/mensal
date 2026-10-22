@@ -4,7 +4,7 @@ import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useState } from "react";
 import type { DownloadedFile } from "./api-client.ts";
 import { saveFile } from "./save-file.ts";
-import toast from "./undo-toast.module.css";
+import { Toast } from "./toast.tsx";
 
 /**
  * Downloads the archive of everything the user entered (PRD §6.5, §7.14):
@@ -43,33 +43,36 @@ export type DataDownload = ReturnType<typeof useDataDownload>;
 export function DataDownloadFailure({ download }: { download: DataDownload }) {
   if (!download.failed) return null;
   return (
-    <div role="alert" className={toast.toast}>
-      <Text className={toast.text} fz="sm">
+    <Toast
+      role="alert"
+      message={
         <Text span fw={600} c="var(--mensal-color-rose-text)">
           Não foi possível baixar seus dados.
         </Text>
-      </Text>
-      <Group gap={4} wrap="nowrap">
-        <Button
-          variant="subtle"
-          size="xs"
-          h={{ base: 44, sm: 30 }}
-          loading={download.building}
-          onClick={() => download.start()}
-        >
-          Tentar novamente
-        </Button>
-        <Button
-          variant="subtle"
-          color="gray"
-          size="xs"
-          h={{ base: 44, sm: 30 }}
-          disabled={download.building}
-          onClick={download.dismiss}
-        >
-          Fechar
-        </Button>
-      </Group>
-    </div>
+      }
+      actions={
+        <Group gap={4} wrap="nowrap">
+          <Button
+            variant="subtle"
+            size="xs"
+            h={{ base: 44, sm: 30 }}
+            loading={download.building}
+            onClick={() => download.start()}
+          >
+            Tentar novamente
+          </Button>
+          <Button
+            variant="subtle"
+            color="gray"
+            size="xs"
+            h={{ base: 44, sm: 30 }}
+            disabled={download.building}
+            onClick={download.dismiss}
+          >
+            Fechar
+          </Button>
+        </Group>
+      }
+    />
   );
 }

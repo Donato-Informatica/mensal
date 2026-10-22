@@ -3,6 +3,7 @@ import {
   clampDueDate,
   ColorSchemeSchema,
   currentPeriod,
+  dataArchiveName,
   defaultColorScheme,
   defaultOccurrenceView,
   editRefusal,
@@ -58,6 +59,8 @@ interface Account {
  */
 export function fakeApi() {
   const accounts = new Map<string, Account>();
+  /** How many accounts were ever made, so a deleted one's id is never reused. */
+  let accountsMade = 0;
   let signedIn: Account | undefined;
   /** Reset tokens not yet used, by token, to the email they reset. */
   const resetTokens = new Map<string, string>();
@@ -205,7 +208,7 @@ export function fakeApi() {
       status: 200,
       headers: {
         "content-type": "application/zip",
-        "content-disposition": `attachment; filename="mensal-dados-${today()}.zip"`,
+        "content-disposition": `attachment; filename="${dataArchiveName(today())}"`,
       },
     });
   }
@@ -584,6 +587,8 @@ export function fakeApi() {
         });
       }
       accounts.delete(signedIn.email);
+      signedIn.recurrences = [];
+      signedIn.occurrences = [];
       accessTokens.delete(signedIn.id);
       signedIn = undefined;
       return json(200, { success: true, message: "User deleted" });
@@ -684,7 +689,7 @@ export function fakeApi() {
     }: Pick<Account, "name" | "email" | "password"> &
       Partial<Pick<Account, "approved"> & Preferences>): Account {
       const created = {
-        id: `user-${accounts.size + 1}`,
+        id: `user-${++accountsMade}`,
         name,
         email,
         password,
@@ -746,9 +751,13 @@ export function fakeApi() {
       return token;
     },
 
-    /** The account's access tokens, secrets included, as the database holds them. */
+    /**
+     * The account's access tokens, secrets included, as the database holds
+     * them: none once the account is deleted.
+     */
     accessTokensOf(email: string): readonly FakeAccessToken[] {
-      return tokensOf(accounts.get(email)!);
+      const account = accounts.get(email);
+      return account ? tokensOf(account) : [];
     },
 
     /** Seeds a recurrence for the account, as through Drizzle Studio. */
@@ -783,14 +792,14 @@ export function fakeApi() {
       return { ...accounts.get(email)!.preferences };
     },
 
-    /** The account's recurrences, as the database holds them. */
+    /** The account's recurrences, as the database holds them: none once it is deleted. */
     recurrencesOf(email: string): readonly Recurrence[] {
-      return accounts.get(email)!.recurrences;
+      return accounts.get(email)?.recurrences ?? [];
     },
 
-    /** The account's persisted occurrences, as the database holds them. */
+    /** The account's persisted occurrences, as the database holds them: none once it is deleted. */
     occurrencesOf(email: string): readonly Occurrence[] {
-      return accounts.get(email)!.occurrences;
+      return accounts.get(email)?.occurrences ?? [];
     },
 
     /** Seeds an occurrence for the account, as through Drizzle Studio. */

@@ -70,6 +70,43 @@ describe("deleting the account (PRD §7.15)", () => {
     expect(api.hasAccount(email)).toBe(false);
   });
 
+  it("erases the account's recurrences, occurrences and access tokens with it (PRD §5.13)", async () => {
+    const user = userEvent.setup();
+    signedIn({ approved: true });
+    api.addRecurrence(email);
+    api.addOccurrence(email);
+    api.addAccessToken(email);
+    openApp(api, "/");
+    await chooseFromAccountMenu("Excluir conta");
+    const dialog = await screen.findByRole("dialog", { name: "Excluir conta" });
+
+    await fillIn(dialog, { password: "old-horse", typedEmail: email });
+    await user.click(deleteButton(dialog));
+
+    await screen.findByText("Sua conta foi excluída.");
+    expect(api.recurrencesOf(email)).toEqual([]);
+    expect(api.occurrencesOf(email)).toEqual([]);
+    expect(api.accessTokensOf(email)).toEqual([]);
+  });
+
+  it("leaves other accounts alone, even one made afterwards", async () => {
+    const user = userEvent.setup();
+    signedIn({ approved: true });
+    api.addAccount({ name: "Bia", email: "bia@example.com", password: "x" });
+    const biasToken = api.addAccessToken("bia@example.com");
+    openApp(api, "/");
+    await chooseFromAccountMenu("Excluir conta");
+    const dialog = await screen.findByRole("dialog", { name: "Excluir conta" });
+
+    await fillIn(dialog, { password: "old-horse", typedEmail: email });
+    await user.click(deleteButton(dialog));
+    await screen.findByText("Sua conta foi excluída.");
+    api.addAccount({ name: "Caio", email: "caio@example.com", password: "x" });
+
+    expect(api.accessTokensOf("bia@example.com")).toEqual([biasToken]);
+    expect(api.accessTokensOf("caio@example.com")).toEqual([]);
+  });
+
   it("is the last item of the account menu", async () => {
     signedIn({ approved: true });
     openApp(api, "/");

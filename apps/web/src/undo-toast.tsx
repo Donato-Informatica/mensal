@@ -2,7 +2,7 @@ import { Button, Text } from "@mantine/core";
 import type { StatusChange } from "@mensal/shared";
 import { useEffect, useState } from "react";
 import type { StatusChangeRequest } from "./status-controls.tsx";
-import classes from "./undo-toast.module.css";
+import { Toast } from "./toast.tsx";
 
 /** How long a change can be taken back before the notice leaves on its own. */
 const VISIBLE_MS = 8000;
@@ -43,29 +43,31 @@ export function UndoToast({
   return (
     <div role="status" aria-live="polite">
       {request && (
-        <div
+        <Toast
           key={request.item.id + request.change.status}
-          className={classes.toast}
           onMouseEnter={() => setHeld(true)}
           onMouseLeave={() => setHeld(false)}
           onFocus={() => setHeld(true)}
           onBlur={() => setHeld(false)}
-        >
-          <Text className={classes.text} fz="sm">
-            <Text span fw={600} c="bright">
-              {request.item.description}
-            </Text>{" "}
-            {outcome(request)}
-          </Text>
-          <Button
-            variant="subtle"
-            size="xs"
-            h={{ base: 44, sm: 30 }}
-            onClick={() => onUndo(request, { status: request.item.status })}
-          >
-            Desfazer
-          </Button>
-        </div>
+          message={
+            <>
+              <Text span fw={600} c="bright">
+                {request.item.description}
+              </Text>{" "}
+              {outcome(request)}
+            </>
+          }
+          actions={
+            <Button
+              variant="subtle"
+              size="xs"
+              h={{ base: 44, sm: 30 }}
+              onClick={() => onUndo(request, { status: request.item.status })}
+            >
+              Desfazer
+            </Button>
+          }
+        />
       )}
     </div>
   );

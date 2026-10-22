@@ -1,10 +1,16 @@
 import { Badge, Box, Group, Paper, Table, Text } from "@mantine/core";
 import { VisuallyHidden } from "@mantine/core";
-import { today, type PeriodPayload, type StatusChange } from "@mensal/shared";
+import {
+  directionLabel,
+  occurrenceColumns,
+  originLabel,
+  today,
+  type PeriodPayload,
+  type StatusChange,
+} from "@mensal/shared";
 import { Fragment, type ReactNode } from "react";
 import { EditOccurrenceButton } from "./edit-occurrence.tsx";
 import { formatDate } from "./format.ts";
-import { columns, directionLabel, originLabel } from "./occurrence-labels.ts";
 import { occurrenceRows, type OccurrenceRow } from "./occurrence-rows.ts";
 import {
   Amount,
@@ -57,14 +63,14 @@ export function OccurrenceTable({
             <Table.Th>
               <VisuallyHidden>Liquidar</VisuallyHidden>
             </Table.Th>
-            <Table.Th>{columns.description}</Table.Th>
-            <Table.Th>{columns.dueDate}</Table.Th>
-            <Table.Th>{columns.direction}</Table.Th>
-            <Table.Th ta="right">{columns.amount}</Table.Th>
-            <Table.Th>{columns.situation}</Table.Th>
-            <Table.Th>{columns.settledAt}</Table.Th>
-            <Table.Th>{columns.origin}</Table.Th>
-            <Table.Th>{columns.notes}</Table.Th>
+            <Table.Th>{occurrenceColumns.description}</Table.Th>
+            <Table.Th>{occurrenceColumns.dueDate}</Table.Th>
+            <Table.Th>{occurrenceColumns.direction}</Table.Th>
+            <Table.Th ta="right">{occurrenceColumns.amount}</Table.Th>
+            <Table.Th>{occurrenceColumns.situation}</Table.Th>
+            <Table.Th>{occurrenceColumns.settledAt}</Table.Th>
+            <Table.Th>{occurrenceColumns.origin}</Table.Th>
+            <Table.Th>{occurrenceColumns.notes}</Table.Th>
             <Table.Th>
               <VisuallyHidden>Ações</VisuallyHidden>
             </Table.Th>
