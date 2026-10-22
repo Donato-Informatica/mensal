@@ -24,6 +24,16 @@ interface Response {
   content?: { "application/json": { schema: Schema } };
 }
 
+/** A file to download, such as the data archive (PRD §6.5). */
+interface FileResponse {
+  description: string;
+  headers: Record<string, { description: string; schema: Schema }>;
+  content: {
+    "application/zip": { schema: Schema };
+    "application/json"?: never;
+  };
+}
+
 interface Operation {
   tags: string[];
   summary: string;
@@ -35,7 +45,7 @@ interface Operation {
     schema: Schema;
   }[];
   requestBody?: Response & { required: true };
-  responses: Record<number, Response>;
+  responses: Record<number, Response | FileResponse>;
 }
 
 const jsonSchema = (schema: z.ZodType, io: "input" | "output"): Schema =>
@@ -190,6 +200,30 @@ export function buildOpenApiSpec() {
         responses: {
           204: noContent,
           404: notFound("ACCESS_TOKEN_NOT_FOUND"),
+        },
+      }),
+    },
+    "/api/v1/data": {
+      get: secured({
+        tags: ["Account"],
+        summary:
+          "Download everything the user entered: a ZIP of perfil.csv, recorrencias.csv and ocorrencias.csv (pt-BR CSV: BOM, `;`, CRLF). Read-only",
+        responses: {
+          200: {
+            description: "The archive, named after today in America/Sao_Paulo",
+            headers: {
+              "Content-Disposition": {
+                description:
+                  'attachment; filename="mensal-dados-YYYY-MM-DD.zip"',
+                schema: { type: "string" },
+              },
+            },
+            content: {
+              "application/zip": {
+                schema: { type: "string", contentMediaType: "application/zip" },
+              },
+            },
+          },
         },
       }),
     },

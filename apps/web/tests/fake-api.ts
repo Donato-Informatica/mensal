@@ -186,6 +186,30 @@ export function fakeApi() {
     );
   }
 
+  /** How many archives GET /api/v1/data has served. */
+  let dataDownloads = 0;
+
+  /**
+   * GET /api/v1/data, behind the approval gate: a ZIP named after today in
+   * São Paulo (PRD §6.5). Its contents are the API's to test; here it is an
+   * empty archive.
+   */
+  function getData(): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    dataDownloads += 1;
+    // An empty ZIP: just its end-of-central-directory record.
+    const emptyZip = new Uint8Array(22);
+    emptyZip.set([0x50, 0x4b, 0x05, 0x06]);
+    return new Response(emptyZip, {
+      status: 200,
+      headers: {
+        "content-type": "application/zip",
+        "content-disposition": `attachment; filename="mensal-dados-${today()}.zip"`,
+      },
+    });
+  }
+
   /** POST /api/v1/recurrences, behind the approval gate. */
   function postRecurrence(body: unknown): Response {
     if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
@@ -586,6 +610,9 @@ export function fakeApi() {
       if (request.method === "GET" && pathname === "/api/v1/access-tokens") {
         return getAccessTokens();
       }
+      if (request.method === "GET" && pathname === "/api/v1/data") {
+        return getData();
+      }
       const accessTokenMatch = /^\/api\/v1\/access-tokens\/([^/]+)$/.exec(
         pathname
       );
@@ -677,6 +704,11 @@ export function fakeApi() {
     /** Every name update-user accepted, trimmed, oldest first. */
     nameUpdates(): readonly string[] {
       return nameUpdates;
+    },
+
+    /** How many archives of the user's data were served. */
+    dataDownloads(): number {
+      return dataDownloads;
     },
 
     /** The account's password as it stands, to tell whether it changed. */
