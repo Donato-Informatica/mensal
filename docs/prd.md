@@ -24,7 +24,7 @@ A **minimalist, opinionated** SaaS focused strictly on forecasting and settling 
 - Periodicity other than monthly. Annual bills are one-off occurrences; installments are recurrences with an `endPeriod`.
 - Balances, categories, multiple currencies. Amounts are always BRL. The only chart is the trend of §7.11.
 - Billing or paid plans.
-- Email beyond the transactional password emails of §8.2 ([ADR-0003](adr/0003-transactional-email-via-resend.md)): no verification, approval notices or notifications.
+- Email beyond the transactional password and account-deletion emails of §8.2 ([ADR-0003](adr/0003-transactional-email-via-resend.md)): no verification, approval notices or notifications.
 - Internationalization: the UI is Brazilian Portuguese only.
 - OAuth for agents (e.g. claude.ai custom connectors): agents connect to the MCP server with access tokens only (§8.9, [ADR-0004](adr/0004-remote-mcp-with-access-tokens.md)).
 
@@ -231,7 +231,7 @@ Only when $P$ is the current period, the payload also lists every overdue occurr
 10. **Recurrence start:** `startPeriod` cannot be earlier than the current period. Earlier history is entered as one-off occurrences.
 11. **Ordering:** by `dueDate` ascending; occurrences without a `dueDate` come **last**.
 12. **Tenant isolation:** every query is filtered by `userId`.
-13. **Account deletion:** deleting a user cascades to all of their recurrences and occurrences.
+13. **Account deletion:** deleting a user ([ADR-0005](adr/0005-immediate-hard-account-deletion.md)) is immediate and permanent. It cascades to all of their recurrences, occurrences, sessions and accounts, and their access tokens are deleted just before it (the `apikeys` table has no foreign key to `users`). Nothing is kept: the same email can sign up again as a new user, who needs approval again.
 
 ---
 
@@ -319,6 +319,15 @@ All routes under `/api/v1` require an authenticated, approved user (see 8.2). Er
   }
   ```
 
+### 6.5 Data download (`/api/v1/data`)
+
+- `GET /`: the user's own data as `200 application/zip`, with `Content-Disposition: attachment; filename="mensal-dados-AAAA-MM-DD.zip"` (today in `America/Sao_Paulo`). Read-only: it never materializes a virtual occurrence. Built by a domain operation that takes the user id and returns the ZIP as a stream and knows nothing of HTTP, so a background job can build it later without changing the archive.
+- The archive holds only what the user entered, as three CSV files in the dialect of §7.10 (UTF-8 with a BOM, `;` separator, CRLF, the same quoting, amounts as `1234,56`, empty when absent, dates as `DD/MM/AAAA`). Every file is present even when it has no rows, with its header only.
+  - `perfil.csv`: `Nome;Email;Criado em`, one row.
+  - `recorrencias.csv`: `ID;Descrição;Tipo;Valor;Dia de vencimento;Início;Fim;Notas`, every recurrence, ended ones included, ordered by `createdAt`. Início and Fim are `AAAA-MM` (Fim empty when open-ended); Valor is the default amount.
+  - `ocorrencias.csv`: `ID;Competência;Descrição;Vencimento;Tipo;Valor;Situação;Liquidada em;Origem;Recorrência (ID);Notas`, every persisted occurrence (virtual ones are not data the user entered; the recurrences rebuild them), ordered by `period` then as in §5.11. Competência is `AAAA-MM`; Recorrência (ID) is empty for a one-off.
+- Preferences, approval, sessions and access tokens are not included.
+
 ---
 
 ## 7. Frontend and Minimalist UX
@@ -350,6 +359,8 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
     - **Criar token** asks for a name and the current password. The full token is shown **once**, with a copy button and the message that it will not be shown again. Next to it are ready-to-copy snippets with the token and the app's public URL: the `claude mcp add --transport http …` command for Claude Code and the `[mcp_servers.mensal]` block of Codex's `~/.codex/config.toml`.
     - An empty list explains what a token is for and offers **Criar token**.
 13. **Change name (Alterar nome):** an item in the account menu, before "Alterar senha" and separate from Configurações (a name is not a preference), opens a modal with a single **Nome** field holding the current name (§8.2). No password is asked. Saving an unchanged name closes it without a request; saving a new one closes it and the menu shows the new name at once, with no notice. A refused name is that field's error ("Informe um nome de até 100 caracteres."); any other failure is the form's. Other devices show the new name the next time they load the session.
+14. **Download data (Baixar meus dados):** an item in the account menu downloads the archive of §6.5. While it is being built the item shows a loader; a failure shows a notice with "Tentar novamente".
+15. **Delete account (Excluir conta):** an item at the end of the account menu, and a link on the "Aguardando aprovação" screen, open a modal that says the account and every recurrence, occurrence and access token will be erased for good, offers **Baixar meus dados** first (approved users only), and asks for the current password and the user's email typed as confirmation. The **Excluir conta** button stays disabled until the typed email matches. A wrong password is that field's error. On success the user lands on the sign-in screen with the notice "Sua conta foi excluída."; other devices are signed out with it (§8.2).
 
 ---
 
@@ -384,6 +395,8 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 - **Email** ([ADR-0003](adr/0003-transactional-email-via-resend.md)): through an injectable `email` sink on Better-Auth. With `RESEND_API_KEY` and `EMAIL_FROM` set it sends through Resend's REST API; with neither it writes each email's text to the log, in any environment, and the startup line says which. Setting only one refuses to boot. Emails are pt-BR, as inline HTML plus a plain-text twin.
 - **Reset password** ("Esqueci a senha" → "Redefinir senha"): `sendResetPassword` emails a link valid for 1 hour, to approved and unapproved users alike. It is sent without awaiting it, so the answer is the same and as fast whether or not the account exists; a send failure is logged without the link, and with Resend configured the link never reaches the log. A reset signs the user out of every device (`revokeSessionsOnPasswordReset`) and revokes every access token (§8.9), with no choice: it is how a user takes a stolen account back.
 - **Change password** ("Alterar senha", a modal opened from the account menu in the header of the app proper, so only approved users reach it): Better-Auth's `change-password`, with the current password, the new one and its confirmation (checked by the client). A wrong current password answers `400 INVALID_PASSWORD`. The modal has two checkboxes, both checked by default: **"Desconectar dos outros dispositivos"** (`revokeOtherSessions`; this device always stays signed in) and **"Revogar todos os tokens de acesso"** (§8.9). The server does what the user chose. Unchecking them is a deliberate choice: it lets a stolen session or token outlive the change.
+- **Delete account** ([ADR-0005](adr/0005-immediate-hard-account-deletion.md)): Better-Auth's `delete-user` with the current password, outside `/api/v1`, so approved and unapproved users alike can leave (§7.15). A wrong password answers `400 INVALID_PASSWORD`. `deleteUser.beforeDelete` deletes the user's access tokens; the foreign keys cascade the rest (§5.13). Every session dies with the user.
+- **Account-deleted email:** after the deletion commits, the user is emailed when it happened (São Paulo time), that every recurrence, occurrence and access token was erased and cannot be recovered, and "se não foi você, responda este email". It has no links. It is sent without awaiting it; a send failure is logged and never undoes the deletion.
 - **Password-changed alert:** after a change or a reset, the user is emailed when it happened (São Paulo time), what was revoked (other devices, access tokens, or nothing) and a link to "Esqueci a senha", so someone whose password was replaced by another can take the account back. A reset always revokes everything. No IP or device details.
 
 ### 8.3 Data Layer (Drizzle + Postgres)
@@ -411,7 +424,7 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 A minimal baseline against opportunistic internet traffic (scanners, credential stuffing, sign-up spam, fingerprinting), applied in the API process so it travels with the container whatever proxy sits in front.
 
 - **Headers:** `helmet` with its defaults is the first middleware in the Express app. It also removes `X-Powered-By`.
-- **Rate limiting on `/api/auth` only:** Better-Auth's built-in limiter, enabled in every environment (not only production), in memory (one container), keyed on the client IP read from `x-forwarded-for` as set by the proxy. Per IP: sign-in 5 per minute, sign-up 3 per hour, password-reset request 3 per hour, password change 5 per minute (it checks the current password, so a stolen session could guess it); every other path keeps Better-Auth's built-in rules: 3 per 10 s on `/sign-in/*`, `/sign-up/*` and `/change-email`, 3 per 60 s on `/send-verification-email`, and 100 per 10 s on the rest. Over the limit: `429`. `/api/v1` has no limiter: only approved users reach it. `/api/mcp` is limited per access token (§8.9).
+- **Rate limiting on `/api/auth` only:** Better-Auth's built-in limiter, enabled in every environment (not only production), in memory (one container), keyed on the client IP read from `x-forwarded-for` as set by the proxy. Per IP: sign-in 5 per minute, sign-up 3 per hour, password-reset request 3 per hour, password change and account deletion 5 per minute each (they check the current password, so a stolen session could guess it); every other path keeps Better-Auth's built-in rules: 3 per 10 s on `/sign-in/*`, `/sign-up/*` and `/change-email`, 3 per 60 s on `/send-verification-email`, and 100 per 10 s on the rest. Over the limit: `429`. `/api/v1` has no limiter: only approved users reach it. `/api/mcp` is limited per access token (§8.9).
 - **Errors are JSON:** a final error handler answers malformed JSON with `400 INVALID_INPUT` (`fields: []`), an oversized body with `413 PAYLOAD_TOO_LARGE`, and anything else with `500 INTERNAL_ERROR`, logging the error server-side and returning no detail.
 - **Boot check:** in production the API refuses to start when `BETTER_AUTH_SECRET` is the `.env.example` value or shorter than 32 characters, or when `BETTER_AUTH_URL` is not `https://`.
 - **Deliberately unchanged:** the 100 kB JSON body limit; no CORS package (same origin, §8.4); no CSRF tokens on `/api/v1` (`SameSite=Lax` keeps the session cookie off cross-site writes, and Better-Auth checks the origin on `/api/auth`).
@@ -425,7 +438,7 @@ A minimal activity log for the operator: who did what to which item, and when. I
 - **One JSON line per event**, e.g. `{"at":"2026-10-16T14:03:00.000Z","user":"…","action":"occurrence.status","kind":"occurrence","id":"…","from":"virtual_…","status":"SETTLED"}`. `at` is UTC ISO from the app's clock.
 - **Who:** the user id only, never email or name. The exception is a failed sign-in, which has no user: it carries the attempted `email` and the client `ip` (from `x-forwarded-for`, §8.6).
 - **What item:** its kind and id only. No descriptions, amounts or dates: they are the user's financial data. An edit lists the changed field _names_ in `fields`, never their values. A write that materializes a virtual occurrence (ADR-0001) carries the virtual id in `from` and the persisted uuid in `id`.
-- **Actions:** `occurrence.create` (one-off), `occurrence.edit`, `occurrence.status` (with the new `status`), `occurrence.delete`, `recurrence.create`, `recurrence.edit` (ending one shows `endPeriod` in `fields`), `recurrence.delete`, `user.sign-up`, `user.sign-in`, `user.sign-in-failed`, `user.password-changed` (with `revoked`: `["sessions", "access-tokens"]`, the part the user chose, or `[]`), `user.password-reset`, `user.name-changed` (never the name itself; a change to the same name is a no-op edit), `user.access-token-created` and `user.access-token-revoked` (the token's id, never the token). A write made through the MCP server (§8.9) logs the same action with `"via":"mcp"`. A reset _request_ is not logged: one for an unknown email has no user. Only successful writes are logged; reads, no-op edits and refused requests are not (unexpected errors already reach the error handler, §8.6).
+- **Actions:** `occurrence.create` (one-off), `occurrence.edit`, `occurrence.status` (with the new `status`), `occurrence.delete`, `recurrence.create`, `recurrence.edit` (ending one shows `endPeriod` in `fields`), `recurrence.delete`, `user.sign-up`, `user.sign-in`, `user.sign-in-failed`, `user.password-changed` (with `revoked`: `["sessions", "access-tokens"]`, the part the user chose, or `[]`), `user.password-reset`, `user.name-changed` (never the name itself; a change to the same name is a no-op edit), `user.access-token-created` and `user.access-token-revoked` (the token's id, never the token), `user.deleted` (the user id only). A write made through the MCP server (§8.9) logs the same action with `"via":"mcp"`. A reset _request_ is not logged: one for an unknown email has no user. Only successful writes are logged; reads, no-op edits and refused requests are not (unexpected errors already reach the error handler, §8.6).
 - **Sink:** an injectable `activity` option on the app and on Better-Auth, writing to the console by default. No log provider in the MVP; adding one later replaces the default sink. The free-text operator log (errors, healthcheck, email failures, and emails while Resend is not configured, §8.2) is unchanged.
 
 ### 8.8 API Documentation
@@ -469,7 +482,7 @@ Users can connect their own agents (Claude Code, Codex, any MCP client that send
   | `update_occurrence`        | `PATCH /occurrences/:id` (accepts virtual ids)                                                     |
   | `change_occurrence_status` | `PATCH /occurrences/:id/status` (accepts virtual ids): `PENDING`, `SETTLED` or `SKIPPED`, rule 5.7 |
   | `delete_occurrence`        | `DELETE /occurrences/:id`                                                                          |
-  - Preferences, passwords and access tokens have no tools.
+  - Preferences, passwords, access tokens, the data download (§6.5) and account deletion have no tools: an agent holding a token cannot take everything away in one call or erase the account.
   - The `delete_*` tools carry the `destructiveHint` annotation, so clients ask before running them. The read tools carry `readOnlyHint`.
 
 - **Contract:** inputs and outputs follow §6 exactly, built from the same Zod schemas of `@mensal/shared`.
@@ -485,7 +498,7 @@ Users can connect their own agents (Claude Code, Codex, any MCP client that send
   - tenant isolation;
   - every tool.
 
-  A test fails when a `/api/v1` operation, other than `/me` and `/access-tokens`, has no tool.
+  A test fails when a `/api/v1` operation, other than `/me`, `/access-tokens` and `/data`, has no tool.
 
 ---
 

@@ -29,6 +29,16 @@ A secret a user creates to let an agent of their own act on their data on their 
 _UI (pt-BR)_: Token de acesso
 _Avoid_: API key, secret, password, credential
 
+**Download data**:
+To take away a copy of everything the user entered: their profile, recurrences and occurrences.
+_UI (pt-BR)_: Baixar meus dados
+_Avoid_: export, backup, dump
+
+**Delete account**:
+To permanently erase the user and everything they entered, at their own request; it cannot be undone.
+_UI (pt-BR)_: Excluir conta
+_Avoid_: close account, deactivate, cancel account
+
 **Preference**:
 A choice a user makes about how the product behaves for them, shared by every device they sign in on; it never changes their data.
 _UI (pt-BR)_: Configurações
