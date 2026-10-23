@@ -9,6 +9,7 @@ import {
   Modal,
   PasswordInput,
   Popover,
+  Portal,
   rem,
   SegmentedControl,
   Switch,
@@ -18,6 +19,8 @@ import {
   type MantineColorsTuple,
   type VariantColorsResolver,
 } from "@mantine/core";
+import { canvas } from "./canvas.ts";
+import { portalTargetId } from "./connection.tsx";
 import controls from "./controls.module.css";
 import dialog from "./dialog.module.css";
 
@@ -45,7 +48,7 @@ const dark: MantineColorsTuple = [
   "#3a3a3a", // hairline-strong
   "#2a2a2a", // hairline
   "#1a1a1a", // surface-card
-  "#0a0a0a", // canvas
+  canvas.dark,
   "#060606",
   "#000000",
 ];
@@ -86,7 +89,7 @@ const paper = {
   mutedSoft: "#a3a3a3", // light-muted-soft
   hairline: "#e5e5e5", // light-hairline
   hairlineStrong: "#d4d4d4", // light-hairline-strong
-  canvas: "#f5f5f5", // light-canvas
+  canvas: canvas.light,
   surfaceCard: "#ffffff", // light-surface-card
   primaryDisabled: "#f2f4c8", // light-primary-disabled
 } as const;
@@ -160,6 +163,7 @@ export const theme = createTheme({
   // --mensal-color-highlight: yellow at night, ink on paper.
   focusClassName: controls.focus ?? "",
   components: {
+    Portal: Portal.extend({ defaultProps: { target: `#${portalTargetId}` } }),
     Loader: Loader.extend({
       defaultProps: { color: "var(--mensal-color-highlight)" },
     }),
@@ -217,12 +221,6 @@ export const theme = createTheme({
     }),
   },
 });
-
-/**
- * Each scheme's canvas (DESIGN.md: canvas, light-canvas), also the colour of
- * the browser's own chrome. `index.html` repeats them for first paint.
- */
-export const canvas = { dark: dark[7], light: paper.canvas } as const;
 
 const paperGrayVariables = Object.fromEntries(
   paperGray.map((shade, index) => [`--mantine-color-gray-${index}`, shade])
