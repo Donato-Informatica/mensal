@@ -177,6 +177,15 @@ describe("the API description's responses", () => {
       204
     );
     await call("GET /api/v1/me", "/api/v1/me", 200);
+    // A file, not JSON: the media type it is served as is the one declared.
+    const archive = await request(api, "/api/v1/data", { cookie });
+    expect(archive.status).toBe(200);
+    expect(
+      Object.keys(
+        buildOpenApiSpec().paths["/api/v1/data"]?.get?.responses[200]
+          ?.content ?? {}
+      )
+    ).toEqual([archive.headers.get("content-type")]);
     const token = await call(
       "POST /api/v1/access-tokens",
       "/api/v1/access-tokens",

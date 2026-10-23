@@ -3,7 +3,7 @@ import type {
   OccurrenceStatus,
   RecurrenceEdit,
 } from "@mensal/shared";
-import type { Log } from "./log.ts";
+import { describeError, type Log } from "./log.ts";
 
 /**
  * Who did what to which item (PRD §8.7), as the write reports it. Only ids and
@@ -45,9 +45,7 @@ export function activityRecorder(
     try {
       activity(stamped(report, now(), extra));
     } catch (error) {
-      log(
-        `Activity log failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`
-      );
+      log(`Activity log failed: ${describeError(error)}`);
     }
   };
 }
@@ -125,15 +123,19 @@ export type AccessTokenAction =
 
 /**
  * Signing up or in, replacing the password, changing the name (never naming
- * it), or creating or revoking an access token (named by its id, never its
- * secret), by the user's id. A failed
+ * it), creating or revoking an access token (named by its id, never its
+ * secret), or deleting the account, by the user's id. A failed
  * sign-in has no user: it names the attempted email and the client's address
  * instead, to spot credential stuffing.
  */
 type AccountReport =
   | {
       user: string;
-      action: SessionAction | "user.password-reset" | "user.name-changed";
+      action:
+        | SessionAction
+        | "user.password-reset"
+        | "user.name-changed"
+        | "user.deleted";
     }
   | { user: string; action: "user.password-changed"; revoked: Revocable[] }
   | { user: string; action: AccessTokenAction; id: string }

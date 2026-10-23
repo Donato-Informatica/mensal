@@ -3,6 +3,7 @@ import {
   clampDueDate,
   ColorSchemeSchema,
   currentPeriod,
+  dataArchiveName,
   defaultColorScheme,
   defaultOccurrenceView,
   editRefusal,
@@ -58,6 +59,8 @@ interface Account {
  */
 export function fakeApi() {
   const accounts = new Map<string, Account>();
+  /** How many accounts were ever made, so a deleted one's id is never reused. */
+  let accountsMade = 0;
   let signedIn: Account | undefined;
   /** Reset tokens not yet used, by token, to the email they reset. */
   const resetTokens = new Map<string, string>();
@@ -184,6 +187,30 @@ export function fakeApi() {
         recurrences: signedIn.recurrences,
       })
     );
+  }
+
+  /** How many archives GET /api/v1/data has served. */
+  let dataDownloads = 0;
+
+  /**
+   * GET /api/v1/data, behind the approval gate: a ZIP named after today in
+   * São Paulo (PRD §6.5). Its contents are the API's to test; here it is an
+   * empty archive.
+   */
+  function getData(): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    dataDownloads += 1;
+    // An empty ZIP: just its end-of-central-directory record.
+    const emptyZip = new Uint8Array(22);
+    emptyZip.set([0x50, 0x4b, 0x05, 0x06]);
+    return new Response(emptyZip, {
+      status: 200,
+      headers: {
+        "content-type": "application/zip",
+        "content-disposition": `attachment; filename="${dataArchiveName(today())}"`,
+      },
+    });
   }
 
   /** POST /api/v1/recurrences, behind the approval gate. */
@@ -549,6 +576,23 @@ export function fakeApi() {
       });
       return json(200, { token: null, user: sessionOf(signedIn).user });
     },
+    // Immediate and permanent, with the current password (ADR-0005); its
+    // recurrences, occurrences and access tokens go with it.
+    "POST /api/auth/delete-user": ({ password }) => {
+      if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+      if (!password || password !== signedIn.password) {
+        return json(400, {
+          code: "INVALID_PASSWORD",
+          message: "Invalid password",
+        });
+      }
+      accounts.delete(signedIn.email);
+      signedIn.recurrences = [];
+      signedIn.occurrences = [];
+      accessTokens.delete(signedIn.id);
+      signedIn = undefined;
+      return json(200, { success: true, message: "User deleted" });
+    },
     "POST /api/auth/sign-out": () => {
       signedIn = undefined;
       return json(200, { success: true });
@@ -585,6 +629,9 @@ export function fakeApi() {
       }
       if (request.method === "GET" && pathname === "/api/v1/access-tokens") {
         return getAccessTokens();
+      }
+      if (request.method === "GET" && pathname === "/api/v1/data") {
+        return getData();
       }
       const accessTokenMatch = /^\/api\/v1\/access-tokens\/([^/]+)$/.exec(
         pathname
@@ -642,7 +689,7 @@ export function fakeApi() {
     }: Pick<Account, "name" | "email" | "password"> &
       Partial<Pick<Account, "approved"> & Preferences>): Account {
       const created = {
-        id: `user-${accounts.size + 1}`,
+        id: `user-${++accountsMade}`,
         name,
         email,
         password,
@@ -657,6 +704,11 @@ export function fakeApi() {
 
     signIn(email: string) {
       signedIn = accounts.get(email);
+    },
+
+    /** Whether an account with this email exists, e.g. not yet deleted. */
+    hasAccount(email: string): boolean {
+      return accounts.has(email);
     },
 
     /**
@@ -679,6 +731,11 @@ export function fakeApi() {
       return nameUpdates;
     },
 
+    /** How many archives of the user's data were served. */
+    dataDownloads(): number {
+      return dataDownloads;
+    },
+
     /** The account's password as it stands, to tell whether it changed. */
     passwordOf(email: string): string | undefined {
       return accounts.get(email)?.password;
@@ -694,9 +751,13 @@ export function fakeApi() {
       return token;
     },
 
-    /** The account's access tokens, secrets included, as the database holds them. */
+    /**
+     * The account's access tokens, secrets included, as the database holds
+     * them: none once the account is deleted.
+     */
     accessTokensOf(email: string): readonly FakeAccessToken[] {
-      return tokensOf(accounts.get(email)!);
+      const account = accounts.get(email);
+      return account ? tokensOf(account) : [];
     },
 
     /** Seeds a recurrence for the account, as through Drizzle Studio. */
@@ -731,14 +792,14 @@ export function fakeApi() {
       return { ...accounts.get(email)!.preferences };
     },
 
-    /** The account's recurrences, as the database holds them. */
+    /** The account's recurrences, as the database holds them: none once it is deleted. */
     recurrencesOf(email: string): readonly Recurrence[] {
-      return accounts.get(email)!.recurrences;
+      return accounts.get(email)?.recurrences ?? [];
     },
 
-    /** The account's persisted occurrences, as the database holds them. */
+    /** The account's persisted occurrences, as the database holds them: none once it is deleted. */
     occurrencesOf(email: string): readonly Occurrence[] {
-      return accounts.get(email)!.occurrences;
+      return accounts.get(email)?.occurrences ?? [];
     },
 
     /** Seeds an occurrence for the account, as through Drizzle Studio. */

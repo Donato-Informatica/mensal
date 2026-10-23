@@ -1,8 +1,11 @@
-import { Text } from "@mantine/core";
+import { Anchor, Text } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { CardScreen } from "./card-screen.tsx";
+import { DeleteAccountModal } from "./delete-account.tsx";
 import { SignOutButton } from "./sign-out-button.tsx";
 
 export function AwaitingApproval() {
+  const [deleting, { open, close }] = useDisclosure(false);
   return (
     <CardScreen
       title="Aguardando aprovação"
@@ -13,6 +16,13 @@ export function AwaitingApproval() {
         Mensal.
       </Text>
       <SignOutButton variant="default" fullWidth />
+      {/* An unapproved user can leave too (PRD §7.15). */}
+      <Text fz="sm" c="dimmed" ta="center">
+        <Anchor component="button" type="button" fz="sm" onClick={open}>
+          Excluir conta
+        </Anchor>
+      </Text>
+      <DeleteAccountModal opened={deleting} onClose={close} />
     </CardScreen>
   );
 }

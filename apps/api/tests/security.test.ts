@@ -134,4 +134,22 @@ describe("rate limiting on /api/auth", () => {
 
     expect(statuses).toEqual([400, 400, 400, 400, 400, 429]);
   });
+
+  it("answers the 6th account deletion within a minute from one address with 429", async () => {
+    const { cookie } = await signUp(limited);
+    const ip = newIp();
+    const statuses = [];
+    for (let attempt = 0; attempt < 6; attempt++)
+      statuses.push(
+        (
+          await request(limited, "/api/auth/delete-user", {
+            cookie,
+            body: { password: "a wrong guess" },
+            ip,
+          })
+        ).status
+      );
+
+    expect(statuses).toEqual([400, 400, 400, 400, 400, 429]);
+  });
 });
