@@ -1,9 +1,7 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
-
-// The canvas color (DESIGN.md, theme.ts): the installed app's splash and bar.
-const canvas = "#0a0a0a";
+import { canvas } from "./src/canvas.ts";
 
 export default defineConfig({
   plugins: [
@@ -24,8 +22,9 @@ export default defineConfig({
         display: "standalone",
         start_url: "/",
         scope: "/",
-        background_color: canvas,
-        theme_color: canvas,
+        // Escuro's canvas, the scheme the app opens in (PRD §3.5).
+        background_color: canvas.dark,
+        theme_color: canvas.dark,
         icons: [
           { src: "/pwa-192x192.png", sizes: "192x192", type: "image/png" },
           { src: "/pwa-512x512.png", sizes: "512x512", type: "image/png" },

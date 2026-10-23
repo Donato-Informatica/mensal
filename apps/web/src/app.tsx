@@ -4,15 +4,43 @@ import "@mantine/charts/styles.css";
 import "dayjs/locale/pt-br";
 import { MantineProvider } from "@mantine/core";
 import { DatesProvider } from "@mantine/dates";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  onlineManager,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { useState } from "react";
 import type { ApiClient } from "./api-client.ts";
 import type { AuthClient } from "./auth-client.ts";
 import { colorSchemeCache } from "./color-scheme.ts";
-import { ConnectionLock } from "./connection.tsx";
+import { ConnectionLock, subscribeToConnection } from "./connection.tsx";
 import { createAppRouter } from "./router.tsx";
 import { cssVariablesResolver, theme } from "./theme.ts";
+
+/**
+ * React Query in step with the connection lock (PRD §7.16): requests pause
+ * while the browser is offline and resume once it's back.
+ */
+function createQueryClient() {
+  // On its own, React Query assumes a connection until the first `offline`
+  // event, so an app opened offline would fail its requests instead of
+  // waiting on its loading state for the connection.
+  onlineManager.setEventListener((setOnline) => {
+    setOnline(navigator.onLine);
+    return subscribeToConnection(() => setOnline(navigator.onLine));
+  });
+  return new QueryClient({
+    defaultOptions: {
+      mutations: {
+        // A save that fails as the connection drops is sent again once it's
+        // back: the retry waits while offline. Online, a failure is final.
+        retry: () => !onlineManager.isOnline(),
+        retryDelay: 0,
+      },
+    },
+  });
+}
 
 export function App({
   authClient,
@@ -21,7 +49,7 @@ export function App({
   authClient: AuthClient;
   api: ApiClient;
 }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(createQueryClient);
   const [router] = useState(() =>
     createAppRouter({ authClient, api, queryClient })
   );

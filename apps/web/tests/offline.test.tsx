@@ -37,10 +37,8 @@ const goOffline = () => setConnection(false);
 const goOnline = () => setConnection(true);
 
 /** The banner, by its role and its text. */
-async function findBanner() {
-  const status = (await screen.findByText(banner)).closest("[role=status]");
-  expect(status).not.toBeNull();
-  return status!;
+function findBanner() {
+  return screen.findByRole("status", { name: banner });
 }
 
 describe("while the browser is offline (PRD §7.16)", () => {
@@ -117,5 +115,57 @@ describe("while the browser is offline (PRD §7.16)", () => {
 
     goOnline();
     expect(await screen.findByText("Aluguel")).toBeInTheDocument();
+  });
+
+  it("doesn't move to another month with the arrow keys", async () => {
+    api.signIn(email);
+    openApp(api, "/");
+    await screen.findByRole("heading", { name: "Outubro 2026" });
+
+    goOffline();
+    await findBanner();
+    await user.keyboard("{ArrowRight}");
+    await settle();
+    expect(screen.getByRole("heading", { name: "Outubro 2026" })).toBeVisible();
+
+    goOnline();
+    await user.keyboard("{ArrowRight}");
+    expect(
+      await screen.findByRole("heading", { name: "Novembro 2026" })
+    ).toBeInTheDocument();
+  });
+
+  it("sends a save started just before the drop once the connection is back", async () => {
+    api.signIn(email);
+    openApp(api, "/");
+    await user.click(
+      await screen.findByRole("button", { name: "Nova avulsa" })
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Nova conta avulsa",
+    });
+    await user.type(within(dialog).getByLabelText("Descrição"), "Presente");
+    await user.type(within(dialog).getByLabelText("Valor"), "120");
+
+    api.stall();
+    await user.click(
+      within(dialog).getByRole("button", { name: "Criar conta" })
+    );
+    await waitFor(() => expect(api.heldCount()).toBe(1));
+    // The drop: the request is lost along with the connection.
+    goOffline();
+    api.answer(0, { fail: true });
+    api.resume();
+    await settle();
+    expect(
+      within(dialog).queryByText("Algo deu errado. Tente novamente.")
+    ).toBeNull();
+    expect(api.occurrencesOf(email)).toEqual([]);
+
+    goOnline();
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    expect(api.occurrencesOf(email)).toEqual([
+      expect.objectContaining({ description: "Presente" }),
+    ]);
   });
 });

@@ -249,7 +249,7 @@ Monochrome on black, with one highlighter and two signal colours that carry mean
 
 Every role above has a light counterpart, prefixed `light-`. The page is Paper Canvas (`{colors.light-canvas}`) and panels lift to pure white (`{colors.light-surface-card}`), so depth is still tonal and still upwards. Text runs Ink (`{colors.light-ink}`) for the facts, `{colors.light-body}` for running text and `{colors.light-muted}` for dimmed text. Hairlines are `{colors.light-hairline}` and `{colors.light-hairline-strong}`. Inflow amounts take `{colors.light-accent-emerald}` and rose takes `{colors.light-accent-rose}`, both dark enough to pass 4.5:1 as text on white.
 
-**The Fill-Only Rule.** On paper, yellow is too faint to read as text or as a line, so in the light scheme it is only ever a fill with ink on or inside it: the primary button and primary action, the checked settle box (black tick), a switch turned on, and the needs-you group labels. Everything that is yellow text or a yellow line in the dark scheme turns ink instead: the wordmark, text links on the auth screens, and the focus ring. Yellow fills that are controls (the checked box, a switch's track) carry a 1px ink border so their shape still reads on white.
+**The Fill-Only Rule.** On paper, yellow is too faint to read as text or as a line, so in the light scheme it is only ever a fill with ink on or inside it: the primary button and primary action, the checked settle box (black tick), a switch turned on, the needs-you group labels, and the offline "Sem conexão" banner (ink text and icon on a yellow fill, in both schemes). Everything that is yellow text or a yellow line in the dark scheme turns ink instead: the wordmark, text links on the auth screens, and the focus ring. Yellow fills that are controls (the checked box, a switch's track) carry a 1px ink border so their shape still reads on white.
 
 - **Needs-you groups** (Atrasadas, Vencem hoje): the label is ink on a yellow fill, padded like a highlighter stroke (2px × 6px, `{rounded.xs}`), and the panel edge is ink instead of Panel Edge.
 - **Spent Highlighter** (`{colors.light-primary-disabled}`): a pale yellow with `{colors.light-muted}` text.
@@ -366,7 +366,7 @@ In the header, the 28px logo mark, a 10px (`xs`) gap, then the wordmark. On the 
 
 - **Don't** use yellow as text or as a line in the light scheme. On paper it is a fill, with ink on it.
 - **Don't** introduce a second accent colour, gradients, glows or shadows on resting surfaces.
-- **Don't** set type above 32px, or add hero, stat-callout or banner treatments carried over from the ClickHouse marketing system.
+- **Don't** set type above 32px, or add hero, stat-callout or marketing-banner treatments carried over from the ClickHouse marketing system. (The offline "Sem conexão" banner is a status bar, not one of these.)
 - **Don't** use yellow for body text, large fills or decoration.
 - **Don't** use emerald or rose for emphasis that does not mean money in, late or destructive.
 - **Don't** wrap individual rows in cards or nest panels inside panels.

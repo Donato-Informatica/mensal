@@ -41,6 +41,7 @@ import {
 import { useCallback, useEffect, useId, useState } from "react";
 import { AppLayout } from "./app-layout.tsx";
 import appLayout from "./app-layout.module.css";
+import { useOnline } from "./connection.tsx";
 import { EditOccurrenceButton } from "./edit-occurrence.tsx";
 import { ExportCsvButton } from "./export-csv-button.tsx";
 import { useFlip } from "./flip.ts";
@@ -114,12 +115,14 @@ export function Month({ period }: { period: string }) {
   };
   const dismissUndo = useCallback(() => setUndoable(null), []);
   const [trendOpen, setTrendOpen] = useState(false);
+  const online = useOnline();
 
   return (
     <AppLayout action={<NewOneOffButton period={period} />}>
       <Stack gap="xl">
-        {/* The trend does not navigate: ← / → rest while it is open. */}
-        <PeriodNavigator arrowKeys={!trendOpen} />
+        {/* The trend does not navigate: ← / → rest while it is open, and
+            while the connection lock is on (inert does not stop keys). */}
+        <PeriodNavigator arrowKeys={!trendOpen && online} />
         <Stack gap="xl" className={classes.content} aria-busy={loading}>
           {showSummary && (
             <Summary
@@ -254,11 +257,12 @@ function PeriodNavigator({ arrowKeys }: { arrowKeys: boolean }) {
     ["ArrowRight", moveUnlessInDialog(1), { preventDefault: false }],
   ]);
 
-  // Fixed at the top while the list scrolls (PRD §7.1).
+  // Fixed at the top while the list scrolls (PRD §7.1), below the offline
+  // banner while it shows (connection.tsx).
   return (
     <Box
       pos="sticky"
-      top={0}
+      top="var(--mensal-sticky-top, 0px)"
       bg="var(--mantine-color-body)"
       py="xs"
       className={appLayout.mobileRule}
