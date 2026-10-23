@@ -9,6 +9,7 @@ import {
   Modal,
   PasswordInput,
   Popover,
+  Portal,
   rem,
   SegmentedControl,
   Switch,
@@ -20,6 +21,13 @@ import {
 } from "@mantine/core";
 import controls from "./controls.module.css";
 import dialog from "./dialog.module.css";
+
+/**
+ * Where Mantine's portals (dialogs, menus, popovers) render: an element
+ * inside the part of the app the connection lock covers (connection.tsx), so
+ * the lock covers them too (PRD §7.16).
+ */
+export const portalTargetId = "mensal-portals";
 
 // DESIGN.md: near-black canvas, one electric yellow, Inter throughout.
 const yellow: MantineColorsTuple = [
@@ -160,6 +168,7 @@ export const theme = createTheme({
   // --mensal-color-highlight: yellow at night, ink on paper.
   focusClassName: controls.focus ?? "",
   components: {
+    Portal: Portal.extend({ defaultProps: { target: `#${portalTargetId}` } }),
     Loader: Loader.extend({
       defaultProps: { color: "var(--mensal-color-highlight)" },
     }),
