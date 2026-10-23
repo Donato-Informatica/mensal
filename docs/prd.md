@@ -26,6 +26,7 @@ A **minimalist, opinionated** SaaS focused strictly on forecasting and settling 
 - Billing or paid plans.
 - Email beyond the transactional password and account-deletion emails of §8.2 ([ADR-0003](adr/0003-transactional-email-via-resend.md)): no verification, approval notices or notifications.
 - Internationalization: the UI is Brazilian Portuguese only.
+- Offline use: the installed app opens without a connection but stays locked until it is back; no data is cached or queued offline (§7.16, [ADR-0006](adr/0006-app-shell-service-worker-no-offline-data.md)).
 - OAuth for agents (e.g. claude.ai custom connectors): agents connect to the MCP server with access tokens only (§8.9, [ADR-0004](adr/0004-remote-mcp-with-access-tokens.md)).
 
 ---
@@ -361,6 +362,10 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 13. **Change name (Alterar nome):** an item in the account menu, before "Alterar senha" and separate from Configurações (a name is not a preference), opens a modal with a single **Nome** field holding the current name (§8.2). No password is asked. Saving an unchanged name closes it without a request; saving a new one closes it and the menu shows the new name at once, with no notice. A refused name is that field's error ("Informe um nome de até 100 caracteres."); any other failure is the form's. Other devices show the new name the next time they load the session.
 14. **Download data (Baixar meus dados):** an item in the account menu downloads the archive of §6.5. While it is being built the item shows a loader; a failure shows a notice with "Tentar novamente".
 15. **Delete account (Excluir conta):** an item at the end of the account menu, and a link on the "Aguardando aprovação" screen, open a modal that says the account and every recurrence, occurrence and access token will be erased for good, offers **Baixar meus dados** first (approved users only), and asks for the current password and the user's email typed as confirmation. The **Excluir conta** button stays disabled until the typed email matches. A wrong password is that field's error. On success the user lands on the sign-in screen with the notice "Sua conta foi excluída."; other devices are signed out with it (§8.2).
+16. **Installable app, online only (PWA):** the app can be installed from the browser's own install UI (no in-app install button). It is a PWA whose service worker caches only the app shell ([ADR-0006](adr/0006-app-shell-service-worker-no-offline-data.md)), so an installed app opens without a connection, but no data is ever available offline.
+    - **Manifest:** name and short name "Mensal", `lang` `pt-BR`, `display` `standalone`, `start_url` and `scope` `/`, `background_color` and `theme_color` `#0a0a0a` (the `theme-color` meta the app switches with the color scheme, §3.5, still wins while it runs). Icons are PNGs generated once from `logo.svg` and committed: 192 and 512 px, a 512 px maskable one on the canvas color with safe padding, and a 180 px `apple-touch-icon`.
+    - **Service worker:** precaches the built shell (`index.html`, hashed assets, fonts, icons); navigations to client routes fall back to `index.html`. Nothing under `/api` is cached or answered by the fallback. A new version installs and activates at once without a prompt or a reload: open tabs keep the shell they loaded and the next open gets the new one. It is registered only by the production build, never in development or tests. nginx serves `sw.js`, `registerSW.js` and `manifest.webmanifest` with `Cache-Control: no-cache` (§8.4).
+    - **No connection:** while the browser reports being offline (its `online`/`offline` events, not failed requests), every screen, the auth screens included, shows a full-width warning banner at the top with a wifi-off icon and `role="status"`: "Sem conexão. O Mensal volta a funcionar quando a conexão voltar." It has no dismiss button. Everything else, open dialogs included, stays visible but inert: nothing can be clicked, typed or focused, and what was on screen (a half-filled dialog) is kept. When the connection returns the banner and the lock go away on their own, paused requests resume (a save started just before the drop is sent then) and data is refetched. Opening the app while already offline shows the banner over the loading state, which continues to the screen once the connection is back. A server failure while online keeps the usual error handling.
 
 ---
 
@@ -411,6 +416,7 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 - Coolify on a VPS hosts the static frontend, the API container and Postgres.
 - **Healthcheck:** Coolify's healthcheck targets `GET /api/health`: unauthenticated, `200 {"status":"ok"}` while Postgres answers `SELECT 1`, `503 {"status":"unavailable"}` otherwise (cause logged, never returned).
 - **Same origin:** the proxy serves the static frontend at `/` and forwards `/api` to Express. No CORS.
+- **PWA files:** hashed `/assets/` are cached as immutable; `sw.js`, `registerSW.js` and `manifest.webmanifest` are served with `Cache-Control: no-cache`, so a new version is picked up on the next open (§7.16).
 - **Backups:** daily Postgres backups through Coolify to S3-compatible storage outside the VPS (e.g. Backblaze B2, Cloudflare R2), with 30-day retention.
 
 ### 8.5 Testing
