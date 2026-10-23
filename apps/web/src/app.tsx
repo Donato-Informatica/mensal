@@ -10,6 +10,7 @@ import { useState } from "react";
 import type { ApiClient } from "./api-client.ts";
 import type { AuthClient } from "./auth-client.ts";
 import { colorSchemeCache } from "./color-scheme.ts";
+import { ConnectionLock } from "./connection.tsx";
 import { createAppRouter } from "./router.tsx";
 import { cssVariablesResolver, theme } from "./theme.ts";
 
@@ -35,7 +36,9 @@ export function App({
     >
       <DatesProvider settings={{ locale: "pt-br" }}>
         <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
+          <ConnectionLock>
+            <RouterProvider router={router} />
+          </ConnectionLock>
         </QueryClientProvider>
       </DatesProvider>
     </MantineProvider>
