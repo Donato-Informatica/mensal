@@ -19,15 +19,10 @@ import {
   type MantineColorsTuple,
   type VariantColorsResolver,
 } from "@mantine/core";
+import { canvas } from "./canvas.ts";
+import { portalTargetId } from "./connection.tsx";
 import controls from "./controls.module.css";
 import dialog from "./dialog.module.css";
-
-/**
- * Where Mantine's portals (dialogs, menus, popovers) render: an element
- * inside the part of the app the connection lock covers (connection.tsx), so
- * the lock covers them too (PRD §7.16).
- */
-export const portalTargetId = "mensal-portals";
 
 // DESIGN.md: near-black canvas, one electric yellow, Inter throughout.
 const yellow: MantineColorsTuple = [
@@ -53,7 +48,7 @@ const dark: MantineColorsTuple = [
   "#3a3a3a", // hairline-strong
   "#2a2a2a", // hairline
   "#1a1a1a", // surface-card
-  "#0a0a0a", // canvas
+  canvas.dark,
   "#060606",
   "#000000",
 ];
@@ -94,7 +89,7 @@ const paper = {
   mutedSoft: "#a3a3a3", // light-muted-soft
   hairline: "#e5e5e5", // light-hairline
   hairlineStrong: "#d4d4d4", // light-hairline-strong
-  canvas: "#f5f5f5", // light-canvas
+  canvas: canvas.light,
   surfaceCard: "#ffffff", // light-surface-card
   primaryDisabled: "#f2f4c8", // light-primary-disabled
 } as const;
@@ -226,12 +221,6 @@ export const theme = createTheme({
     }),
   },
 });
-
-/**
- * Each scheme's canvas (DESIGN.md: canvas, light-canvas), also the colour of
- * the browser's own chrome. `index.html` repeats them for first paint.
- */
-export const canvas = { dark: dark[7], light: paper.canvas } as const;
 
 const paperGrayVariables = Object.fromEntries(
   paperGray.map((shade, index) => [`--mantine-color-gray-${index}`, shade])

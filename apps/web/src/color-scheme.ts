@@ -7,8 +7,8 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { canvas } from "./canvas.ts";
 import { sessionQuery } from "./session.ts";
-import { canvas } from "./theme.ts";
 
 /**
  * Where this device keeps the theme it last applied: `"dark"`, `"light"` or
