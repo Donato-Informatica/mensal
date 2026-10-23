@@ -1,5 +1,7 @@
 import {
+  dataArchiveName,
   monthOf,
+  today,
   type AccessToken,
   type CreatedAccessToken,
   type NewAccessToken,
@@ -16,9 +18,16 @@ import {
 } from "@mensal/shared";
 import { ApiError } from "./api-error.ts";
 
+/** A file the API answered with, and the name it gives it. */
+export interface DownloadedFile {
+  blob: Blob;
+  fileName: string;
+}
+
 /** The app's own API (`/api/v1`), on the page's origin. */
 export function createApiClient(fetchImpl: typeof fetch = fetch) {
-  async function send<T>(path: string, init?: RequestInit): Promise<T> {
+  /** The answer to `path`, once it is known to be a success. */
+  async function fetchOk(path: string, init?: RequestInit): Promise<Response> {
     const response = await fetchImpl(
       new URL(`/api/v1${path}`, window.location.origin),
       init
@@ -31,6 +40,11 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
           : undefined;
       throw new ApiError(code);
     }
+    return response;
+  }
+
+  async function send<T>(path: string, init?: RequestInit): Promise<T> {
+    const response = await fetchOk(path, init);
     if (response.status === 204) return undefined as T;
     return (await response.json()) as T;
   }
@@ -60,6 +74,19 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
       send<void>(`/access-tokens/${encodeURIComponent(id)}`, {
         method: "DELETE",
       }),
+
+    /**
+     * The archive of everything the user entered (PRD §6.5), with the file
+     * name the API gives it, or, should it give none, the one it gives today.
+     */
+    downloadData: async (): Promise<DownloadedFile> => {
+      const response = await fetchOk("/data");
+      const fileName =
+        /filename="([^"]+)"/.exec(
+          response.headers.get("content-disposition") ?? ""
+        )?.[1] ?? dataArchiveName(today());
+      return { blob: await response.blob(), fileName };
+    },
 
     /** The payload of `period` ('YYYY-MM-01'). */
     period: (period: string) =>

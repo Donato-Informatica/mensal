@@ -19,10 +19,19 @@ import { z } from "zod";
 
 type Schema = Record<string, unknown>;
 
+/** A response; its body, if any, by media type (the data archive's is a ZIP). */
 interface Response {
   description: string;
-  content?: { "application/json": { schema: Schema } };
+  headers?: Record<string, { description: string; schema: Schema }>;
+  content?: Partial<
+    Record<"application/json" | "application/zip", { schema: Schema }>
+  >;
 }
+
+/** A response with a JSON body, whose schema another response can reuse. */
+type JsonResponse = Response & {
+  content: { "application/json": { schema: Schema } };
+};
 
 interface Operation {
   tags: string[];
@@ -34,7 +43,7 @@ interface Operation {
     required: boolean;
     schema: Schema;
   }[];
-  requestBody?: Response & { required: true };
+  requestBody?: JsonResponse & { required: true };
   responses: Record<number, Response>;
 }
 
@@ -51,7 +60,7 @@ const body = (schema: z.ZodType) => ({
   content: { "application/json": { schema: jsonSchema(schema, "input") } },
 });
 
-const ok = (description: string, schema: Schema): Response => ({
+const ok = (description: string, schema: Schema): JsonResponse => ({
   description,
   content: { "application/json": { schema } },
 });
@@ -61,7 +70,7 @@ const output = (schema: z.ZodType) => jsonSchema(schema, "output");
 const noContent: Response = { description: "Done; no body" };
 
 /** A refusal: `{ code }`, one of the codes this operation can answer with. */
-const refusal = (description: string, ...codes: string[]): Response =>
+const refusal = (description: string, ...codes: string[]): JsonResponse =>
   ok(description, {
     type: "object",
     required: ["code"],
@@ -170,8 +179,8 @@ export function buildOpenApiSpec() {
           ),
           400: ok("The input is invalid, or the current password is wrong", {
             oneOf: [
-              invalidInput.content!["application/json"].schema,
-              refusal("", "INVALID_PASSWORD").content!["application/json"]
+              invalidInput.content["application/json"].schema,
+              refusal("", "INVALID_PASSWORD").content["application/json"]
                 .schema,
             ],
           }),
@@ -190,6 +199,30 @@ export function buildOpenApiSpec() {
         responses: {
           204: noContent,
           404: notFound("ACCESS_TOKEN_NOT_FOUND"),
+        },
+      }),
+    },
+    "/api/v1/data": {
+      get: secured({
+        tags: ["Account"],
+        summary:
+          "Download everything the user entered: a ZIP of perfil.csv, recorrencias.csv and ocorrencias.csv (pt-BR CSV: BOM, `;`, CRLF). Read-only",
+        responses: {
+          200: {
+            description: "The archive, named after today in America/Sao_Paulo",
+            headers: {
+              "Content-Disposition": {
+                description:
+                  'attachment; filename="mensal-dados-YYYY-MM-DD.zip"',
+                schema: { type: "string" },
+              },
+            },
+            content: {
+              "application/zip": {
+                schema: { type: "string", contentMediaType: "application/zip" },
+              },
+            },
+          },
         },
       }),
     },
@@ -253,8 +286,8 @@ export function buildOpenApiSpec() {
           201: ok("The recurrence", output(RecurrenceSchema)),
           400: ok("The input is invalid, or the start period is in the past", {
             oneOf: [
-              invalidInput.content!["application/json"].schema,
-              refusal("", "START_PERIOD_IN_PAST").content!["application/json"]
+              invalidInput.content["application/json"].schema,
+              refusal("", "START_PERIOD_IN_PAST").content["application/json"]
                 .schema,
             ],
           }),
@@ -282,8 +315,8 @@ export function buildOpenApiSpec() {
             "The input is invalid, or the end period precedes the start",
             {
               oneOf: [
-                invalidInput.content!["application/json"].schema,
-                refusal("", "END_PERIOD_BEFORE_START").content![
+                invalidInput.content["application/json"].schema,
+                refusal("", "END_PERIOD_BEFORE_START").content[
                   "application/json"
                 ].schema,
               ],
@@ -327,13 +360,13 @@ export function buildOpenApiSpec() {
           200: ok("The occurrence", anyOccurrence),
           400: ok("The input is invalid, or the edit is refused", {
             oneOf: [
-              invalidInput.content!["application/json"].schema,
+              invalidInput.content["application/json"].schema,
               refusal(
                 "",
                 "DUE_DATE_OUTSIDE_PERIOD",
                 "OCCURRENCE_NOT_SETTLED",
                 "AMOUNT_REQUIRED_TO_SETTLE"
-              ).content!["application/json"].schema,
+              ).content["application/json"].schema,
             ],
           }),
           404: notFound("OCCURRENCE_NOT_FOUND"),
@@ -363,8 +396,8 @@ export function buildOpenApiSpec() {
           200: ok("The occurrence", anyOccurrence),
           400: ok("The input is invalid, or settling needs an amount", {
             oneOf: [
-              invalidInput.content!["application/json"].schema,
-              refusal("", "AMOUNT_REQUIRED_TO_SETTLE").content![
+              invalidInput.content["application/json"].schema,
+              refusal("", "AMOUNT_REQUIRED_TO_SETTLE").content[
                 "application/json"
               ].schema,
             ],

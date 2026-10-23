@@ -1,5 +1,9 @@
 import { Badge, Box, Button, Group, Text, VisuallyHidden } from "@mantine/core";
-import type { PeriodItem, StatusChange } from "@mensal/shared";
+import {
+  directionLabel,
+  type PeriodItem,
+  type StatusChange,
+} from "@mensal/shared";
 import {
   IconArrowDownLeft,
   IconArrowUpRight,
@@ -9,7 +13,6 @@ import { errorMessage } from "./api-error.ts";
 import { OneOffActions } from "./delete-one-off.tsx";
 import { EditOccurrenceButton } from "./edit-occurrence.tsx";
 import { formatAmount, formatPeriod } from "./format.ts";
-import { directionLabel } from "./occurrence-labels.ts";
 import classes from "./occurrence-row.module.css";
 import { RecurrenceActions } from "./recurrence-actions.tsx";
 import { SkipMenuItem, type StatusChangeRequest } from "./status-controls.tsx";

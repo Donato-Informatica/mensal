@@ -7,7 +7,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { errorMessage } from "./api-error.ts";
 import { CardScreen } from "./card-screen.tsx";
 import { useSessionChange } from "./session.ts";
@@ -21,6 +21,10 @@ export function SignIn() {
       }),
     "/"
   );
+  // Where a deleted account's user lands (PRD §7.15).
+  const accountDeleted = useLocation({
+    select: (location) => location.state.accountDeleted === true,
+  });
 
   return (
     <CardScreen title="Entrar" subtitle="Acesse suas contas do mês.">
@@ -31,6 +35,11 @@ export function SignIn() {
         }}
       >
         <Stack gap="md">
+          {accountDeleted && !signIn.error && (
+            <Alert color="green" variant="light">
+              Sua conta foi excluída.
+            </Alert>
+          )}
           {signIn.error && (
             <Alert color="red" variant="light">
               {errorMessage(signIn.error)}

@@ -389,7 +389,10 @@ describe("the write tools", () => {
 });
 
 describe("the coverage guard", () => {
-  /** Operations on /api/v1, /me and the access tokens apart, without a tool. */
+  /**
+   * Operations on /api/v1, /me, the access tokens and the data download apart
+   * (PRD §8.9), without a tool.
+   */
   function uncovered(app: ReturnType<typeof createApp>) {
     const spec = buildOpenApiSpec();
     const { operations } = mountedOperations(app, [
@@ -400,7 +403,7 @@ describe("the coverage guard", () => {
     return operations.filter(
       (operation) =>
         / \/api\/v1\//.test(operation) &&
-        !/ \/api\/v1\/(me|access-tokens)/.test(operation) &&
+        !/ \/api\/v1\/(me|access-tokens|data)\b/.test(operation) &&
         !covered.has(operation)
     );
   }

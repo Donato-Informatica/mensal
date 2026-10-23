@@ -13,7 +13,7 @@ import { z } from "zod";
 import type { RecordActivity } from "./activity.ts";
 import type { Auth } from "./auth.ts";
 import { invalidInput } from "./invalid-input.ts";
-import type { Log } from "./log.ts";
+import { describeError, type Log } from "./log.ts";
 import { explain } from "./mcp-refusals.ts";
 import type { AnyTool } from "./mcp-tool.ts";
 import { tools as allTools } from "./mcp-tools.ts";
@@ -181,9 +181,7 @@ function createServer(tools: AnyTool[], context: OperationContext, log: Log) {
     } catch (error) {
       if (error instanceof Refusal) return refused(error);
       // Never described to the agent (PRD §8.6).
-      log(
-        error instanceof Error ? (error.stack ?? error.message) : String(error)
-      );
+      log(describeError(error));
       return refused(new Refusal(500, "INTERNAL_ERROR"));
     }
   });

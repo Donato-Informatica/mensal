@@ -28,7 +28,11 @@ import {
   type SessionAction,
 } from "./activity.ts";
 import { consoleEmail, type Email, type SendEmail } from "./email.ts";
-import { passwordChangedEmail, resetPasswordEmail } from "./emails.ts";
+import {
+  accountDeletedEmail,
+  passwordChangedEmail,
+  resetPasswordEmail,
+} from "./emails.ts";
 import type { Log } from "./log.ts";
 
 /** What every access token starts with, so a leaked one is recognizable. */
@@ -37,7 +41,7 @@ export const accessTokenPrefix = "mensal_";
 /**
  * How often a current password may be tried (it could be guessed with a stolen
  * session): `max` per `window` seconds. Better-Auth enforces it per IP on
- * `/change-password`; `/access-tokens` applies it per user.
+ * `/change-password` and `/delete-user`; `/access-tokens` applies it per user.
  */
 export const passwordGuessLimit = { window: 60, max: 5 };
 
@@ -66,8 +70,10 @@ export interface AuthOptions {
  * SameSite=Lax cookies, and password-reset links sent by `email` (PRD §8.2,
  * ADR-0003); a reset signs the user out everywhere and revokes every access token, while a password change revokes what the user chose (PRD §8.2). The anonymous endpoints are
  * rate limited per client IP, read from the proxy's `X-Forwarded-For`
- * (PRD §8.6). The user's name is trimmed and checked (PRD §8.2). Sign-ups,
- * sign-ins, failed sign-ins and name changes go to the activity log (PRD §8.7).
+ * (PRD §8.6). The user's name is trimmed and checked (PRD §8.2). A user can
+ * delete their own account at once with the current password, and is emailed
+ * afterwards (ADR-0005). Sign-ups, sign-ins, failed sign-ins, name changes and
+ * deletions go to the activity log (PRD §8.7).
  */
 export function createAuth({
   db,
@@ -154,9 +160,27 @@ export function createAuth({
         "/request-password-reset": { window: 3600, max: 3 },
         // It checks the current password, so a stolen session could guess it.
         "/change-password": passwordGuessLimit,
+        "/delete-user": passwordGuessLimit,
       },
     },
     user: {
+      // Immediate and permanent, proven with the current password (PRD §8.2,
+      // ADR-0005); no email-link verification.
+      deleteUser: {
+        enabled: true,
+        // The foreign keys cascade everything else (PRD §5.13), but `apikeys`
+        // names its user only by `reference_id`.
+        beforeDelete: async (user) => {
+          await revokeAccessTokens(user.id);
+        },
+        // Once the deletion has committed; a failed goodbye undoes nothing.
+        afterDelete: async (user) => {
+          record({ user: user.id, action: "user.deleted" });
+          sendInBackground(
+            accountDeletedEmail({ to: user.email, name: user.name, at: now() })
+          );
+        },
+      },
       additionalFields: {
         // Set to true by an administrator, directly in the database (PRD §3.4).
         approved: {
@@ -231,6 +255,9 @@ export function createAuth({
       "/api-key/delete",
       "/api-key/list",
       "/api-key/delete-all-expired-api-keys",
+      // Deletion is confirmed by the password, never by an emailed link
+      // (ADR-0005).
+      "/delete-user/callback",
     ],
     advanced: {
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax" },
@@ -247,6 +274,17 @@ export function createAuth({
       // The name, trimmed, must be NameSchema's (PRD §8.2): at sign-up, and on
       // an update-user that changes it.
       before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path === "/delete-user") {
+          // Without one, Better-Auth settles for a fresh session (ADR-0005).
+          const { password } = (ctx.body ?? {}) as { password?: unknown };
+          if (typeof password !== "string" || password === "") {
+            throw new APIError("BAD_REQUEST", {
+              code: "INVALID_PASSWORD",
+              message: "Invalid password",
+            });
+          }
+          return;
+        }
         const body = ctx.body as { name?: unknown } | undefined;
         if (
           ctx.path !== "/sign-up/email" &&

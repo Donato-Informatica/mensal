@@ -3,6 +3,7 @@ import { today, type PeriodPayload } from "@mensal/shared";
 import { IconDownload } from "@tabler/icons-react";
 import { useMemo } from "react";
 import { occurrenceCsv, periodCsvRows } from "./occurrence-csv.ts";
+import { saveFile } from "./save-file.ts";
 
 /**
  * Downloads the period on screen as `mensal-AAAA-MM.csv` (PRD §7.9). It is
@@ -14,20 +15,13 @@ export function ExportCsvButton({ payload }: { payload: PeriodPayload }) {
     () => periodCsvRows(payload, today()).length === 0,
     [payload]
   );
-  const download = () => {
-    const url = URL.createObjectURL(
+  const download = () =>
+    saveFile(
       new Blob([occurrenceCsv(payload, today())], {
         type: "text/csv;charset=utf-8",
-      })
+      }),
+      `mensal-${payload.period.slice(0, 7)}.csv`
     );
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `mensal-${payload.period.slice(0, 7)}.csv`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-  };
   return (
     <Button
       variant="subtle"

@@ -1,3 +1,5 @@
+export { dataArchiveName } from "./lib/archive-name.ts";
+export { csvAmount, csvDate, csvPeriod, toCsv } from "./lib/csv.ts";
 export { clampDueDate } from "./lib/due-date.ts";
 export {
   AccessTokenSchema,
@@ -46,6 +48,11 @@ export {
   type SummariesQuery,
   type VirtualOccurrence,
 } from "./lib/schemas.ts";
+export {
+  directionLabel,
+  occurrenceColumns,
+  originLabel,
+} from "./lib/labels.ts";
 export { editRefusal } from "./lib/occurrence-edit.ts";
 export { monthOf, periodOfMonth, shiftPeriod } from "./lib/period.ts";
 export { isActive, isInEffect } from "./lib/recurrence.ts";
@@ -61,6 +68,7 @@ export {
   type SummariesPayload,
   type SummarizeRangeInput,
 } from "./lib/resolve-period.ts";
+export { situationOf, type Situation } from "./lib/situation.ts";
 export { applyStatusChange } from "./lib/status-change.ts";
 export { currentPeriod, today } from "./lib/today.ts";
 export { parseVirtualId } from "./lib/virtual-id.ts";
