@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import { trace } from "@opentelemetry/api";
 import { InMemoryLogRecordExporter } from "@opentelemetry/sdk-logs";
 import { InMemorySpanExporter } from "@opentelemetry/sdk-trace";
 import {
@@ -13,6 +14,7 @@ import {
   vi,
   type MockInstance,
 } from "vitest";
+import { exportedLog } from "../src/log.ts";
 import type { TestApi } from "./api.ts";
 
 // The real app with the real instrumentation, exporting to memory (PRD §8.7.2).
@@ -183,6 +185,15 @@ describe("telemetry privacy and identity", () => {
     expect(rest.length).toBeGreaterThanOrEqual(3);
     for (const span of rest)
       expect(span.attributes["enduser.id"]).toBe(user.userId);
+    // Other authenticated REST routes carry it too.
+    const recurrences = requests.filter(
+      (s) =>
+        s.attributes["url.path"] === "/api/v1/recurrences" &&
+        s.attributes["http.request.method"] === "POST"
+    );
+    expect(recurrences.length).toBeGreaterThan(0);
+    for (const span of recurrences)
+      expect(span.attributes["enduser.id"]).toBe(user.userId);
     // The calls that got through authentication (a client may also probe with a GET).
     const mcp = requests.filter(
       (s) =>
@@ -198,5 +209,57 @@ describe("telemetry privacy and identity", () => {
       "/api/health"
     );
     expect(spans.map((s) => s.name).join(" ")).not.toContain("health");
+  });
+
+  it("exports no user text from errors, in span events or logs", async () => {
+    const { request, signUp, approve } = helpers;
+    const user = await signUp(api);
+    await approve(api, user.email);
+    const sentinel = "Sentinel erro VBN";
+
+    // A rejected request echoing the value, and a database error whose message
+    // quotes it ("invalid input syntax ... \"Sentinel erro VBN\""), recorded as
+    // an exception event on the pg span.
+    await request(api, "/api/v1/occurrences", {
+      cookie: user.cookie,
+      body: { direction: sentinel, description: sentinel, amount: sentinel },
+    });
+    await trace
+      .getTracer("test")
+      .startActiveSpan("failing query", async (span) => {
+        try {
+          await api.db.$client.query("SELECT $1::integer", [sentinel]);
+        } catch (error) {
+          span.recordException(error as Error);
+          exportedLog(() => {})(`failed: ${(error as Error).message}`);
+        } finally {
+          span.end();
+        }
+      });
+
+    const spans = exporter.getFinishedSpans();
+    const withException = spans.filter((s) =>
+      s.events.some((e) => e.name === "exception")
+    );
+    // The error path did produce exception events, now without their text.
+    expect(withException.length).toBeGreaterThan(0);
+    for (const span of withException)
+      for (const event of span.events)
+        expect(Object.keys(event.attributes ?? {})).not.toContain(
+          "exception.message"
+        );
+    const exported = JSON.stringify([
+      spans.map(({ name, attributes, events, status }) => ({
+        name,
+        attributes,
+        events,
+        status,
+      })),
+      logExporter
+        .getFinishedLogRecords()
+        .map(({ body, attributes }) => ({ body, attributes })),
+    ]);
+    expect(exported).not.toContain(sentinel);
+    expect(exported).not.toContain("exception.stacktrace");
   });
 });

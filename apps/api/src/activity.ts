@@ -31,12 +31,33 @@ export type RecordActivity = (report: ActivityReport) => void;
  */
 export const consoleActivity: Activity = (event) => {
   console.log(JSON.stringify(event));
-  // The attempted email of a failed sign-in is the operator's alone: it is
-  // never exported (PRD §8.7.2).
-  const fields: Record<string, unknown> = { ...event };
-  delete fields.email;
-  emitLog("INFO", event.action, fields as LogAttributes);
+  emitLog("INFO", event.action, exportedFields(event));
 };
+
+/**
+ * The only fields of an event that leave the process (PRD §8.7.2): ids, field
+ * names and the like. An allow-list, so a field added to an event later (an
+ * email, an address) stays on stdout until someone decides it may be exported.
+ */
+const EXPORTED_FIELDS = [
+  "action",
+  "kind",
+  "user",
+  "id",
+  "from",
+  "fields",
+  "status",
+  "revoked",
+  "via",
+] as const;
+
+function exportedFields(event: ActivityEvent): LogAttributes {
+  const source: Record<string, unknown> = { ...event };
+  const exported: Record<string, unknown> = {};
+  for (const key of EXPORTED_FIELDS)
+    if (source[key] !== undefined) exported[key] = source[key];
+  return exported as LogAttributes;
+}
 
 /**
  * Records to `activity`, stamping each report with the time `now` reads. The

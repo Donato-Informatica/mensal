@@ -105,6 +105,11 @@ describe("activity and operator logs as OpenTelemetry records", () => {
       .find((r) => r.attributes.action === "user.sign-in-failed");
     expect(failed).toBeDefined();
     expect(JSON.stringify(failed!.attributes)).not.toContain(attempted);
+    // Only allow-listed fields are exported: no email, no client address.
+    expect(Object.keys(failed!.attributes)).toEqual(["action"]);
+    expect(
+      stdout.mock.calls.some(([line]) => String(line).includes('"ip":'))
+    ).toBe(true);
     expect(
       stdout.mock.calls.some(([line]) => String(line).includes(attempted))
     ).toBe(true);

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { consoleActivity } from "../../src/activity.ts";
-import { exportedLog } from "../../src/log.ts";
+import { exportedLog, sanitizeForExport } from "../../src/log.ts";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -27,5 +27,32 @@ describe("sinks with telemetry off", () => {
 
     expect(stderr.mock.calls).toEqual([["boom"]]);
     expect(stdout.mock.calls).toEqual([["hello"]]);
+  });
+});
+
+describe("sanitizeForExport", () => {
+  it("masks emails, quoted values and Postgres key details", () => {
+    const text = [
+      'error: duplicate key value violates unique constraint "users_email_key"',
+      "Key (email)=(secret@example.com) already exists.",
+      "Failing row contains (1, Sentinel descricao, 7654321).",
+      "bad input 'Sentinel notas' from a@b.co",
+    ].join("\n");
+
+    const out = sanitizeForExport(text);
+
+    for (const leaked of [
+      "secret@example.com",
+      "Sentinel",
+      "7654321",
+      "a@b.co",
+      "users_email_key",
+    ])
+      expect(out).not.toContain(leaked);
+    expect(out).toContain("Key (email)=([value]) already exists.");
+  });
+
+  it("truncates long text", () => {
+    expect(sanitizeForExport("x".repeat(5000)).length).toBe(1000);
   });
 });

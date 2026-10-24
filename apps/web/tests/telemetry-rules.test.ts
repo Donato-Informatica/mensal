@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  isOwnApiUrl,
+  errorReport,
   notOwnApiPattern,
   stripQueryAndHash,
   telemetryEndpoint,
@@ -51,20 +51,23 @@ describe("notOwnApiPattern", () => {
   });
 });
 
-describe("isOwnApiUrl", () => {
-  const origin = "https://app.test";
+describe("errorReport", () => {
+  it("exports an error's type, never its message or stack", () => {
+    const report = errorReport(new TypeError("Sentinel texto do usuario"), "x");
 
-  it("matches the app's own /api, absolute or relative", () => {
-    expect(isOwnApiUrl("https://app.test/api/v1/period", origin)).toBe(true);
-    expect(isOwnApiUrl("/api/auth/get-session", origin)).toBe(true);
-    expect(isOwnApiUrl("https://app.test/api", origin)).toBe(true);
+    expect(report).toEqual({
+      body: "TypeError",
+      attributes: { "exception.type": "TypeError" },
+    });
   });
 
-  it("rejects other origins, other paths and look-alikes", () => {
-    expect(isOwnApiUrl("https://other.test/api/v1/period", origin)).toBe(false);
-    expect(isOwnApiUrl("https://app.test/otlp/v1/traces", origin)).toBe(false);
-    expect(isOwnApiUrl("https://app.test/apix", origin)).toBe(false);
-    expect(isOwnApiUrl("https://app.test.evil.com/api/x", origin)).toBe(false);
-    expect(isOwnApiUrl("not a url", "")).toBe(false);
+  it("falls back for anything else, strings included", () => {
+    expect(errorReport("Sentinel texto", "Uncaught error")).toEqual({
+      body: "Uncaught error",
+      attributes: {},
+    });
+    expect(errorReport(undefined, "Unhandled promise rejection").body).toBe(
+      "Unhandled promise rejection"
+    );
   });
 });
