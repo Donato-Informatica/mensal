@@ -100,7 +100,19 @@ function redact(span: ReadableSpan): ReadableSpan {
       ? (withoutQuery(value) as typeof value)
       : value;
   }
-  return Object.create(span, { attributes: { value: attributes } });
+  // Error text can echo bound values or user input: events keep their name and
+  // the exception's type only, and the status its code without a message.
+  const events = span.events.map((event) => ({
+    ...event,
+    attributes: event.attributes?.["exception.type"]
+      ? { "exception.type": event.attributes["exception.type"] }
+      : {},
+  }));
+  return Object.create(span, {
+    attributes: { value: attributes },
+    events: { value: events },
+    status: { value: { code: span.status.code } },
+  });
 }
 
 function redacted(inner: SpanExporter): SpanExporter {

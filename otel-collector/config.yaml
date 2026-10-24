@@ -63,18 +63,18 @@ processors:
         conditions:
           - resource.attributes["service.name"] == "mensal-web"
         statements:
-          - keep_matching_keys(span.attributes, "^(http\\.method|http\\.url|http\\.status_code|http\\.status_text|http\\.host|http\\.scheme|http\\.user_agent|http\\.response_content_length|http\\.response_content_length_uncompressed|http\\.request\\.method|http\\.response\\.status_code|url\\.full|url\\.path|url\\.scheme|server\\.address|server\\.port|user_agent\\.original|error\\.type|component|exception\\.type|exception\\.message|exception\\.stacktrace)$")
+          - keep_matching_keys(span.attributes, "^(http\\.method|http\\.url|http\\.status_code|http\\.status_text|http\\.host|http\\.scheme|http\\.user_agent|http\\.response_content_length|http\\.response_content_length_uncompressed|http\\.request\\.method|http\\.response\\.status_code|url\\.full|url\\.path|url\\.scheme|server\\.address|server\\.port|user_agent\\.original|error\\.type|component|exception\\.type)$")
       - context: spanevent
         conditions:
           - resource.attributes["service.name"] == "mensal-web"
         statements:
-          - keep_matching_keys(spanevent.attributes, "^(exception\\.type|exception\\.message|exception\\.stacktrace)$")
+          - keep_matching_keys(spanevent.attributes, "^(exception\\.type)$")
     log_statements:
       - context: log
         conditions:
           - resource.attributes["service.name"] == "mensal-web"
         statements:
-          - keep_matching_keys(log.attributes, "^(url\\.path|exception\\.type|exception\\.message|exception\\.stacktrace)$")
+          - keep_matching_keys(log.attributes, "^(url\\.path|exception\\.type)$")
 
   batch:
 

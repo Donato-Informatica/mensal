@@ -79,15 +79,15 @@ export function createAuth({
   db,
   baseURL,
   secret,
-  log: givenLog,
-  email = consoleEmail(givenLog ?? console.log),
+  log: customLog,
+  email = consoleEmail(customLog ?? console.log),
   rateLimit = true,
   now = () => new Date(),
   activity = consoleActivity,
 }: AuthOptions) {
   // The email text holds reset links: `consoleEmail` above writes to stdout
   // only, never through the exporting log.
-  const log = givenLog ?? exportedLog((message) => console.log(message));
+  const log = customLog ?? exportedLog((message) => console.log(message));
   const record: RecordActivity = activityRecorder(activity, now, log);
   /**
    * Sends without waiting, so an answer neither slows down nor fails for an

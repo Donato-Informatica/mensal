@@ -36,14 +36,32 @@ export function emitLog(
 
 const emailAddress = /[^\s<>"',;()]+@[^\s<>"',;()]+/g;
 
+const MAX_EXPORTED_LENGTH = 1000;
+
 /**
- * An operator `Log` that writes through `write` (stdout or stderr, as before)
- * and also exports the line as a log record, `ERROR` unless said otherwise.
- * Email addresses in the exported copy are masked (PRD §8.7.2).
+ * `message` as it may leave the process (PRD §8.7.2). Error text can echo
+ * user data: email addresses, quoted values, and the values Postgres puts in
+ * `Key (column)=(value)` and `Failing row contains (...)` details are masked,
+ * and the result is truncated.
+ */
+export function sanitizeForExport(message: string): string {
+  return message
+    .replace(emailAddress, "[email]")
+    .replace(/\(([^()\n]*)\)=\([^\n]*?\)(?= |$|\.)/g, "($1)=([value])")
+    .replace(/(contains) \(.*\)/g, "$1 ([values])")
+    .replace(/"[^"\n]*"/g, '"[value]"')
+    .replace(/'[^'\n]*'/g, "'[value]'")
+    .slice(0, MAX_EXPORTED_LENGTH);
+}
+
+/**
+ * An operator `Log` that writes through `write` (stdout or stderr, as before,
+ * unchanged) and also exports the line as a log record, `ERROR` unless said
+ * otherwise. The exported copy is sanitized (`sanitizeForExport`).
  */
 export function exportedLog(write: Log, severity: Severity = "ERROR"): Log {
   return (message) => {
     write(message);
-    emitLog(severity, message.replace(emailAddress, "[email]"));
+    emitLog(severity, sanitizeForExport(message));
   };
 }

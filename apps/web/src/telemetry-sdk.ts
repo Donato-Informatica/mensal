@@ -27,7 +27,11 @@ import {
   type SpanExporter,
   type SpanProcessor,
 } from "@opentelemetry/sdk-trace";
-import { notOwnApiPattern, stripQueryAndHash } from "./telemetry-rules.ts";
+import {
+  errorReport,
+  notOwnApiPattern,
+  stripQueryAndHash,
+} from "./telemetry-rules.ts";
 
 /** Span attributes that hold a url: they leave the browser without a query. */
 const URL_ATTRIBUTES = ["url.full", "http.url", "http.target"];
@@ -63,7 +67,7 @@ function withoutAssetSpans(exporter: SpanExporter): SpanExporter {
  * The OpenTelemetry web SDK wiring (PRD §8.7.3), loaded lazily by
  * `startTelemetry` only when the build turns telemetry on. Document load and
  * `fetch` traces to the app's own `/api` share a trace with the API request;
- * uncaught errors become ERROR logs. Both go to `<endpoint>/v1/...` on the
+ * uncaught errors become ERROR logs carrying only the error's type. Both go to `<endpoint>/v1/...` on the
  * app's origin in async batches.
  */
 export function startSdk(endpoint: string, environment: string) {
@@ -112,22 +116,12 @@ export function startSdk(endpoint: string, environment: string) {
 
     const report = (error: unknown, fallbackMessage: string) => {
       try {
-        const attributes: Attributes = {
-          "url.path": window.location.pathname,
-        };
-        let body = fallbackMessage;
-        if (error instanceof Error) {
-          body = error.message || fallbackMessage;
-          attributes["exception.type"] = error.name;
-          if (error.stack) attributes["exception.stacktrace"] = error.stack;
-        } else if (typeof error === "string") {
-          body = error;
-        }
+        const { body, attributes } = errorReport(error, fallbackMessage);
         logger.emit({
           severityNumber: SeverityNumber.ERROR,
           severityText: "ERROR",
           body,
-          attributes,
+          attributes: { "url.path": window.location.pathname, ...attributes },
         });
       } catch {
         // Telemetry never affects the app.

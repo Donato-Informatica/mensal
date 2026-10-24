@@ -24,12 +24,14 @@ export function notOwnApiPattern(origin: string) {
   return new RegExp(`^(?!(?:${escaped})?/api(?:[/?#]|$))`);
 }
 
-/** Whether `url` is the app's own `/api`, the only place `traceparent` goes. */
-export function isOwnApiUrl(url: string, origin: string) {
-  try {
-    const { origin: urlOrigin, pathname } = new URL(url, origin);
-    return urlOrigin === origin && /^\/api(\/|$)/.test(pathname);
-  } catch {
-    return false;
-  }
+/**
+ * What an uncaught error may export (PRD §8.7.2): its type as the log body and
+ * `exception.type`, never its message or stack, which can hold user text.
+ */
+export function errorReport(error: unknown, fallbackBody: string) {
+  const type = error instanceof Error ? error.name : undefined;
+  return {
+    body: type || fallbackBody,
+    attributes: type ? { "exception.type": type } : {},
+  };
 }
