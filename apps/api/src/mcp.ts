@@ -19,6 +19,7 @@ import type { AnyTool } from "./mcp-tool.ts";
 import { tools as allTools } from "./mcp-tools.ts";
 import type { OperationContext } from "./operations.ts";
 import { Refusal } from "./refusal.ts";
+import { identifyRequest } from "./telemetry-context.ts";
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -127,6 +128,7 @@ function authenticateToken(auth: Auth, db: Database): RequestHandler {
         return;
       }
       res.locals.tokenOwnerId = ownerId;
+      identifyRequest(req, ownerId);
       next();
     } catch (error) {
       next(error);
