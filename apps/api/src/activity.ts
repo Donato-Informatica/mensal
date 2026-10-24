@@ -3,7 +3,7 @@ import type {
   OccurrenceStatus,
   RecurrenceEdit,
 } from "@mensal/shared";
-import { describeError, type Log } from "./log.ts";
+import { describeError, emitLog, type Log, type LogAttributes } from "./log.ts";
 
 /**
  * Who did what to which item (PRD §8.7), as the write reports it. Only ids and
@@ -25,9 +25,17 @@ export type Activity = (event: ActivityEvent) => void;
 /** Logs a write once it has succeeded. Never throws. */
 export type RecordActivity = (report: ActivityReport) => void;
 
-/** The default sink: each event as one JSON line on stdout. */
+/**
+ * The default sink: each event as one JSON line on stdout and, when telemetry
+ * is on, as an INFO log record whose fields are attributes (PRD §8.7.1).
+ */
 export const consoleActivity: Activity = (event) => {
   console.log(JSON.stringify(event));
+  // The attempted email of a failed sign-in is the operator's alone: it is
+  // never exported (PRD §8.7.2).
+  const fields: Record<string, unknown> = { ...event };
+  delete fields.email;
+  emitLog("INFO", event.action, fields as LogAttributes);
 };
 
 /**

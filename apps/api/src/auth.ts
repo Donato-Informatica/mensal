@@ -33,7 +33,7 @@ import {
   passwordChangedEmail,
   resetPasswordEmail,
 } from "./emails.ts";
-import type { Log } from "./log.ts";
+import { exportedLog, type Log } from "./log.ts";
 
 /** What every access token starts with, so a leaked one is recognizable. */
 export const accessTokenPrefix = "mensal_";
@@ -79,12 +79,15 @@ export function createAuth({
   db,
   baseURL,
   secret,
-  log = console.log,
-  email = consoleEmail(log),
+  log: givenLog,
+  email = consoleEmail(givenLog ?? console.log),
   rateLimit = true,
   now = () => new Date(),
   activity = consoleActivity,
 }: AuthOptions) {
+  // The email text holds reset links: `consoleEmail` above writes to stdout
+  // only, never through the exporting log.
+  const log = givenLog ?? exportedLog((message) => console.log(message));
   const record: RecordActivity = activityRecorder(activity, now, log);
   /**
    * Sends without waiting, so an answer neither slows down nor fails for an

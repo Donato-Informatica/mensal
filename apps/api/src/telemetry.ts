@@ -3,8 +3,14 @@ import {
   AlwaysOnSampler,
   BatchSpanProcessor,
   SimpleSpanProcessor,
-} from "@opentelemetry/sdk-trace-base";
-import type { ReadableSpan, SpanExporter } from "@opentelemetry/sdk-trace-base";
+} from "@opentelemetry/sdk-trace";
+import type { ReadableSpan, SpanExporter } from "@opentelemetry/sdk-trace";
+import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
+import {
+  BatchLogRecordProcessor,
+  SimpleLogRecordProcessor,
+} from "@opentelemetry/sdk-logs";
+import type { LogRecordExporter } from "@opentelemetry/sdk-logs";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { ExpressInstrumentation } from "@opentelemetry/instrumentation-express";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
@@ -34,9 +40,13 @@ export interface Telemetry {
  */
 export function startTelemetry(
   env: Record<string, string | undefined>,
-  { exporter }: { exporter?: SpanExporter } = {}
+  {
+    exporter,
+    logExporter,
+  }: { exporter?: SpanExporter; logExporter?: LogRecordExporter } = {}
 ): Telemetry | undefined {
-  if (!exporter && !env.OTEL_EXPORTER_OTLP_ENDPOINT) return undefined;
+  if (!exporter && !logExporter && !env.OTEL_EXPORTER_OTLP_ENDPOINT)
+    return undefined;
 
   const sdk = new NodeSDK({
     resource: resourceFromAttributes({
@@ -46,8 +56,16 @@ export function startTelemetry(
     sampler: new AlwaysOnSampler(),
     spanProcessors: [
       exporter
-        ? new SimpleSpanProcessor(redacted(exporter))
-        : new BatchSpanProcessor(redacted(new OTLPTraceExporter())),
+        ? new SimpleSpanProcessor({ exporter: redacted(exporter) })
+        : new BatchSpanProcessor({
+            exporter: redacted(new OTLPTraceExporter()),
+          }),
+    ],
+    // Activity and operator logs (PRD §8.7.1), linked to the active span.
+    logRecordProcessors: [
+      logExporter
+        ? new SimpleLogRecordProcessor({ exporter: logExporter })
+        : new BatchLogRecordProcessor({ exporter: new OTLPLogExporter() }),
     ],
     instrumentations: [
       new HttpInstrumentation({
