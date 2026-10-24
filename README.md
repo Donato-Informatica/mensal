@@ -65,7 +65,7 @@ Coolify preview deployments load the same data on boot when `SEED_DEMO_DATA=true
 
 ## Deploying to production
 
-The production stack is [docker-compose.prod.yml](docker-compose.prod.yml), meant for [Coolify](https://coolify.io) (PRD §8.4): Postgres, the API, and the web app (nginx serving the static build and forwarding `/api` to the API, so the browser sees one origin). Only `web` is public.
+The production stack is [docker-compose.prod.yml](docker-compose.prod.yml), meant for [Coolify](https://coolify.io) (PRD §8.4): Postgres, the API, the OpenTelemetry Collector and the web app (nginx serving the static build and forwarding `/api` to the API, so the browser sees one origin). Only `web` is public.
 
 1. **Resend** (optional, but without it password-reset links only reach the container log):
    1. In Resend, add your domain under **Domains** and create the DNS records it lists (SPF, DKIM) at your DNS provider. Wait until the domain shows as verified.
@@ -77,6 +77,35 @@ The production stack is [docker-compose.prod.yml](docker-compose.prod.yml), mean
 6. Check email end to end: sign up, use **Esqueci a senha** with that address, and confirm the reset email arrives. Then approve your user by setting `users.approved = true` in the database.
 
 Also set up daily Postgres backups in Coolify to S3-compatible storage outside the VPS (PRD §8.4).
+
+### Telemetry: Grafana Cloud
+
+Traces and logs go from the API and the browser to the `otel-collector` service ([otel-collector/config.yaml](otel-collector/config.yaml)), which redacts them and exports to Grafana Cloud's free tier (PRD §8.7, [ADR-0007](docs/adr/0007-opentelemetry-through-a-collector.md)). The browser posts to `/otlp` on the app's own origin and nginx forwards it (60 requests per minute per client IP, bodies up to 256 kB). The Collector being down never affects the app or `/api/health`.
+
+1. In [Grafana Cloud](https://grafana.com) create a free stack. Under the stack's **OpenTelemetry** tile, generate an API token and note the **OTLP endpoint** (e.g. `https://otlp-gateway-prod-us-east-0.grafana.net/otlp`) and the **Instance ID**.
+2. In Coolify, set these on the resource (and in its **Preview Deployments** environment variables; previews share production's stack):
+
+   | Variable                      | Value                                                                                  |
+   | ----------------------------- | -------------------------------------------------------------------------------------- |
+   | `GRAFANA_CLOUD_OTLP_ENDPOINT` | the OTLP endpoint above                                                                |
+   | `GRAFANA_CLOUD_INSTANCE_ID`   | the numeric instance id                                                                |
+   | `GRAFANA_CLOUD_API_TOKEN`     | the token                                                                              |
+   | `DEPLOYMENT_ENVIRONMENT`      | `production` for production; `pr-<n>` (or `preview`) in Preview Deployments, see below |
+
+   None has a default in the compose file on purpose: Coolify would otherwise bake production's value into every preview. The web build reads `DEPLOYMENT_ENVIRONMENT` as a build argument, so redeploy after changing it.
+
+3. Coolify reads the compose file from `main`, not from the PR: after merging a change to `docker-compose.prod.yml` (including the first one adding the Collector), open the resource and use **Reload Compose File**, then redeploy. Until then previews keep the old stack.
+
+Coolify exposes no pull request number to compose files, so `DEPLOYMENT_ENVIRONMENT` in the Preview Deployments variables is one fixed value for every preview. Use `preview` there, or change it to `pr-<n>` when you are looking at a specific preview.
+
+In Grafana, open **Explore** and pick the Loki (logs) or Tempo (traces) data source. Filter by environment first (`deployment_environment` in Loki, `resource.deployment.environment` in Tempo):
+
+- **Activity log of one user** (Loki): `{service_name="mensal-api", deployment_environment="production"} | action != "" | user = "<user id>"`. Add `| action = "occurrence.status"` to narrow it to one action.
+- **Slow traces** (Tempo, TraceQL): `{ resource.service.name = "mensal-api" && duration > 1s }`. Open one to see the browser span, the API request and the SQL under it.
+- **500s** (Tempo): `{ resource.service.name = "mensal-api" && span.http.status_code >= 500 }`; for the logs of the same failures, `{service_name="mensal-api"} | detected_level = "error"` in Loki.
+- **Browser errors** (Loki): `{service_name="mensal-web"} | detected_level = "error"`.
+
+Attribute names follow Grafana's OTLP mapping; if a label or field is missing, use the query builder's label browser to see what the stack calls it.
 
 ## Checks
 

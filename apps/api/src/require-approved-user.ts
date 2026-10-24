@@ -1,6 +1,7 @@
 import { fromNodeHeaders } from "better-auth/node";
 import type { RequestHandler } from "express";
 import type { Auth } from "./auth.ts";
+import { identifyRequest } from "./telemetry-context.ts";
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -30,6 +31,7 @@ export function requireApprovedUser(auth: Auth): RequestHandler {
       return;
     }
     res.locals.userId = session.user.id;
+    identifyRequest(req, session.user.id);
     next();
   };
 }

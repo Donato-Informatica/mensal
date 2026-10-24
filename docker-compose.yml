@@ -16,5 +16,14 @@ services:
       timeout: 5s
       retries: 15
 
+  # Grafana, Loki, Tempo and a Collector in one image, for browsing the API's
+  # telemetry locally without an account (PRD §8.7.4). Grafana is on :3001;
+  # point OTEL_EXPORTER_OTLP_ENDPOINT at http://localhost:4318.
+  otel-lgtm:
+    image: grafana/otel-lgtm
+    ports:
+      - "3001:3000"
+      - "4318:4318"
+
 volumes:
   postgres-data:
