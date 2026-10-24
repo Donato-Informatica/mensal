@@ -28,5 +28,7 @@ EXPOSE 3000
 # falls back to localhost when it is unset. `exec node` rather than the api's
 # `npm start` makes Node PID 1, so it receives SIGTERM. SEED_DEMO_DATA=true
 # (set only in Coolify's preview environment) also loads the demo data; a
-# failed seed is logged and never blocks boot.
-CMD ["sh", "-c", ": \"${DATABASE_URL:?is not set}\" && npm run --silent -w @mensal/database migrate && { [ \"$SEED_DEMO_DATA\" != true ] || node apps/api/src/seed-cli.ts || echo \"demo seed failed\"; } && exec node apps/api/src/server.ts"]
+# failed seed is logged and never blocks boot. `--import` loads the telemetry
+# hook before the server; it does nothing unless OTEL_EXPORTER_OTLP_ENDPOINT is
+# set (PRD §8.7.4).
+CMD ["sh", "-c", ": \"${DATABASE_URL:?is not set}\" && npm run --silent -w @mensal/database migrate && { [ \"$SEED_DEMO_DATA\" != true ] || node apps/api/src/seed-cli.ts || echo \"demo seed failed\"; } && exec node --import ./apps/api/src/instrumentation.ts apps/api/src/server.ts"]
