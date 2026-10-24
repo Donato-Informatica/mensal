@@ -14,6 +14,8 @@ RUN npm ci --ignore-scripts
 COPY tsconfig.base.json ./
 COPY apps/web apps/web
 COPY packages/shared packages/shared
+ARG VITE_OTLP_PATH
+ARG VITE_DEPLOYMENT_ENVIRONMENT
 RUN npm run build:web
 
 FROM nginx:1-alpine

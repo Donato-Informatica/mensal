@@ -3,7 +3,7 @@ import type {
   OccurrenceStatus,
   RecurrenceEdit,
 } from "@mensal/shared";
-import { describeError, type Log } from "./log.ts";
+import { describeError, emitLog, type Log, type LogAttributes } from "./log.ts";
 
 /**
  * Who did what to which item (PRD §8.7), as the write reports it. Only ids and
@@ -25,10 +25,39 @@ export type Activity = (event: ActivityEvent) => void;
 /** Logs a write once it has succeeded. Never throws. */
 export type RecordActivity = (report: ActivityReport) => void;
 
-/** The default sink: each event as one JSON line on stdout. */
+/**
+ * The default sink: each event as one JSON line on stdout and, when telemetry
+ * is on, as an INFO log record whose fields are attributes (PRD §8.7.1).
+ */
 export const consoleActivity: Activity = (event) => {
   console.log(JSON.stringify(event));
+  emitLog("INFO", event.action, exportedFields(event));
 };
+
+/**
+ * The only fields of an event that leave the process (PRD §8.7.2): ids, field
+ * names and the like. An allow-list, so a field added to an event later (an
+ * email, an address) stays on stdout until someone decides it may be exported.
+ */
+const EXPORTED_FIELDS = [
+  "action",
+  "kind",
+  "user",
+  "id",
+  "from",
+  "fields",
+  "status",
+  "revoked",
+  "via",
+] as const;
+
+function exportedFields(event: ActivityEvent): LogAttributes {
+  const source: Record<string, unknown> = { ...event };
+  const exported: Record<string, unknown> = {};
+  for (const key of EXPORTED_FIELDS)
+    if (source[key] !== undefined) exported[key] = source[key];
+  return exported as LogAttributes;
+}
 
 /**
  * Records to `activity`, stamping each report with the time `now` reads. The

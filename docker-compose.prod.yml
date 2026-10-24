@@ -1,4 +1,5 @@
-# Production stack for Coolify (PRD §8.4): Postgres, the API and the web app.
+# Production stack for Coolify (PRD §8.4): Postgres, the API, the OpenTelemetry
+# Collector (§8.7.4) and the web app.
 # In Coolify: new resource -> Docker Compose, compose file `/docker-compose.prod.yml`,
 # then set the domain of the `web` service. Only `web` is public; it serves the
 # static frontend and forwards /api to the API, so the browser sees one origin.
@@ -49,6 +50,12 @@ services:
       # value, so the preview's `true` would never reach the container. Unset
       # is an empty string, which the Dockerfile treats as "do not seed".
       SEED_DEMO_DATA: ${SEED_DEMO_DATA}
+      # Telemetry (PRD §8.7.4). Exports to the Collector over the internal
+      # network; deliberately NOT in depends_on, and /api/health ignores it.
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      # `production` in production, `pr-<n>` in Preview Deployments (no
+      # `:-default`, same reason as SEED_DEMO_DATA).
+      DEPLOYMENT_ENVIRONMENT: ${DEPLOYMENT_ENVIRONMENT}
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,6 +76,10 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        # Turns browser telemetry on (nginx forwards /otlp to the Collector).
+        VITE_OTLP_PATH: /otlp
+        VITE_DEPLOYMENT_ENVIRONMENT: ${DEPLOYMENT_ENVIRONMENT}
     environment:
       - SERVICE_URL_WEB_80
     depends_on:
@@ -80,6 +91,20 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  # Receives OTLP from the API and (through nginx) the browser, redacts, and
+  # exports to Grafana Cloud (PRD §8.7.4, ADR-0007). Not public, no published
+  # port. The credentials have no `:-default`: previews would otherwise get
+  # production's value baked in.
+  otel-collector:
+    build:
+      context: otel-collector
+    hostname: otel-collector
+    environment:
+      GRAFANA_CLOUD_OTLP_ENDPOINT: ${GRAFANA_CLOUD_OTLP_ENDPOINT}
+      GRAFANA_CLOUD_INSTANCE_ID: ${GRAFANA_CLOUD_INSTANCE_ID}
+      GRAFANA_CLOUD_API_TOKEN: ${GRAFANA_CLOUD_API_TOKEN}
+    restart: unless-stopped
 
 volumes:
   postgres-data:
