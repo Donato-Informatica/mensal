@@ -13,7 +13,7 @@ import { dataRouter } from "./data.ts";
 import { docsRouter } from "./docs.ts";
 import { errorHandler } from "./error-handler.ts";
 import { healthRouter } from "./health.ts";
-import type { Log } from "./log.ts";
+import { exportedLog, type Log } from "./log.ts";
 import { mcpRouter } from "./mcp.ts";
 import { occurrencesRouter } from "./occurrences.ts";
 import { periodsRouter } from "./periods.ts";
@@ -36,7 +36,7 @@ export function createApp({
   auth,
   db,
   now = () => new Date(),
-  log = console.error,
+  log = exportedLog((message) => console.error(message)),
   activity = consoleActivity,
 }: AppOptions) {
   const record = activityRecorder(activity, now, log);

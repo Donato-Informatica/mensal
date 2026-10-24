@@ -4,6 +4,7 @@ import { createApp } from "./app.ts";
 import { createAuth } from "./auth.ts";
 import { readConfig } from "./config.ts";
 import { consoleEmail, resendEmail } from "./email.ts";
+import { exportedLog } from "./log.ts";
 
 const { databaseURL, baseURL, secret, port, email } = readConfig(process.env);
 const db = createDatabase(databaseURL);
@@ -18,8 +19,9 @@ const auth = createAuth({
 });
 
 const server = createApp({ auth, db, activity }).listen(port, () => {
-  console.log(`API listening on http://localhost:${port}`);
-  console.log(
+  const info = exportedLog((message) => console.log(message), "INFO");
+  info(`API listening on http://localhost:${port}`);
+  info(
     email
       ? `Email: Resend, from ${email.from}`
       : "Email: console (no RESEND_API_KEY)"
