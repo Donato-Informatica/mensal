@@ -54,7 +54,16 @@ export default defineConfig({
   server: {
     // Same origin as in production (PRD §8.4): the browser only ever talks to
     // the dev server, which forwards /api to Express. No CORS.
-    proxy: { "/api": "http://localhost:3000" },
+    // /otlp is the browser's telemetry ingest (PRD §8.7.4): locally the
+    // otel-lgtm container of docker-compose.yml, in production nginx → Collector.
+    proxy: {
+      "/api": "http://localhost:3000",
+      // The Collector serves /v1/traces and /v1/logs at its root.
+      "/otlp": {
+        target: "http://localhost:4318",
+        rewrite: (path) => path.replace(/^\/otlp/, ""),
+      },
+    },
     // Better-Auth trusts only BETTER_AUTH_URL's origin: on another port every
     // sign-in fails with INVALID_ORIGIN, so a taken port is an error instead.
     strictPort: true,
