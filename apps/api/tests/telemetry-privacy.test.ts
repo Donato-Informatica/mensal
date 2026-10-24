@@ -2,23 +2,34 @@ import { createRequire } from "node:module";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import { InMemorySpanExporter } from "@opentelemetry/sdk-trace-base";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { InMemoryLogRecordExporter } from "@opentelemetry/sdk-logs";
+import { InMemorySpanExporter } from "@opentelemetry/sdk-trace";
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+  type MockInstance,
+} from "vitest";
 import type { TestApi } from "./api.ts";
 
 // The real app with the real instrumentation, exporting to memory (PRD §8.7.2).
 // Telemetry starts before express, pg and the app are loaded, as `--import`
 // does in production, hence the dynamic imports below.
 const exporter = new InMemorySpanExporter();
+const logExporter = new InMemoryLogRecordExporter();
 let stop: () => Promise<void>;
 let api: TestApi;
 let helpers: typeof import("./api.ts");
+let stdout: MockInstance<typeof console.log>;
 
 beforeAll(async () => {
   const { registerModuleHooks, startTelemetry } =
     await import("../src/telemetry.ts");
   registerModuleHooks();
-  const telemetry = startTelemetry({}, { exporter });
+  const telemetry = startTelemetry({}, { exporter, logExporter });
   stop = () => telemetry!.shutdown();
   // The test runner has loaded or will load these its own way: a CommonJS require now is
   // what lets the HTTP instrumentation patch them.
@@ -26,9 +37,13 @@ beforeAll(async () => {
   require("node:http");
   require("express");
   helpers = await import("./api.ts");
-  api = await helpers.startApi();
+  // The real activity sink, so its records are checked too.
+  const { consoleActivity } = await import("../src/activity.ts");
+  stdout = vi.spyOn(console, "log").mockImplementation(() => {});
+  api = await helpers.startApi({ activity: consoleActivity });
 });
 afterAll(async () => {
+  stdout.mockRestore();
   await api.close();
   await stop();
 });
@@ -114,15 +129,25 @@ describe("telemetry privacy and identity", () => {
     await client.close();
 
     const spans = exporter.getFinishedSpans();
-    const exported = JSON.stringify(
+    const records = logExporter.getFinishedLogRecords();
+    // The flows above did produce activity records.
+    expect(
+      records.some((r) => r.attributes.action === "occurrence.create")
+    ).toBe(true);
+    const exported = JSON.stringify([
       spans.map(({ name, attributes, events, resource, links }) => ({
         name,
         attributes,
         events,
         links,
         resource: resource.attributes,
-      }))
-    );
+      })),
+      records.map(({ body, attributes, resource }) => ({
+        body,
+        attributes,
+        resource: resource.attributes,
+      })),
+    ]);
     const forbidden = [
       ...Object.values(secrets).map(String),
       "Sentinel mcp PLM",
