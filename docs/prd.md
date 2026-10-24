@@ -417,6 +417,7 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 - **Healthcheck:** Coolify's healthcheck targets `GET /api/health`: unauthenticated, `200 {"status":"ok"}` while Postgres answers `SELECT 1`, `503 {"status":"unavailable"}` otherwise (cause logged, never returned).
 - **Same origin:** the proxy serves the static frontend at `/` and forwards `/api` to Express. No CORS.
 - **PWA files:** hashed `/assets/` are cached as immutable; `sw.js`, `registerSW.js` and `manifest.webmanifest` are served with `Cache-Control: no-cache`, so a new version is picked up on the next open (§7.16).
+- **Telemetry:** an `otel-collector` service exports traces and logs to Grafana Cloud; nginx forwards the browser's `/otlp` to it (§8.7.4).
 - **Backups:** daily Postgres backups through Coolify to S3-compatible storage outside the VPS (e.g. Backblaze B2, Cloudflare R2), with 30-day retention.
 
 ### 8.5 Testing
@@ -439,13 +440,45 @@ A minimal baseline against opportunistic internet traffic (scanners, credential 
 
 ### 8.7 Observability
 
-A minimal activity log for the operator: who did what to which item, and when. It is operational, not an audit trail: written to stdout only (Coolify keeps the container logs), never stored in the database, never shown to users.
+Traces and logs from the API and the browser, collected with OpenTelemetry and browsed in Grafana ([ADR-0007](adr/0007-opentelemetry-through-a-collector.md)). They are for the operator only: never stored in the database, never shown to users.
+
+#### 8.7.1 Activity log
+
+A minimal log for the operator of who did what to which item, and when. It is operational, not an audit trail: written to stdout (Coolify keeps the container logs) and exported as OpenTelemetry log records (§8.7.3).
 
 - **One JSON line per event**, e.g. `{"at":"2026-10-16T14:03:00.000Z","user":"…","action":"occurrence.status","kind":"occurrence","id":"…","from":"virtual_…","status":"SETTLED"}`. `at` is UTC ISO from the app's clock.
 - **Who:** the user id only, never email or name. The exception is a failed sign-in, which has no user: it carries the attempted `email` and the client `ip` (from `x-forwarded-for`, §8.6).
 - **What item:** its kind and id only. No descriptions, amounts or dates: they are the user's financial data. An edit lists the changed field _names_ in `fields`, never their values. A write that materializes a virtual occurrence (ADR-0001) carries the virtual id in `from` and the persisted uuid in `id`.
 - **Actions:** `occurrence.create` (one-off), `occurrence.edit`, `occurrence.status` (with the new `status`), `occurrence.delete`, `recurrence.create`, `recurrence.edit` (ending one shows `endPeriod` in `fields`), `recurrence.delete`, `user.sign-up`, `user.sign-in`, `user.sign-in-failed`, `user.password-changed` (with `revoked`: `["sessions", "access-tokens"]`, the part the user chose, or `[]`), `user.password-reset`, `user.name-changed` (never the name itself; a change to the same name is a no-op edit), `user.access-token-created` and `user.access-token-revoked` (the token's id, never the token), `user.deleted` (the user id only). A write made through the MCP server (§8.9) logs the same action with `"via":"mcp"`. A reset _request_ is not logged: one for an unknown email has no user. Only successful writes are logged; reads, no-op edits and refused requests are not (unexpected errors already reach the error handler, §8.6).
-- **Sink:** an injectable `activity` option on the app and on Better-Auth, writing to the console by default. No log provider in the MVP; adding one later replaces the default sink. The free-text operator log (errors, healthcheck, email failures, and emails while Resend is not configured, §8.2) is unchanged.
+- **Sink:** an injectable `activity` option on the app and on Better-Auth. By default it writes the line to the console and, when telemetry is on (§8.7.4), also emits it as a log record.
+
+#### 8.7.2 Privacy
+
+Every attribute, log body and span name the API, the browser or the Collector sends follows the rules of the activity log (§8.7.1). User and item ids and periods are allowed. Amounts, descriptions, due dates, email, names, request and response bodies, cookies, `Authorization`, access tokens and reset links never are.
+
+- **API spans** carry the signed-in user in `enduser.id`. Instrumented SQL keeps its parameterized text, never the bound values. URLs drop their query strings.
+- **Browser spans** carry no user identity: their `traceparent` links them to the API span that has it.
+- **Two layers:** the SDKs are configured not to capture what is forbidden, and the Collector also removes `authorization`, `cookie` and `set-cookie` headers and URL query strings, and drops browser attributes outside a known list.
+- **Guard:** an API test with an in-memory exporter runs real flows (one-off create, edit and settle; recurrence create; sign-in; an MCP write). It fails when any exported attribute or log contains the amounts, descriptions, email, name or token those flows used.
+
+#### 8.7.3 Signals
+
+- **Traces, API:** Node SDK auto-instrumentation of HTTP, Express and `pg`, loaded with `--import` before the app (in development and production, never in tests). MCP calls are traced like any other request.
+- **Traces, browser:** the OpenTelemetry web SDK traces document load and `fetch` calls to `/api`, propagating W3C `traceparent` so a browser span and its API span form one trace. No click or route-change spans.
+- **Logs:** the activity log (§8.7.1) at INFO, its fields as log attributes (`action`, `kind`, `id`, `via`, …), never a JSON string in the body. The free-text operator log (errors, healthcheck, email failures) at ERROR for failures and INFO otherwise. Browser errors (`error`, `unhandledrejection`) at ERROR. Every API log record carries the active `trace_id` and `span_id`. Everything still reaches stdout as before.
+- **Never exported:** the email text printed to the log while Resend is not configured (§8.2), since it holds reset links. It stays on stdout only.
+- **Sampling:** 100%. Spans for `GET /api/health`, static assets and `/otlp` itself are dropped.
+- **Resource:** `service.name` is `mensal-api` or `mensal-web`. `deployment.environment` is `production`, `pr-<n>` for previews, or `local`.
+- **Out of scope for now:** metrics (RED, Node runtime, Web Vitals), versioned dashboards and alerting. Grafana's Explore is the interface; the README lists the useful queries (activity log by user, slow traces, 500s).
+
+#### 8.7.4 Pipeline
+
+- **Switch:** telemetry is on only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set (the API) or the build is configured with the `/otlp` path (the web). Otherwise the SDKs are no-ops. Tests never export.
+- **Collector:** an `otel-collector` service in `docker-compose.prod.yml` receives OTLP from the API over the internal network and from browsers via nginx, redacts (§8.7.2) and exports to Grafana Cloud's OTLP endpoint. The credentials are Coolify variables declared without `:-default` (previews would otherwise get production's value baked in). Previews share production's Grafana Cloud stack.
+- **Browser ingest:** `POST /otlp/v1/traces` and `/otlp/v1/logs` on the app's origin (no CORS, no extra `connect-src`), forwarded by nginx to the Collector. Unauthenticated, so the auth screens report too, but nginx limits each client IP to 60 requests per minute and bodies to 256 kB. The Vite dev server proxies `/otlp` the same way.
+- **Never on the critical path:** both SDKs export in async batches. The API does not depend on the Collector in compose, and `/api/health` ignores it. When the Collector is unreachable, telemetry is dropped and the app is unaffected.
+- **Local:** `docker compose up -d` also starts `grafana/otel-lgtm` (Grafana, Loki, Tempo and a Collector in one image), with Grafana on `http://localhost:3001`.
+- **Vendor seam:** only the Collector's config and its variables know the backend is Grafana Cloud. Moving to self-hosted Grafana, Loki and Tempo changes those and nothing in the apps.
 
 ### 8.8 API Documentation
 
