@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // Bundled by Vite; the tests read the page from disk with Node.
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "types": ["node", "vite/client"]
+  },
+  "include": ["**/*.ts"]
+}

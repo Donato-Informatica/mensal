@@ -16,6 +16,7 @@
   "scripts": {
     "prepare": "husky",
     "build:web": "npm run -w @mensal/web build",
+    "build:guide": "npm run -w @mensal/guide build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
