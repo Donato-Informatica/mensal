@@ -11,6 +11,7 @@ import { Link } from "@tanstack/react-router";
 import { MAX_NAME_LENGTH } from "@mensal/shared";
 import { errorMessage } from "./api-error.ts";
 import { CardScreen } from "./card-screen.tsx";
+import { GuideLink } from "./guide-link.tsx";
 import { useSessionChange } from "./session.ts";
 
 export function SignUp() {
@@ -71,6 +72,9 @@ export function SignUp() {
             <Anchor component={Link} to="/entrar" fz="sm">
               Entrar
             </Anchor>
+          </Text>
+          <Text ta="center">
+            <GuideLink>Como funciona</GuideLink>
           </Text>
         </Stack>
       </form>

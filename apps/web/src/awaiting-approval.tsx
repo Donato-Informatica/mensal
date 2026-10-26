@@ -2,6 +2,7 @@ import { Anchor, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { CardScreen } from "./card-screen.tsx";
 import { DeleteAccountModal } from "./delete-account.tsx";
+import { GuideLink } from "./guide-link.tsx";
 import { SignOutButton } from "./sign-out-button.tsx";
 
 export function AwaitingApproval() {
@@ -14,6 +15,9 @@ export function AwaitingApproval() {
       <Text fz="sm">
         Quando ela for aprovada, recarregue esta página para começar a usar o
         Mensal.
+      </Text>
+      <Text>
+        <GuideLink section="cadastro">Como funciona a aprovação</GuideLink>
       </Text>
       <SignOutButton variant="default" fullWidth />
       {/* An unapproved user can leave too (PRD §7.15). */}
