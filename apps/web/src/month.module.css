@@ -1,0 +1,37 @@
+/*
+ * The period navigator: equal side columns that always fit "Mês atual", so
+ * the title never shifts.
+ */
+.navigator {
+  display: grid;
+  grid-template-columns: minmax(36px, 1fr) minmax(0, 400px) minmax(36px, 1fr);
+  align-items: center;
+  gap: var(--mantine-spacing-xs);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-xs);
+}
+
+/*
+ * Phones close the gaps, so "Outubro 2026" keeps one line at 375px; the
+ * title button's own padding keeps it clear of the arrows. The longer month
+ * names still wrap (DESIGN.md).
+ */
+@media (max-width: 36em) {
+  .navigator {
+    gap: 4px;
+  }
+
+  .stepper {
+    gap: 0;
+  }
+}
+
+/* Summary figures: digits of equal width, so the amounts read as a column. */
+.figure {
+  font-variant-numeric: tabular-nums;
+}

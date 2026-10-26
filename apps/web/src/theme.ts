@@ -116,7 +116,7 @@ const paperGray: MantineColorsTuple = [
  * Two variants of the app's own, so a control can take a role rather than a
  * fixed shade (DESIGN.md: "take colours from the theme by role"):
  * - `surface`: Panel Black with ink on it (icon-button-round, category-tab-active).
- * - `overdue`: the overdue badge, rose (badge-overdue).
+ * - `overdue`: the overdue badge, rose text on a rose tint (badge-overdue).
  * A confirming delete (filled red) carries `--mensal-color-on-danger`.
  */
 const variantColorResolver: VariantColorsResolver = (input) => {
@@ -130,10 +130,10 @@ const variantColorResolver: VariantColorsResolver = (input) => {
   }
   if (input.variant === "overdue") {
     return {
-      background: "var(--mensal-color-overdue)",
-      hover: "var(--mensal-color-overdue)",
-      color: "var(--mantine-color-red-light-color)",
-      border: `${rem(1)} solid transparent`,
+      background: "var(--mensal-color-rose-tint)",
+      hover: "var(--mensal-color-rose-tint)",
+      color: "var(--mensal-color-rose-text)",
+      border: `${rem(1)} solid var(--mensal-color-rose-edge)`,
     };
   }
   const colors = defaultVariantColorsResolver(input);
@@ -248,7 +248,6 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     "--mensal-color-rose-text": "var(--mantine-color-red-4)",
     "--mensal-color-rose-tint": "rgb(239 68 68 / 0.1)",
     "--mensal-color-rose-edge": "var(--mantine-color-red-9)",
-    "--mensal-color-overdue": "var(--mantine-color-red-5)",
     "--mensal-color-on-danger": "var(--mantine-color-black)",
     "--mensal-color-highlight": "var(--mantine-primary-color-filled)",
     "--mensal-color-wordmark": "var(--mantine-color-yellow-4)",
@@ -293,7 +292,6 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     "--mensal-color-rose-text": "var(--mantine-color-red-6)",
     "--mensal-color-rose-tint": "rgb(220 38 38 / 0.06)",
     "--mensal-color-rose-edge": "var(--mantine-color-red-2)",
-    "--mensal-color-overdue": "var(--mantine-color-red-light)",
     "--mensal-color-on-danger": "var(--mantine-color-white)",
     "--mensal-color-highlight": "var(--mantine-color-bright)",
     "--mensal-color-wordmark": "var(--mantine-color-bright)",

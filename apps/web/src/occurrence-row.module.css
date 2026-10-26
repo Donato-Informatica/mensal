@@ -35,7 +35,21 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Wide screens: the amount and badge take fixed columns, so every row's amounts line up. */
+/* The amount and its badge: one wrapping line on phones, part of the trail otherwise. */
+.amountAndBadge {
+  display: contents;
+}
+
+/* No badge, no column; the rule below keeps it where the panel has badges. */
+.badgeColumn:empty {
+  display: none;
+}
+
+/*
+ * Wide screens: the amount and the badge take fixed columns, so a panel's
+ * amounts line up. A panel (.rows) holding any badge gives every row the
+ * badge column, fixed at the width of the longest period ("Fevereiro 2026").
+ */
 @media (min-width: 36.01em) {
   .amount {
     min-width: 7.5rem;
@@ -45,6 +59,11 @@
   .badge {
     min-width: 5.5rem;
     justify-content: center;
+  }
+
+  .rows:has(.badge) .badgeColumn {
+    display: flex;
+    flex: 0 0 8rem;
   }
 }
 
@@ -82,13 +101,17 @@
   }
 }
 
+/*
+ * The badge follows the amount and wraps under it when both do not fit
+ * ("−R$ 2.200,00" beside "Setembro 2026" at 360px), never overlapping it.
+ */
 @media (max-width: 36em) {
   .row {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
-      "check text text menu"
-      "check amount badge menu";
+      "check text menu"
+      "check amountAndBadge menu";
     align-items: center;
     column-gap: var(--mantine-spacing-sm);
   }
@@ -106,13 +129,13 @@
     grid-area: text;
   }
 
-  .amount {
-    grid-area: amount;
-  }
-
-  .badge {
-    grid-area: badge;
-    justify-self: end;
+  .amountAndBadge {
+    grid-area: amountAndBadge;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px var(--mantine-spacing-xs);
+    min-width: 0;
   }
 
   .menu {

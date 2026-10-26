@@ -60,6 +60,7 @@ import {
 import { OccurrenceTable } from "./occurrence-table.tsx";
 import { OccurrenceViewBar, useOccurrenceView } from "./occurrence-view.tsx";
 import { periodQuery } from "./period-query.ts";
+import monthClasses from "./month.module.css";
 import { monthPickerProps } from "./pickers.ts";
 import { useDocumentTitle } from "./document-title.ts";
 import type { SaveFailure } from "./session.ts";
@@ -268,20 +269,11 @@ function PeriodNavigator({ arrowKeys }: { arrowKeys: boolean }) {
       className={appLayout.mobileRule}
       style={{ zIndex: 1 }}
     >
-      {/* Equal side columns that always fit "Mês atual", so the title never shifts. */}
-      <Box
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "minmax(36px, 1fr) minmax(0, 400px) minmax(36px, 1fr)",
-          alignItems: "center",
-          gap: "var(--mantine-spacing-xs)",
-        }}
-      >
+      <Box className={monthClasses.navigator}>
         <Group justify="flex-end">
           {away && backSide === "start" && goToCurrent}
         </Group>
-        <Group justify="space-between" wrap="nowrap" gap="xs">
+        <Box className={monthClasses.stepper}>
           <ActionIcon
             variant="surface"
             size={36}
@@ -309,8 +301,12 @@ function PeriodNavigator({ arrowKeys }: { arrowKeys: boolean }) {
                   px={{ base: 4, xs: "xs" }}
                   fz="inherit"
                   fw="inherit"
+                  lts="inherit"
                   lh={1.2}
-                  styles={{ label: { whiteSpace: "normal" } }}
+                  styles={{
+                    label: { whiteSpace: "normal" },
+                    section: { marginInlineStart: 6 },
+                  }}
                   aria-haspopup="dialog"
                   title="Escolher mês"
                   rightSection={
@@ -340,7 +336,7 @@ function PeriodNavigator({ arrowKeys }: { arrowKeys: boolean }) {
           >
             <IconChevronRight size={20} aria-hidden="true" />
           </ActionIcon>
-        </Group>
+        </Box>
         <Group justify="flex-start">
           {away && backSide === "end" && goToCurrent}
         </Group>
@@ -378,10 +374,12 @@ function Summary({
         <Text id={id} fz="xs" c="dimmed" tt="uppercase" fw={600} lts="1.5px">
           Sobra prevista
         </Text>
+        {/* The dominant figure (PRD §7), at the display step: never above the title. */}
         <Text
           aria-labelledby={id}
-          fz={{ base: 36, xs: 52 }}
-          lh={1.1}
+          fz={{ base: 24, xs: 32 }}
+          lh={1.2}
+          lts="-1px"
           fw={700}
           c={leftOver < 0 ? "var(--mensal-color-rose)" : "bright"}
         >
@@ -432,13 +430,14 @@ function SummaryBlock({
       aria-labelledby={`${id}-title`}
       bg="var(--mensal-color-surface-card)"
       withBorder
-      p="md"
+      p="lg"
       radius="lg"
     >
-      <Title order={2} id={`${id}-title`} fz="md" fw={600}>
+      {/* The title step, not display: no -1px tracking (DESIGN.md). */}
+      <Title order={2} id={`${id}-title`} fz="md" fw={600} lts={0}>
         {title}
       </Title>
-      <Group mt="xs" gap="xl" align="flex-end">
+      <Group mt="sm" gap="xl" align="flex-end">
         <Figure label="Previsto" cents={expected} />
         <Figure label="Realizado" cents={settled} />
       </Group>
@@ -453,7 +452,14 @@ function Figure({ label, cents }: { label: string; cents: number }) {
       <Text id={id} fz="xs" c="dimmed" tt="uppercase" fw={600} lts="1.5px">
         {label}
       </Text>
-      <Text aria-labelledby={id} fz="md" fw={600} c="bright">
+      <Text
+        aria-labelledby={id}
+        fz={20}
+        fw={700}
+        lh={1.4}
+        c="bright"
+        className={monthClasses.figure}
+      >
         {formatAmount(cents)}
       </Text>
     </Stack>
@@ -519,12 +525,10 @@ function EmptyMonth({ period }: { period: string }) {
           Para registrar o que aconteceu, use “Nova avulsa”.
         </Text>
       ) : (
-        <>
-          <Text fz="sm" c="dimmed" maw={360}>
-            Cadastre o que se repete todo mês em Recorrências e ele aparece aqui
-            sozinho. O que acontece uma vez só entra em “Nova avulsa”.
-          </Text>
-        </>
+        <Text fz="sm" c="dimmed" maw={360}>
+          Cadastre o que se repete todo mês em Recorrências e ele aparece aqui
+          sozinho. O que acontece uma vez só entra em “Nova avulsa”.
+        </Text>
       )}
     </Stack>
   );
@@ -574,6 +578,7 @@ function OccurrenceList({
         <Stack
           component="ul"
           aria-label={title}
+          className={classes.rows}
           gap={0}
           m={0}
           p={0}
@@ -657,8 +662,12 @@ function Row({
           </Box>
         </Box>
         <Box className={classes.trail}>
-          <Amount item={item} />
-          <StatusBadge item={item} period={period} />
+          <Box className={classes.amountAndBadge}>
+            <Amount item={item} />
+            <Box className={classes.badgeColumn}>
+              <StatusBadge item={item} period={period} />
+            </Box>
+          </Box>
           <Box className={classes.menu}>
             <RowMenu item={item} onChange={onStatusChange} />
           </Box>

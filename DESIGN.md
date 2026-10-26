@@ -183,6 +183,7 @@ components:
     textColor: "{colors.body}"
     rounded: "{rounded.pill}"
   badge-overdue:
+    # Rose at 10% (6% on paper) behind rose text, edged in a darker rose.
     textColor: "{colors.accent-rose}"
     rounded: "{rounded.pill}"
   dialog:
@@ -265,7 +266,7 @@ Every role above has a light counterpart, prefixed `light-`. The page is Paper C
 
 ### Hierarchy
 
-- **Display** (`{typography.display-sm}`): the screen title, such as "Outubro 2026" in the period navigator, and the auth card titles. It is the largest type in the product.
+- **Display** (`{typography.display-sm}`): the screen title, such as "Outubro 2026" in the period navigator, and the auth card titles. It is the largest type in the product: Sobra prevista takes the same step and never exceeds the title.
 - **Figure** (`{typography.figure}`): summary amounts under Previsto and Realizado, in white.
 - **Title** (`{typography.title-sm}`): summary block titles (Entradas, Saídas).
 - **Row title** (`{typography.row-title}`): an occurrence's or recurrence's description, in white, truncated on one line.
@@ -274,7 +275,7 @@ Every role above has a light counterpart, prefixed `light-`. The page is Paper C
 - **Small** (`{typography.body-sm}`): due dates, form hints and links on the auth screens, in Pencil Grey.
 - **Label** (`{typography.caption-uppercase}`): group headings (ATRASADAS, A VENCER NO MÊS) and the Previsto/Realizado labels. Uppercase, tracked 1.5px, Pencil Grey, or rose for Atrasadas.
 
-**The Tight Display Rule.** Display type is 700 with -1px tracking (set on every `Title` by the theme). Labels go the other way: 12px uppercase opened to +1.5px. Nothing sits in between.
+**The Tight Display Rule.** Display type is 700 with -1px tracking (set on every `Title` by the theme). Labels go the other way: 12px uppercase opened to +1.5px. Nothing sits in between, except 16px titles (`{typography.title-sm}`), which keep normal tracking: -1px crushes them.
 
 **The Thirty-Two Ceiling Rule.** Nothing is set larger than 32px. A ledger screen has no hero.
 
@@ -282,7 +283,7 @@ Every role above has a light counterpart, prefixed `light-`. The page is Paper C
 
 - **Frame:** a header ruled off by a `{colors.hairline}` line, then one centred column, Mantine's `xl` container (1320px max), with 32px of vertical padding. From 48em the header is one 64px row: lockup and screen tabs on the left; the screen's primary action and the account avatar side by side on the right. On phones it is one row too, the lockup and the screen tab on the left and the account avatar on the right; the screen tab keeps its label, and the primary action floats at the bottom right, and the column's bottom padding grows to clear it.
 - **Rhythm:** sections of a screen are 32px apart (`xl`). A group label sits 12px (`sm`) above its panel. Rows are padded 12px × 20px. Summary blocks pad 20px and the auth card 32px.
-- **Scale:** Mantine's default spacing, 10 / 12 / 16 / 20 / 32px (`xs` to `xl`). Radii and colours are themed; spacing is not.
+- **Scale:** Mantine's default spacing, 10 / 12 / 16 / 20 / 32px (`xs` to `xl`). Radii and colours are themed; spacing is not. Gaps inside a single control or line (an icon beside its label, an amount beside its badge) may go below the scale, to 4 or 6px.
 - **Period navigator:** sticky at the top of the month screen on the canvas colour, a three-column grid of [side | ‹ title › | side]. The centre group is 400px wide at most. Away from the current month, "Mês atual" sits in the side column toward it, against the arrow that points back (left on a later month, right on an earlier one). The side columns are equal and always wide enough for it, so the title never shifts.
 - **Occurrence bar:** directly above the occurrences, 12px (`sm`) from them: the Lista / Tabela switch (icon and label) on the left, "Exportar CSV" on the right. Both are 36px tall. Controls that act on the occurrences sit with them, not with the navigator.
 - **Summary:** two blocks, one column on phones and two from 576px (`xs`) up.
@@ -320,12 +321,12 @@ Header navigation between "Mês" and "Recorrências". The active tab is filled P
 ### Ledger panel and rows
 
 - **Panel:** Panel Black, a 1px Panel Edge border, 12px corners, rendered as a `ul`.
-- **Row:** settle checkbox, then description (white, 500, truncated) over its due date ("10/10" or "Sem vencimento", Pencil Grey, 14px), then amount, optional badge and a "Mais ações" (⋯) menu on the right. Rows after the first carry a 1px Ruling Line on top.
+- **Row:** settle checkbox, then description (white, 500, truncated) over its due date ("10/10" or "Sem vencimento", Pencil Grey, 14px), then amount, optional badge and a "Mais ações" (⋯) menu on the right. Rows after the first carry a 1px Ruling Line on top. From 576px the amount and badge are fixed columns; a panel holding any badge keeps the badge column, 8rem fixed, in every row, so its amounts line up. On phones the amount sits under the due date and the badge follows it, wrapping beneath when both do not fit.
 - **Settle checkbox:** 20px, 8px corners. Checked is Highlighter Yellow with a black tick. One click settles. When the amount is still "A definir", a popover asks only for the amount.
 
 ### Summary blocks
 
-Two panels, Entradas and Saídas, each with a 16px / 600 title and two figures (Previsto, Realizado). Each figure is an uppercase tracked label over a 20px / 700 white amount. They can be hidden per device in Configurações.
+Above them, the dominant figure: Sobra prevista, an uppercase tracked label over the amount at the display step (32px / 700, -1px; 24px on phones, like the title), white, or rose when negative. Then two panels, Entradas and Saídas, each with a 16px / 600 title and two figures (Previsto, Realizado). Each figure is an uppercase tracked label over a 20px / 700 white amount. They can be hidden per device in Configurações.
 
 ### Badges (badge-pill)
 
