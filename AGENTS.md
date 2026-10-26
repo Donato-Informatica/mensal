@@ -40,7 +40,7 @@ Three vitest projects (`vitest.config.ts`):
 
 ### Issue tracker
 
-Issues live in GitHub Issues on `ebdonato/mensal` (via the `gh` CLI). See `docs/agents/issue-tracker.md`.
+Issues live in GitHub Issues on `Donato-Informatica/mensal` (via the `gh` CLI). See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
