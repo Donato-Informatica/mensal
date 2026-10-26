@@ -1,6 +1,7 @@
 import { Avatar, Loader, Menu, Text, UnstyledButton } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
+  IconBook,
   IconDownload,
   IconKey,
   IconLock,
@@ -16,6 +17,7 @@ import { ChangeNameModal } from "./change-name.tsx";
 import { ChangePasswordModal } from "./change-password.tsx";
 import { DeleteAccountModal } from "./delete-account.tsx";
 import { DataDownloadFailure, useDataDownload } from "./download-data.tsx";
+import { guideHref } from "./guide-link.tsx";
 import { useSession } from "./session.ts";
 import { SettingsModal } from "./settings.tsx";
 import { SignOutModal } from "./sign-out-button.tsx";
@@ -23,9 +25,9 @@ import { SignOutModal } from "./sign-out-button.tsx";
 /**
  * The header's account menu: an avatar with the user icon, which opens their name and
  * email over Configurações, Alterar nome, Alterar senha, Tokens de acesso,
- * Baixar meus dados, Sair and, last, Excluir conta. Each item opens its
+ * Baixar meus dados, Guia, Sair and, last, Excluir conta. Each item opens its
  * modal, but Baixar meus dados, which keeps the menu open with a loader until
- * the archive arrives.
+ * the archive arrives, and Guia, a plain link to the static guide (PRD §7.17).
  */
 export function AccountMenu() {
   const { name, email } = useSession().user;
@@ -114,6 +116,13 @@ export function AccountMenu() {
             onClick={() => download.start(menuHandlers.close)}
           >
             Baixar meus dados
+          </Menu.Item>
+          <Menu.Item
+            component="a"
+            href={guideHref()}
+            leftSection={<IconBook size={18} aria-hidden="true" />}
+          >
+            Guia
           </Menu.Item>
           <Menu.Divider />
           <Menu.Item
