@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { BrowserContext } from "playwright";
+import type { Browser, BrowserContext } from "playwright";
 import { captures, demoUser, type Capture } from "./captures.ts";
 import {
   exampleOrigin,
@@ -15,12 +15,6 @@ import {
 } from "./redact.ts";
 
 type StorageState = Awaited<ReturnType<BrowserContext["storageState"]>>;
-
-/** The part of `POST /api/v1/access-tokens`'s answer that must stay secret. */
-interface CreatedToken {
-  token: string;
-  prefix: string;
-}
 
 const webUrl = process.env.GUIDE_WEB_URL ?? "http://localhost:5173";
 const guideRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -89,7 +83,7 @@ try {
   await signIn.close();
 
   for (const capture of captures) {
-    await take(capture, storageState);
+    await take(browser, capture, storageState);
     console.log(`screenshots/${capture.name}.png`);
   }
 } finally {
@@ -97,6 +91,7 @@ try {
 }
 
 async function take(
+  browser: Browser,
   {
     name,
     path,
@@ -128,8 +123,8 @@ async function take(
         response.ok()
       ) {
         reading.push(
-          response.json().then(({ token, prefix }: CreatedToken) => {
-            tokens.push({ token, start: prefix });
+          response.json().then(({ token, prefix }: RealToken) => {
+            tokens.push({ token, prefix });
           })
         );
       }

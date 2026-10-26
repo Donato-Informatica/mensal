@@ -6,12 +6,12 @@ import { exampleOrigin, fakeToken, redactTokens } from "../scripts/redact.ts";
 // before each one, the script runs `redactTokens` in the page.
 const real = {
   token: "mensal_Zq81RealSecretValue0123456789",
-  start: "mensal_Zq8",
+  prefix: "mensal_Zq8",
 };
 
 function screen() {
   document.body.innerHTML = `
-    <ul><li>Claude Code <span>${real.start}…</span></li></ul>
+    <ul><li>Claude Code <span>${real.prefix}…</span></li></ul>
     <label>Token <input value="${real.token}" readonly /></label>
     <pre>claude mcp add --header "Authorization: Bearer ${real.token}"</pre>
     <textarea>${real.token}</textarea>`;
@@ -33,7 +33,7 @@ describe("redactTokens", () => {
 
     expect(remaining).toBe(false);
     expect(shown()).not.toContain(real.token);
-    expect(shown()).not.toContain(real.start);
+    expect(shown()).not.toContain(real.prefix);
     expect(shown()).toContain(`Bearer ${fakeToken}`);
     expect((document.querySelector("input") as HTMLInputElement).value).toBe(
       fakeToken

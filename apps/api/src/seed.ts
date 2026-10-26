@@ -3,7 +3,7 @@ import {
   clampDueDate,
   currentPeriod,
   shiftPeriod,
-  today as dateOf,
+  today,
 } from "@mensal/shared";
 import { eq, ne } from "drizzle-orm";
 import type { Auth } from "./auth.ts";
@@ -64,7 +64,7 @@ export async function seed(
   auth: Auth,
   now: () => Date = () => new Date()
 ): Promise<void> {
-  const today = dateOf(now());
+  const todaysDate = today(now());
   const current = currentPeriod(now());
   const lastDay = clampDueDate(current, 31)!;
   const at = (months: number) => shiftPeriod(current, months);
@@ -204,7 +204,7 @@ export async function seed(
   materialize("Estacionamento", current, { status: "SKIPPED" });
   for (const name of ["Salário", "Aluguel"]) {
     const dueDate = clampDueDate(current, recurrence(name).dueDay)!;
-    if (dueDate <= today) settle(name, current);
+    if (dueDate <= todaysDate) settle(name, current);
     else materialize(name, current);
   }
 
@@ -222,9 +222,9 @@ export async function seed(
     amount: 85000,
     dueDate: clampDueDate(current, 20),
   });
-  oneOff({ description: "Conta de luz", amount: 18990, dueDate: today });
+  oneOff({ description: "Conta de luz", amount: 18990, dueDate: todaysDate });
   // Due later this month, unless today is its last day.
-  if (lastDay > today) {
+  if (lastDay > todaysDate) {
     oneOff({
       description: "Fatura do cartão",
       amount: 243050,
@@ -236,7 +236,7 @@ export async function seed(
     description: "Venda de bike usada",
     status: "SETTLED",
     amount: 60000,
-    settledAt: today,
+    settledAt: todaysDate,
   });
   oneOff({
     description: "IPVA",
