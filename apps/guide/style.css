@@ -171,3 +171,101 @@ section {
 section p {
   margin: 0 0 16px;
 }
+
+h3 {
+  margin: 24px 0 12px;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* A screenshot of the app: desktop ones fill the column, phone ones stay
+   phone-sized. */
+.shot {
+  display: block;
+  width: 100%;
+  margin: 0 0 20px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+}
+
+.shot-phone {
+  max-width: 320px;
+}
+
+.steps {
+  margin: 0 0 16px;
+  padding-left: 24px;
+}
+
+.steps li {
+  margin-bottom: 10px;
+}
+
+.steps li::marker {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--surface-card);
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875em;
+}
+
+/* Copyable code: it wraps instead of scrolling, and copies as one line. */
+.code {
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface-card);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.code code {
+  padding: 0;
+  background: none;
+}
+
+/* A conversation with an agent, as text. */
+.transcript {
+  margin: 0 0 16px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--surface-card);
+}
+
+.transcript figcaption {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.transcript p {
+  margin: 0 0 8px;
+}
+
+.transcript p:last-child {
+  margin-bottom: 0;
+}
+
+.speaker {
+  display: block;
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 600;
+}

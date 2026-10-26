@@ -4,14 +4,19 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { guideSections } from "@mensal/guide";
+import { captures } from "../scripts/captures.ts";
 
 // The guide's source page (PRD §7.17): links into it from the app, and
 // within it, must never break silently.
 const guideRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-const page = new DOMParser().parseFromString(
-  readFileSync(join(guideRoot, "index.html"), "utf8"),
-  "text/html"
-);
+const source = readFileSync(join(guideRoot, "index.html"), "utf8");
+const page = new DOMParser().parseFromString(source, "text/html");
+
+/** A PNG's size in pixels, from its IHDR chunk. */
+function pngSize(file: string) {
+  const header = readFileSync(file).subarray(16, 24);
+  return { width: header.readUInt32BE(0), height: header.readUInt32BE(4) };
+}
 
 /** Where Vite takes an `src` from: `/x` is public/x, anything else is relative. */
 function sourceFile(src: string) {
@@ -45,6 +50,17 @@ describe("guide sections", () => {
     }
   });
 
+  it("each say what the feature is for, then how to use it, step by step", () => {
+    for (const id of guideSections) {
+      const section = page.getElementById(id)!;
+      expect(
+        section.querySelector("h2 + p")?.textContent?.trim(),
+        id
+      ).toBeTruthy();
+      expect(section.querySelectorAll("ol li").length, id).toBeGreaterThan(1);
+    }
+  });
+
   it("are each listed in the table of contents, in order", () => {
     const toc = [...page.querySelectorAll("nav[aria-label] a[href^='#']")];
     expect(toc.map((link) => link.getAttribute("href"))).toEqual(
@@ -72,6 +88,56 @@ describe("guide page", () => {
       expect(image.getAttribute("width"), src).toMatch(/^\d+$/);
       expect(image.getAttribute("height"), src).toMatch(/^\d+$/);
     }
+  });
+
+  it("shows only declared screenshots, described, lazy and at their 2x size", () => {
+    const screenshots = [
+      ...page.querySelectorAll<HTMLImageElement>("main img"),
+    ];
+    const declared = captures.map(({ name }) => `./screenshots/${name}.png`);
+    expect(screenshots.length).toBeGreaterThan(0);
+    for (const image of screenshots) {
+      const src = image.getAttribute("src")!;
+      expect(declared, src).toContain(src);
+      expect(image.getAttribute("alt")?.trim(), src).toBeTruthy();
+      expect(image.getAttribute("loading"), src).toBe("lazy");
+      const { width, height } = pngSize(sourceFile(src));
+      expect(Number(image.getAttribute("width")), src).toBe(width / 2);
+      expect(Number(image.getAttribute("height")), src).toBe(height / 2);
+    }
+  });
+
+  it("previews with the monthly screen when shared", () => {
+    const image = page
+      .querySelector("meta[property='og:image']")
+      ?.getAttribute("content");
+    expect(image).toBe("./screenshots/mes.png");
+    expect(existsSync(sourceFile(image!))).toBe(true);
+    expect(
+      page.querySelector("meta[property='og:title']")?.getAttribute("content")
+    ).toBeTruthy();
+  });
+
+  it("never points at a local address", () => {
+    expect(source).not.toMatch(/localhost|127\.0\.0\.1/);
+  });
+
+  it("gives the agent setup as copyable code, and conversations as text", () => {
+    const mcp = page.getElementById("mcp")!;
+    const code = [...mcp.querySelectorAll("pre code")].map(
+      (block) => block.textContent ?? ""
+    );
+    expect(
+      code.some((text) =>
+        text.includes("claude mcp add --transport http mensal")
+      )
+    ).toBe(true);
+    expect(code.some((text) => text.includes("[mcp_servers.mensal]"))).toBe(
+      true
+    );
+    expect(mcp.textContent).toContain("Authorization: Bearer");
+    expect(mcp.textContent).toContain("quais contas vencem esta semana?");
+    expect(mcp.textContent).toContain("liquide a conta de luz");
   });
 
   it("links home, to Entrar and to Criar conta", () => {
