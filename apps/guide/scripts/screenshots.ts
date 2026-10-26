@@ -7,7 +7,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { BrowserContext } from "playwright";
 import { captures, demoUser, type Capture } from "./captures.ts";
-import { fakeToken, redactTokens, type RealToken } from "./redact.ts";
+import {
+  exampleOrigin,
+  fakeToken,
+  redactTokens,
+  type RealToken,
+} from "./redact.ts";
 
 type StorageState = Awaited<ReturnType<BrowserContext["storageState"]>>;
 
@@ -92,11 +97,19 @@ try {
 }
 
 async function take(
-  { name, path, viewport, theme = "dark", view = "list", steps }: Capture,
+  {
+    name,
+    path,
+    viewport,
+    theme = "dark",
+    view = "list",
+    signedOut = false,
+    steps,
+  }: Capture,
   storageState: StorageState
 ) {
   const context = await browser.newContext({
-    storageState,
+    ...(signedOut ? {} : { storageState }),
     viewport: viewports[viewport],
     deviceScaleFactor: 2,
     colorScheme: theme,
@@ -122,20 +135,23 @@ async function take(
       }
     });
 
-    // The account's preferences, as Configurações would save them.
-    await page.goto(`${webUrl}/`);
-    const saved = await page.evaluate(
-      async (body) =>
-        (
-          await fetch("/api/auth/update-user", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify(body),
-          })
-        ).ok,
-      { colorScheme: theme, occurrenceView: view }
-    );
-    if (!saved) fail(`${name}: could not save the account's preferences.`);
+    // The account's preferences, as Configurações would save them. Signed
+    // out, the screens use the default theme, Escuro.
+    if (!signedOut) {
+      await page.goto(`${webUrl}/`);
+      const saved = await page.evaluate(
+        async (body) =>
+          (
+            await fetch("/api/auth/update-user", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(body),
+            })
+          ).ok,
+        { colorScheme: theme, occurrenceView: view }
+      );
+      if (!saved) fail(`${name}: could not save the account's preferences.`);
+    }
 
     await page.goto(`${webUrl}${path}`);
     await page.waitForLoadState("networkidle");
@@ -147,6 +163,7 @@ async function take(
     const leaked = await page.evaluate(redactTokens, {
       tokens,
       fake: fakeToken,
+      origin: { real: new URL(webUrl).origin, shown: exampleOrigin },
     });
     if (leaked) fail(`${name}: a real access token is still on the page.`);
 

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import { fakeToken, redactTokens } from "../scripts/redact.ts";
+import { exampleOrigin, fakeToken, redactTokens } from "../scripts/redact.ts";
 
 // The guide's captures must never show a real access token (PRD §7.17):
 // before each one, the script runs `redactTokens` in the page.
@@ -37,6 +37,24 @@ describe("redactTokens", () => {
     expect(shown()).toContain(`Bearer ${fakeToken}`);
     expect((document.querySelector("input") as HTMLInputElement).value).toBe(
       fakeToken
+    );
+  });
+
+  it("shows the example host in place of the local stack's origin", () => {
+    document.body.innerHTML = `
+      <pre>claude mcp add --transport http mensal http://localhost:5173/api/mcp</pre>
+      <input value="http://localhost:5173/api/mcp" />`;
+
+    redactTokens({
+      tokens: [],
+      fake: fakeToken,
+      origin: { real: "http://localhost:5173", shown: exampleOrigin },
+    });
+
+    expect(shown()).not.toContain("localhost");
+    expect(shown()).toContain("https://mensal.example.com/api/mcp");
+    expect((document.querySelector("input") as HTMLInputElement).value).toBe(
+      "https://mensal.example.com/api/mcp"
     );
   });
 
