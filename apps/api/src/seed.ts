@@ -1,5 +1,10 @@
 import { schema, type Database } from "@mensal/database";
-import { clampDueDate, shiftPeriod } from "@mensal/shared";
+import {
+  clampDueDate,
+  currentPeriod,
+  shiftPeriod,
+  today as dateOf,
+} from "@mensal/shared";
 import { eq, ne } from "drizzle-orm";
 import type { Auth } from "./auth.ts";
 
@@ -47,15 +52,21 @@ type NewOccurrence = typeof schema.occurrences.$inferInsert;
 
 /**
  * Replaces the demo user, and everything they own, with example data relative
- * to the current month. Safe to re-run; other users are never touched.
+ * to today in America/Sao_Paulo. Safe to re-run; other users are never touched.
+ *
+ * It is also the guide's scenario (PRD §7.17): whatever the day of the month,
+ * the current period has an overdue occurrence from an earlier period, one due
+ * today, some due later, settled and skipped ones and one "A definir", with
+ * recurrences active and ended and six months of history for Evolução.
  */
 export async function seed(
   db: Database,
   auth: Auth,
   now: () => Date = () => new Date()
 ): Promise<void> {
-  const today = now().toISOString().slice(0, 10);
-  const current = `${today.slice(0, 7)}-01`;
+  const today = dateOf(now());
+  const current = currentPeriod(now());
+  const lastDay = clampDueDate(current, 31)!;
   const at = (months: number) => shiftPeriod(current, months);
 
   // Occurrences and recurrences cascade from the user.
@@ -102,6 +113,14 @@ export async function seed(
     {
       userId,
       direction: "OUTFLOW",
+      description: "Estacionamento",
+      defaultAmount: 25000,
+      dueDay: 3,
+      startPeriod: at(-5),
+    },
+    {
+      userId,
+      direction: "OUTFLOW",
       description: "Streaming",
       defaultAmount: 3990,
       dueDay: 20,
@@ -113,7 +132,7 @@ export async function seed(
       direction: "INFLOW",
       description: "Freelance",
       dueDay: 25,
-      startPeriod: at(-5),
+      startPeriod: at(-2),
       notes: "Amount varies; filled in when it arrives.",
     },
   ];
@@ -166,6 +185,10 @@ export async function seed(
   for (const months of [-5, -4, -3, -2]) {
     settle("Internet", at(months));
     settle("Streaming", at(months));
+    settle("Academia", at(months));
+  }
+  for (const months of [-5, -4, -3, -2, -1]) {
+    settle("Estacionamento", at(months));
   }
   settle("Streaming", at(-1));
   settle("Freelance", at(-2), { amount: 120000 });
@@ -175,7 +198,10 @@ export async function seed(
   materialize("Internet", at(-1));
   materialize("Academia", at(-1), { status: "SKIPPED" });
 
-  // This month: what is already due is settled, the rest is pending.
+  // This month: what is already due is settled, the rest is pending; no
+  // parking while the car is in the shop. Academia (no due date) and
+  // Freelance ("A definir") stay virtual.
+  materialize("Estacionamento", current, { status: "SKIPPED" });
   for (const name of ["Salário", "Aluguel"]) {
     const dueDate = clampDueDate(current, recurrence(name).dueDay)!;
     if (dueDate <= today) settle(name, current);
@@ -196,6 +222,15 @@ export async function seed(
     amount: 85000,
     dueDate: clampDueDate(current, 20),
   });
+  oneOff({ description: "Conta de luz", amount: 18990, dueDate: today });
+  // Due later this month, unless today is its last day.
+  if (lastDay > today) {
+    oneOff({
+      description: "Fatura do cartão",
+      amount: 243050,
+      dueDate: lastDay,
+    });
+  }
   oneOff({
     direction: "INFLOW",
     description: "Venda de bike usada",

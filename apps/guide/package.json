@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "screenshots": "node scripts/screenshots.ts",
     "typecheck": "tsc"
   },
   "dependencies": {
@@ -17,6 +18,7 @@
   },
   "devDependencies": {
     "jsdom": "^30.1.2",
+    "playwright": "^1.64.1",
     "vite": "^8.3.4"
   }
 }
