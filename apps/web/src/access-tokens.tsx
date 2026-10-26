@@ -30,6 +30,7 @@ import type { ApiClient } from "./api-client.ts";
 import { ApiError, errorMessage } from "./api-error.ts";
 import { DialogActions } from "./dialog-actions.tsx";
 import { formatDate } from "./format.ts";
+import { GuideLink } from "./guide-link.tsx";
 
 const accessTokensKey = ["access-tokens"];
 
@@ -178,6 +179,9 @@ function TokenList({
           ))}
         </ul>
       )}
+      <Text>
+        <GuideLink section="mcp">Como conectar um agente</GuideLink>
+      </Text>
       <DialogActions>
         <Button variant="default" onClick={onClose}>
           Fechar
@@ -335,6 +339,9 @@ function CreatedToken({
         text={codexSnippet(token.token)}
         testId="codex-snippet"
       />
+      <Text>
+        <GuideLink section="mcp">Como conectar um agente</GuideLink>
+      </Text>
       <Button onClick={onDone} fullWidth>
         Concluir
       </Button>
