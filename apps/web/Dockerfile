@@ -19,6 +19,9 @@ COPY apps/guide apps/guide
 COPY packages/shared packages/shared
 ARG VITE_OTLP_PATH
 ARG VITE_DEPLOYMENT_ENVIRONMENT
+# The public origin (e.g. https://mensal.example), for the guide's absolute
+# og:image and og:url; unset, they stay relative (apps/guide/vite.config.ts).
+ARG VITE_PUBLIC_ORIGIN
 RUN npm run build:web && npm run build:guide
 
 FROM nginx:1-alpine

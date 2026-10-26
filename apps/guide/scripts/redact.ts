@@ -1,7 +1,7 @@
-/** A real token as the API gave it: the whole secret and the prefix it lists. */
+/** A real token as the API gave it: the whole secret and the prefix the token list shows. */
 export interface RealToken {
   token: string;
-  start: string;
+  prefix: string;
 }
 
 /** What the guide's captures show in place of any access token. */
@@ -31,9 +31,9 @@ export function redactTokens({
   fake: string;
   origin?: { real: string; shown: string };
 }): boolean {
-  const pairs = tokens.flatMap(({ token, start }) => [
+  const pairs = tokens.flatMap(({ token, prefix }) => [
     [token, fake],
-    [start, fake.slice(0, start.length)],
+    [prefix, fake.slice(0, prefix.length)],
   ]);
   if (origin) pairs.push([origin.real, origin.shown]);
   const redact = (text: string) =>
@@ -63,6 +63,6 @@ export function redactTokens({
     ].map((field) => field.value),
   ].join("\n");
   return tokens.some(
-    ({ token, start }) => shown.includes(token) || shown.includes(start)
+    ({ token, prefix }) => shown.includes(token) || shown.includes(prefix)
   );
 }

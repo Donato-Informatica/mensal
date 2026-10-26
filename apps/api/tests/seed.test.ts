@@ -95,7 +95,7 @@ describe("seed", () => {
           upcoming: pending.filter((i) => !i.overdue && i.dueDate !== today),
           settled: period.items.filter((i) => i.status === "SETTLED"),
           skipped: period.items.filter((i) => i.status === "SKIPPED"),
-          toBeDefined: period.items.filter((i) => i.amount === null),
+          amountToDefine: period.items.filter((i) => i.amount === null),
         };
         for (const [name, items] of Object.entries(groups)) {
           expect(items.length, name).toBeGreaterThan(0);
@@ -115,6 +115,18 @@ describe("seed", () => {
           expect(summary.inflowSettled).toBeGreaterThan(0);
           expect(summary.outflowExpected).toBeGreaterThan(0);
         }
+
+        // Recurrences both active and ended, for Recorrências.
+        const recurrences = async (status: "active" | "all") =>
+          (await (
+            await request(dated, `/api/v1/recurrences?status=${status}`, {
+              cookie,
+            })
+          ).json()) as { id: string }[];
+        const active = await recurrences("active");
+        const all = await recurrences("all");
+        expect(active.length).toBeGreaterThan(0);
+        expect(all.length).toBeGreaterThan(active.length);
       } finally {
         await dated.close();
       }
