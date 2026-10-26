@@ -10,6 +10,7 @@ npm-workspaces monorepo — no build step, TypeScript source is consumed directl
 
 - `apps/api` — Express server on :3000, Better-Auth + Drizzle (`/api/v1`).
 - `apps/web` — React + Mantine + Vite on :5173, proxies `/api` to the API (same origin).
+- `apps/guide` — the user guide, a static page served at `/guia/` (see [User guide](#user-guide)).
 - `packages/database` — Drizzle schema and migrations (Postgres 17).
 - `packages/shared` — shared domain types and the period-resolution logic.
 
@@ -63,6 +64,24 @@ The seed creates recurrences (salary, rent, internet, an ended subscription, …
 
 Coolify preview deployments load the same data on boot when `SEED_DEMO_DATA=true`, set only in the Preview Deployments environment variables, never production's. That mode skips the local-host check but still refuses if the database has any user besides the demo one.
 
+## User guide
+
+The app links to a pt-BR guide at `/guia/` (PRD §7.17): one page with a section per feature (what it is for, then how to use it, step by step), with screenshots of the demo data. It is plain HTML and CSS in `apps/guide`, built by Vite and served by the web image's nginx beside the app.
+
+```sh
+npm run -w @mensal/guide dev   # :5174, open http://localhost:5174/guia/
+```
+
+The screenshots in `apps/guide/screenshots/` are taken from the local stack with the demo seed. With the stack running (`docker compose up -d`, then the API and web dev servers, as in [Running locally](#running-locally)) and Playwright's browser installed once (`npx playwright install chromium`):
+
+```sh
+npm run -w @mensal/guide screenshots
+```
+
+It re-runs `npm run seed`, signs in as the demo user and rewrites every screenshot declared in `apps/guide/scripts/captures.ts`. It is manual only: never run by `npm run check` or CI.
+
+**When you change a feature of PRD §7, update its section of the guide and redo the screenshots** in the same change.
+
 ## Deploying to production
 
 The production stack is [docker-compose.prod.yml](docker-compose.prod.yml), meant for [Coolify](https://coolify.io) (PRD §8.4): Postgres, the API, the OpenTelemetry Collector and the web app (nginx serving the static build and forwarding `/api` to the API, so the browser sees one origin). Only `web` is public.
@@ -71,7 +90,7 @@ The production stack is [docker-compose.prod.yml](docker-compose.prod.yml), mean
    1. In Resend, add your domain under **Domains** and create the DNS records it lists (SPF, DKIM) at your DNS provider. Wait until the domain shows as verified.
    2. Create an API key under **API Keys** with **Sending access**, restricted to that domain.
 2. **Coolify:** create a new resource → **Docker Compose**, pointing at this repository with compose file `/docker-compose.prod.yml`.
-3. Set the domain of the `web` service (e.g. `https://mensal.example`). Coolify fills `SERVICE_URL_WEB` with it, which becomes `BETTER_AUTH_URL`. It also generates the Postgres password and `BETTER_AUTH_SECRET` once and keeps them.
+3. Set the domain of the `web` service (e.g. `https://mensal.example`). Coolify fills `SERVICE_URL_WEB` with it, which becomes `BETTER_AUTH_URL` and the web build argument `VITE_PUBLIC_ORIGIN` (the guide's link previews need an absolute image URL; without it, previews show no image). It also generates the Postgres password and `BETTER_AUTH_SECRET` once and keeps them.
 4. Under the resource's environment variables, set `RESEND_API_KEY` and `EMAIL_FROM` (step 1), or leave both empty.
 5. Deploy. The API applies pending migrations before it starts, and refuses to boot on a guessable secret, a plain-`http` origin, or only one of the two Resend variables; check its log if the healthcheck fails. A healthy start logs `Email: Resend, from …`.
 6. Check email end to end: sign up, use **Esqueci a senha** with that address, and confirm the reset email arrives. Then approve your user by setting `users.approved = true` in the database.

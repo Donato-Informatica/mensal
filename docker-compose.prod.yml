@@ -80,6 +80,8 @@ services:
         # Turns browser telemetry on (nginx forwards /otlp to the Collector).
         VITE_OTLP_PATH: /otlp
         VITE_DEPLOYMENT_ENVIRONMENT: ${DEPLOYMENT_ENVIRONMENT}
+        # The guide's link previews need absolute URLs (apps/guide/vite.config.ts).
+        VITE_PUBLIC_ORIGIN: ${SERVICE_URL_WEB}
     environment:
       - SERVICE_URL_WEB_80
     depends_on:
