@@ -22,14 +22,21 @@ export interface Capture {
   steps?: (page: Page) => Promise<void>;
 }
 
-/** The demo user the seed creates (`apps/api/src/seed.ts`). */
+/**
+ * The demo user the seed creates (`apps/api/src/seed.ts`); `demo-user.test.ts`
+ * fails if the two drift apart.
+ */
 export const demoUser = {
   email: "demo@mensal.local",
   password: "demo-password-local",
 };
 
+function openAccountMenu(page: Page) {
+  return page.getByRole("button", { name: "Conta", exact: true }).click();
+}
+
 async function openAccountMenuItem(page: Page, item: string) {
-  await page.getByRole("button", { name: "Conta", exact: true }).click();
+  await openAccountMenu(page);
   await page.getByRole("menuitem", { name: item }).click();
   await page.getByRole("dialog").waitFor();
 }
@@ -118,7 +125,7 @@ export const captures: Capture[] = [
     viewport: "desktop",
     // The account menu, with every item of #conta.
     steps: async (page) => {
-      await page.getByRole("button", { name: "Conta", exact: true }).click();
+      await openAccountMenu(page);
       await page.getByRole("menuitem", { name: "Excluir conta" }).waitFor();
     },
   },
