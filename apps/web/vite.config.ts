@@ -2,6 +2,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { canvas } from "./src/canvas.ts";
+import { notAnsweredByShell } from "./src/pwa-navigation.ts";
 
 export default defineConfig({
   plugins: [
@@ -39,9 +40,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ["**/*.{js,css,html,woff2,png,svg}"],
         navigateFallback: "/index.html",
-        // /api is never cached nor answered by the shell: a navigation to
-        // /api/docs goes to the network (and fails offline).
-        navigateFallbackDenylist: [/^\/api(\/|$)/],
+        // /api and the guide (/guia) are never cached nor answered by the
+        // shell: a navigation to /api/docs or /guia/ goes to the network
+        // (and fails offline).
+        navigateFallbackDenylist: notAnsweredByShell,
         runtimeCaching: [],
         // A new version takes over at once, with no prompt and no reload:
         // open tabs keep their shell, the next open gets the new one.
