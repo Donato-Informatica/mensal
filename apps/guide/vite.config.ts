@@ -52,10 +52,11 @@ function absoluteSharePreview(): Plugin {
 
 // The guide (PRD §7.17, §8.4): a static page served by the web image's nginx
 // under /guia/, so every built URL carries that prefix. Its own port, so it
-// previews beside the app's dev server.
+// previews beside the app's dev server, which forwards /guia here: a taken
+// port is an error instead of a silent move the proxy would miss.
 export default defineConfig({
   base,
   plugins: [absoluteSharePreview()],
-  server: { port: 5174 },
+  server: { port: 5174, strictPort: true },
   preview: { port: 5174 },
 });

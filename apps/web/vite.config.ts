@@ -7,6 +7,21 @@ import { notAnsweredByShell } from "./src/pwa-navigation.ts";
 export default defineConfig({
   plugins: [
     react(),
+    // As nginx does (apps/web/nginx.conf), /guia redirects to /guia/; the
+    // guide's dev server, behind the /guia proxy below, only answers its base.
+    {
+      name: "mensal-guide-redirect",
+      apply: "serve",
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (req.url !== "/guia" && !req.url?.startsWith("/guia?"))
+            return next();
+          res.statusCode = 301;
+          res.setHeader("Location", `/guia/${req.url.slice("/guia".length)}`);
+          res.end();
+        });
+      },
+    },
     // Installable, online only (PRD §7.16, ADR-0006): the service worker
     // precaches the built shell and nothing else. Only the production build
     // registers it (registerSW.js in index.html); dev and the web tests never do.
@@ -58,8 +73,11 @@ export default defineConfig({
     // the dev server, which forwards /api to Express. No CORS.
     // /otlp is the browser's telemetry ingest (PRD §8.7.4): locally the
     // otel-lgtm container of docker-compose.yml, in production nginx → Collector.
+    // /guia/ is the guide's own dev server (PRD §8.4: nginx serves it in
+    // production), so the app's links into the guide work locally too.
     proxy: {
       "/api": "http://localhost:3000",
+      "^/guia/": { target: "http://localhost:5174", ws: true },
       // The Collector serves /v1/traces and /v1/logs at its root.
       "/otlp": {
         target: "http://localhost:4318",
