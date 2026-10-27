@@ -66,6 +66,14 @@ module.exports = {
       to: { path: `^${R}/[^/]+/tests/` },
     },
     {
+      name: "guide-entrypoint-boundary",
+      comment:
+        "apps/guide is an app, but the web app imports its section ids by name (@mensal/guide): only its index.ts, like a package's entry point.",
+      severity: "error",
+      from: { pathNot: "^apps/guide/" },
+      to: { path: "^apps/guide/", pathNot: "^apps/guide/index\\.ts$" },
+    },
+    {
       name: "no-circular",
       comment:
         "No dependency cycles. Scope to `^${R}/` if you want to allow cycles outside packages.",

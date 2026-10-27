@@ -5,6 +5,7 @@
 !tsconfig.base.json
 !apps/api
 !apps/web
+!apps/guide
 !packages/shared
 !packages/database
 

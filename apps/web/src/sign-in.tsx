@@ -10,6 +10,7 @@ import {
 import { Link, useLocation } from "@tanstack/react-router";
 import { errorMessage } from "./api-error.ts";
 import { CardScreen } from "./card-screen.tsx";
+import { GuideLink } from "./guide-link.tsx";
 import { useSessionChange } from "./session.ts";
 
 export function SignIn() {
@@ -69,6 +70,9 @@ export function SignIn() {
             <Anchor component={Link} to="/cadastro" fz="sm">
               Criar conta
             </Anchor>
+          </Text>
+          <Text ta="center">
+            <GuideLink>Como funciona</GuideLink>
           </Text>
         </Stack>
       </form>
