@@ -106,7 +106,7 @@ export function accountDeletedEmail({
 }): Email {
   const deleted = `Sua conta no Mensal foi excluída em ${when(at)} (horário de Brasília).`;
   const erased =
-    "Todas as suas recorrências, contas e tokens de acesso foram apagados e não podem ser recuperados.";
+    "Todas as suas recorrências, contas e tokens de acesso, e o link do calendário, foram apagados e não podem ser recuperados.";
   const notYou =
     "Se foi você, não precisa fazer nada. Se não foi você, responda este e-mail.";
   return {
