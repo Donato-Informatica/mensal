@@ -16,6 +16,7 @@ import { healthRouter } from "./health.ts";
 import { exportedLog, type Log } from "./log.ts";
 import { mcpRouter } from "./mcp.ts";
 import { occurrencesRouter } from "./occurrences.ts";
+import { passwordConfirmation } from "./password-confirmation.ts";
 import { periodsRouter } from "./periods.ts";
 import { recurrencesRouter } from "./recurrences.ts";
 import { summariesRouter } from "./summaries.ts";
@@ -72,7 +73,12 @@ export function createApp({
   v1.get("/me", (_req, res) => {
     res.json({ userId: res.locals.userId });
   });
-  v1.use("/access-tokens", accessTokensRouter({ auth, db, now, record }));
+  // One throttle for every route that mints a lasting credential.
+  const confirmPassword = passwordConfirmation({ auth, now });
+  v1.use(
+    "/access-tokens",
+    accessTokensRouter({ auth, confirmPassword, db, record })
+  );
   v1.use("/data", dataRouter({ db, now, log }));
   v1.use("/occurrences", occurrencesRouter({ db, now, record }));
   v1.use("/periods", periodsRouter({ db, now, record }));
