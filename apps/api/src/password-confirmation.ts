@@ -3,6 +3,7 @@ import { fromNodeHeaders } from "better-auth/node";
 import type { IncomingHttpHeaders } from "node:http";
 import { passwordGuessLimit, type Auth } from "./auth.ts";
 import { Refusal } from "./refusal.ts";
+import { slidingWindow } from "./sliding-window.ts";
 
 const MAX_WRONG_PASSWORDS = passwordGuessLimit.max;
 const WRONG_PASSWORD_WINDOW_MS = passwordGuessLimit.window * 1000;
@@ -32,17 +33,15 @@ export function passwordConfirmation({
   auth: Auth;
   now: () => Date;
 }): ConfirmPassword {
-  /** When each user last sent a wrong password (epoch ms). */
-  const wrongPasswords = new Map<string, number[]>();
-
-  /** The user's wrong passwords still inside the window. */
-  function recentWrongPasswords(userId: string): number[] {
-    const since = now().getTime() - WRONG_PASSWORD_WINDOW_MS;
-    return (wrongPasswords.get(userId) ?? []).filter((at) => at > since);
-  }
+  /** Each user's recent wrong passwords. */
+  const wrongPasswords = slidingWindow({
+    max: MAX_WRONG_PASSWORDS,
+    windowMs: WRONG_PASSWORD_WINDOW_MS,
+    now,
+  });
 
   return async ({ userId, headers, password }) => {
-    if (recentWrongPasswords(userId).length >= MAX_WRONG_PASSWORDS) {
+    if (wrongPasswords.isFull(userId)) {
       throw new Refusal(429, "TOO_MANY_ATTEMPTS");
     }
     try {
@@ -52,10 +51,7 @@ export function passwordConfirmation({
       });
     } catch (error) {
       if (isAPIError(error) && error.body?.code === "INVALID_PASSWORD") {
-        wrongPasswords.set(userId, [
-          ...recentWrongPasswords(userId),
-          now().getTime(),
-        ]);
+        wrongPasswords.add(userId);
         throw new Refusal(400, "INVALID_PASSWORD");
       }
       throw error;

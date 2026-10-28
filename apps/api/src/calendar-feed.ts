@@ -3,6 +3,7 @@ import { Router } from "express";
 import { publicOrigin, type Auth } from "./auth.ts";
 import { calendarDocument } from "./calendar-document.ts";
 import { calendarLinkOwner } from "./calendar-link-operations.ts";
+import { slidingWindow } from "./sliding-window.ts";
 import { identifyRequest } from "./telemetry-context.ts";
 
 /**
@@ -58,24 +59,16 @@ export function calendarFeedRouter({
   return router;
 }
 
-const MAX_READS = 60;
-const READ_WINDOW_MS = 60 * 60 * 1000;
-
 /**
- * Whether a link may be read now: at most {@link MAX_READS} reads of each link
- * in the last hour (PRD §6.7). In memory, as the app runs as one container;
- * only existing links are counted, so unknown keys cannot fill it.
+ * Whether a link may be read now: at most 60 reads of each link in the last
+ * hour (PRD §6.7). Only existing links are counted, so unknown keys cannot
+ * fill it.
  */
 function readLimiter(now: () => Date): (key: string) => boolean {
-  /** When each link was read lately (epoch ms), by key. */
-  const reads = new Map<string, number[]>();
+  const reads = slidingWindow({ max: 60, windowMs: 60 * 60 * 1000, now });
   return (key) => {
-    const at = now().getTime();
-    const recent = (reads.get(key) ?? []).filter(
-      (readAt) => readAt > at - READ_WINDOW_MS
-    );
-    const allowed = recent.length < MAX_READS;
-    reads.set(key, allowed ? [...recent, at] : recent);
-    return allowed;
+    if (reads.isFull(key)) return false;
+    reads.add(key);
+    return true;
   };
 }
