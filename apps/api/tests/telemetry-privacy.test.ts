@@ -106,6 +106,19 @@ describe("telemetry privacy and identity", () => {
     });
     await request(api, "/api/health");
 
+    // A calendar app reading the feed, whose events carry the recurrence's
+    // description and amount.
+    const linkResponse = await request(api, "/api/v1/calendar-link", {
+      cookie,
+      body: { password },
+    });
+    const { link } = (await linkResponse.json()) as { link: { url: string } };
+    const calendarKey = new URL(link.url).searchParams.get("key")!;
+    const feed = await (await fetch(link.url)).text();
+    expect(feed).toContain(secrets.recurrence);
+    // R$ 87.654,32, its comma escaped.
+    expect(feed).toContain("87.654\\,32");
+
     const tokenResponse = await request(api, "/api/v1/access-tokens", {
       cookie,
       body: { name: "Claude Code", currentPassword: password },
@@ -154,6 +167,8 @@ describe("telemetry privacy and identity", () => {
       ...Object.values(secrets).map(String),
       "Sentinel mcp PLM",
       "6543210",
+      "87.654",
+      calendarKey,
       "QRYSECRET",
       user.email,
       "Test User",
@@ -203,6 +218,12 @@ describe("telemetry privacy and identity", () => {
     expect(mcp.length).toBeGreaterThan(0);
     for (const span of mcp)
       expect(span.attributes["enduser.id"]).toBe(user.userId);
+    // The feed read was traced, by its path alone, and carries its owner.
+    const feedReads = requests.filter(
+      (s) => s.attributes["url.path"] === "/api/calendar.ics"
+    );
+    expect(feedReads.length).toBe(1);
+    expect(feedReads[0]!.attributes["enduser.id"]).toBe(user.userId);
 
     // Health checks leave no trace, not even their query.
     expect(JSON.stringify(spans.map((s) => s.attributes))).not.toContain(
