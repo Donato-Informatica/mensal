@@ -75,6 +75,41 @@ describe("the calendar link", () => {
     expect(await navigator.clipboard.readText()).toBe(url);
   });
 
+  it("opens the link in the device's calendar and in Google Calendar, through its webcal:// form", async () => {
+    const { url } = api.addCalendarLink(email);
+    const { host, pathname, search } = new URL(url);
+    const webcal = `webcal://${host}${pathname}${search}`;
+    const dialog = await openCalendarLink();
+
+    expect(
+      await within(dialog).findByRole("link", {
+        name: "Abrir no calendário do dispositivo",
+      })
+    ).toHaveAttribute("href", webcal);
+    const google = within(dialog).getByRole("link", {
+      name: /Adicionar ao Google Agenda/,
+    });
+    expect(google).toHaveAttribute(
+      "href",
+      `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}`
+    );
+    expect(google).toHaveAccessibleName(/no computador/);
+  });
+
+  it("warns that calendars may drop the reminder and take a day to drop a settled occurrence", async () => {
+    api.addCalendarLink(email);
+    const dialog = await openCalendarLink();
+
+    expect(
+      await within(dialog).findByText(
+        /Google Agenda e o Outlook ignoram o lembrete.*Remover alertas/
+      )
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/até cerca de um dia para sair/)
+    ).toBeInTheDocument();
+  });
+
   it("is replaced after a warning that the current link stops working, given the password", async () => {
     const old = api.addCalendarLink(email);
     const user = userEvent.setup();
