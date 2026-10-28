@@ -399,6 +399,32 @@ describe("the calendar's events", () => {
     expect(Number.isInteger(Number(valueOf(after, "SEQUENCE")))).toBe(true);
   });
 
+  it("reads the current period from the app's clock in São Paulo, not UTC", async () => {
+    const { cookie, userId } = await approvedUser();
+    const january = await insertOccurrence(api.db, {
+      userId,
+      period: "2027-01-01",
+      dueDate: "2027-01-10",
+    });
+    await insertOccurrence(api.db, {
+      userId,
+      period: "2027-02-01",
+      dueDate: "2027-02-10",
+    });
+    const link = await generateLink(cookie);
+
+    // 23:30 on 2026-10-31 in São Paulo, already November in UTC.
+    clock = new Date("2026-11-01T02:30:00Z");
+    try {
+      const events = await eventsAt(link);
+      expect(events.map((event) => valueOf(event, "UID"))).toEqual([
+        `${january.id}@mensal`,
+      ]);
+    } finally {
+      clock = noon;
+    }
+  });
+
   it("keeps overdue occurrences of earlier periods on their own due date", async () => {
     const { cookie, userId } = await approvedUser();
     const internet = await insertRecurrence(api.db, {
