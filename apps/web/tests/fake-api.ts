@@ -615,6 +615,11 @@ export function fakeApi() {
         revokeOtherSessions: asked.revokeOtherSessions === true,
         revokeAccessTokens: asked.revokeAccessTokens === true,
       });
+      // One box revokes the access tokens and the calendar link (PRD §8.2).
+      if (asked.revokeAccessTokens === true) {
+        accessTokens.delete(signedIn.id);
+        calendarLinks.delete(signedIn.id);
+      }
       return json(200, { token: null, user: sessionOf(signedIn).user });
     },
     // Immediate and permanent, with the current password (ADR-0005); its

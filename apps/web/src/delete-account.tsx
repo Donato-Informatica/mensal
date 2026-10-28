@@ -122,8 +122,9 @@ function DeleteAccountForm({ onCancel }: { onCancel: () => void }) {
           </Alert>
         )}
         <Text>
-          Sua conta e todas as suas recorrências, contas e tokens de acesso
-          serão apagados para sempre. Isso não pode ser desfeito.
+          Sua conta e todas as suas recorrências, contas e tokens de acesso, e o
+          link do calendário, serão apagados para sempre. Isso não pode ser
+          desfeito.
         </Text>
         {/* Only an approved user has data to take (PRD §7.15). */}
         {approved && <DownloadDataFirst />}

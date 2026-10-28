@@ -65,7 +65,8 @@ function changedMessage({
     "Senha alterada.",
     revokeOtherSessions &&
       "Nos outros dispositivos, entre de novo com a nova senha.",
-    revokeAccessTokens && "Os tokens de acesso foram revogados.",
+    revokeAccessTokens &&
+      "Os tokens de acesso e o link do calendário foram revogados.",
   ]
     .filter(Boolean)
     .join(" ");
@@ -178,7 +179,7 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
           defaultChecked
         />
         <Checkbox
-          label="Revogar todos os tokens de acesso"
+          label="Revogar todos os tokens de acesso e o link do calendário"
           name="revokeAccessTokens"
           defaultChecked
         />
