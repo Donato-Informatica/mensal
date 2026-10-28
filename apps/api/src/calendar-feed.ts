@@ -1,6 +1,8 @@
 import type { Database } from "@mensal/database";
 import { Router } from "express";
+import type { Auth } from "./auth.ts";
 import { calendarDocument } from "./calendar-document.ts";
+import { publicOrigin } from "./calendar-link.ts";
 import { calendarLinkOwner } from "./calendar-link-operations.ts";
 import { identifyRequest } from "./telemetry-context.ts";
 
@@ -11,7 +13,15 @@ import { identifyRequest } from "./telemetry-context.ts";
  * missing, unknown or deactivated key answers 404 with no body; an unapproved
  * owner, 403, checked on every read.
  */
-export function calendarFeedRouter({ db }: { db: Database }) {
+export function calendarFeedRouter({
+  auth,
+  db,
+  now,
+}: {
+  auth: Auth;
+  db: Database;
+  now: () => Date;
+}) {
   const router = Router();
 
   router.get("/", async (req, res) => {
@@ -29,13 +39,19 @@ export function calendarFeedRouter({ db }: { db: Database }) {
       return;
     }
     identifyRequest(req, owner.userId);
+    const calendar = await calendarDocument({
+      db,
+      userId: owner.userId,
+      now,
+      origin: publicOrigin(auth),
+    });
     res
       .status(200)
       .set({
         "content-type": "text/calendar; charset=utf-8",
         "cache-control": "no-store",
       })
-      .send(calendarDocument());
+      .send(calendar);
   });
 
   return router;

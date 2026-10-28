@@ -68,7 +68,7 @@ export function calendarLinkRouter({
 }
 
 /** The origin the app is served from, as Better-Auth was configured with. */
-function publicOrigin(auth: Auth): string {
+export function publicOrigin(auth: Auth): string {
   const { baseURL } = auth.options;
   if (typeof baseURL !== "string") throw new Error("No public origin");
   return baseURL;
