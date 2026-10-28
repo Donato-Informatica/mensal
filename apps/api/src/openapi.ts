@@ -249,7 +249,7 @@ export function buildOpenApiSpec() {
       get: {
         tags: ["Calendar link"],
         summary:
-          "The calendar a calendar link serves, for a calendar app to subscribe to. No session: the key is the only credential. Read-only",
+          "The calendar a calendar link serves, for a calendar app to subscribe to: each pending occurrence with a due date, from the overdue ones through the current period and the next 3, as an all-day event with an alarm at 09:00. No session: the key is the only credential. Read-only",
         parameters: [
           {
             name: "key",
@@ -273,6 +273,10 @@ export function buildOpenApiSpec() {
             description:
               "No such link: the key is missing, unknown, replaced or deactivated. No body",
           },
+          429: refusal(
+            "The link was read 60 times in the last hour",
+            "TOO_MANY_REQUESTS"
+          ),
         },
       },
     },

@@ -46,12 +46,12 @@ async function changePassword({
 }
 
 describe("changing the password", () => {
-  it("offers to revoke other devices and access tokens, both checked", async () => {
+  it("offers to revoke other devices, and access tokens with the calendar link, both checked", async () => {
     const dialog = await openChangePassword();
 
     for (const label of [
       "Desconectar dos outros dispositivos",
-      "Revogar todos os tokens de acesso",
+      "Revogar todos os tokens de acesso e o link do calendário",
     ])
       expect(within(dialog).getByLabelText(label)).toBeChecked();
   });
@@ -70,7 +70,9 @@ describe("changing the password", () => {
       );
     if (!tokens)
       await user.click(
-        within(dialog).getByLabelText("Revogar todos os tokens de acesso")
+        within(dialog).getByLabelText(
+          "Revogar todos os tokens de acesso e o link do calendário"
+        )
       );
 
     await changePassword({ current: "old-horse", next: "new-horse" });
@@ -92,7 +94,7 @@ describe("changing the password", () => {
 
     expect(
       await within(dialog).findByText(
-        "Senha alterada. Os tokens de acesso foram revogados."
+        "Senha alterada. Os tokens de acesso e o link do calendário foram revogados."
       )
     ).toBeInTheDocument();
   });
@@ -104,7 +106,7 @@ describe("changing the password", () => {
     await changePassword({ current: "old-horse", next: "new-horse" });
     expect(
       await within(dialog).findByText(
-        "Senha alterada. Nos outros dispositivos, entre de novo com a nova senha. Os tokens de acesso foram revogados."
+        "Senha alterada. Nos outros dispositivos, entre de novo com a nova senha. Os tokens de acesso e o link do calendário foram revogados."
       )
     ).toBeInTheDocument();
     // The text one, not the modal's own "Fechar" ×.

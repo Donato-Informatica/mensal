@@ -97,3 +97,18 @@ export function valueOf(component: Component, name: string) {
     throw new Error(`${name} appears ${found.length} times`);
   return found[0]?.value;
 }
+
+/**
+ * The text of `component`'s one property `name`, unescaped (RFC 5545 §3.3.11),
+ * or undefined.
+ */
+export function textOf(component: Component, name: string) {
+  return valueOf(component, name)?.replace(/\\([\\;,nN])/g, (_, char) =>
+    char === "n" || char === "N" ? "\n" : char
+  );
+}
+
+/** The VEVENTs of `calendar`. */
+export function eventsOf(calendar: Component): Component[] {
+  return calendar.components.filter(({ name }) => name === "VEVENT");
+}

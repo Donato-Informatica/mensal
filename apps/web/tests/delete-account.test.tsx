@@ -56,7 +56,7 @@ describe("deleting the account (PRD §7.15)", () => {
 
     expect(
       within(dialog).getByText(
-        /recorrências, contas e tokens de acesso serão apagados para sempre/
+        /recorrências, contas e tokens de acesso, e o link do calendário, serão apagados para sempre/
       )
     ).toBeInTheDocument();
     await fillIn(dialog, { password: "old-horse", typedEmail: email });

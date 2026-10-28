@@ -90,8 +90,8 @@ describe("deleting the account (PRD §5.13, ADR-0005)", () => {
   });
 
   /**
-   * An approved user with a second device, an access token, a recurrence with
-   * a persisted occurrence of its own, and a one-off.
+   * An approved user with a second device, an access token, a calendar link,
+   * a recurrence with a persisted occurrence of its own, and a one-off.
    */
   async function userWithEverything() {
     const user = await signUp(api);
@@ -103,13 +103,19 @@ describe("deleting the account (PRD §5.13, ADR-0005)", () => {
     });
     expect(created.status).toBe(201);
     const { token } = (await created.json()) as { token: string };
+    const generated = await request(api, "/api/v1/calendar-link", {
+      cookie: user.cookie,
+      body: { password },
+    });
+    expect(generated.status).toBe(201);
+    const calendarLink: string = (await generated.json()).link.url;
     const recurrence = await insertRecurrence(api.db, { userId: user.userId });
     await insertOccurrence(api.db, {
       userId: user.userId,
       recurrenceId: recurrence.id,
     });
     await insertOccurrence(api.db, { userId: user.userId });
-    return { ...user, elsewhere, token };
+    return { ...user, elsewhere, token, calendarLink };
   }
 
   /** How many rows of each table belong to the user. */
@@ -121,7 +127,8 @@ describe("deleting the account (PRD §5.13, ADR-0005)", () => {
          (SELECT count(*)::int FROM accounts WHERE user_id = $1) AS accounts,
          (SELECT count(*)::int FROM recurrences WHERE user_id = $1) AS recurrences,
          (SELECT count(*)::int FROM occurrences WHERE user_id = $1) AS occurrences,
-         (SELECT count(*)::int FROM apikeys WHERE reference_id = $1) AS apikeys`,
+         (SELECT count(*)::int FROM apikeys WHERE reference_id = $1) AS apikeys,
+         (SELECT count(*)::int FROM calendar_links WHERE user_id = $1) AS "calendarLinks"`,
       [userId]
     );
     return rows[0];
@@ -142,6 +149,7 @@ describe("deleting the account (PRD §5.13, ADR-0005)", () => {
       recurrences: 0,
       occurrences: 0,
       apikeys: 0,
+      calendarLinks: 0,
     });
     expect(await rowsOf(staying.userId)).toEqual(before);
     expect(before).toEqual({
@@ -151,6 +159,7 @@ describe("deleting the account (PRD §5.13, ADR-0005)", () => {
       recurrences: 1,
       occurrences: 2,
       apikeys: 1,
+      calendarLinks: 1,
     });
   });
 
@@ -178,6 +187,15 @@ describe("deleting the account (PRD §5.13, ADR-0005)", () => {
     await deleteAccount(cookie, { password });
 
     expect((await mcpPing(token)).status).toBe(401);
+  });
+
+  it("stops the user's calendar link working", async () => {
+    const { cookie, calendarLink } = await userWithEverything();
+    expect((await fetch(calendarLink)).status).toBe(200);
+
+    await deleteAccount(cookie, { password });
+
+    expect((await fetch(calendarLink)).status).toBe(404);
   });
 
   it("lets the same email sign up again, as a new user awaiting approval", async () => {
@@ -225,6 +243,7 @@ describe("deleting the account (PRD §5.13, ADR-0005)", () => {
       expect(body).toContain("17/10/2026 às 14:03");
       expect(body).toContain("recorrências");
       expect(body).toContain("tokens de acesso");
+      expect(body).toContain("link do calendário");
       expect(body).toContain("Se não foi você, responda este e-mail");
       expect(body).not.toMatch(/https?:\/\//);
     }

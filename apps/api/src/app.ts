@@ -70,7 +70,7 @@ export function createApp({
   );
 
   // Authenticated by the calendar link's key alone (PRD §6.7, ADR-0008).
-  app.use("/api/calendar.ics", calendarFeedRouter({ db }));
+  app.use("/api/calendar.ics", calendarFeedRouter({ auth, db, now }));
 
   const v1 = express.Router();
   v1.use(requireApprovedUser(auth));
