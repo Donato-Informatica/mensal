@@ -29,6 +29,11 @@ A secret a user creates to let an agent of their own act on their data on their 
 _UI (pt-BR)_: Token de acesso
 _Avoid_: API key, secret, password, credential
 
+**Calendar link**:
+A private, read-only address a user gives their own calendar app, so it shows their pending occurrences on their due dates and reminds them of those occurrences; generating a new one stops the old one from working.
+_UI (pt-BR)_: Link do calendário
+_Avoid_: feed, subscription, iCal, webcal, token
+
 **Download data**:
 To take away a copy of everything the user entered: their profile, recurrences and occurrences.
 _UI (pt-BR)_: Baixar meus dados
