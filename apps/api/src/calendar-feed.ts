@@ -1,8 +1,7 @@
 import type { Database } from "@mensal/database";
 import { Router } from "express";
-import type { Auth } from "./auth.ts";
+import { publicOrigin, type Auth } from "./auth.ts";
 import { calendarDocument } from "./calendar-document.ts";
-import { publicOrigin } from "./calendar-link.ts";
 import { calendarLinkOwner } from "./calendar-link-operations.ts";
 import { identifyRequest } from "./telemetry-context.ts";
 

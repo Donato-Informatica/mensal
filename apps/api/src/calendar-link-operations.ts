@@ -56,7 +56,7 @@ export async function generateCalendarLink({
 }
 
 /**
- * Deactivates the user's link, if they have one; its feed answers 404 from
+ * Deactivates the user's link, if they have one; reading it answers 404 from
  * then on. Logged only when there was a link to deactivate.
  */
 export async function revokeCalendarLink({
@@ -64,13 +64,25 @@ export async function revokeCalendarLink({
   userId,
   record,
 }: CalendarLinkContext): Promise<void> {
-  const revoked = await db
+  if (await deleteCalendarLink(db, userId)) {
+    record({ user: userId, action: "user.calendar-link-revoked" });
+  }
+}
+
+/**
+ * Deletes the user's link, if they have one, logging nothing; whether there
+ * was one. For callers whose own event reports it, as a password change or
+ * reset does in its `revoked`.
+ */
+export async function deleteCalendarLink(
+  db: Database,
+  userId: string
+): Promise<boolean> {
+  const deleted = await db
     .delete(calendarLinks)
     .where(eq(calendarLinks.userId, userId))
     .returning({ userId: calendarLinks.userId });
-  if (revoked.length > 0) {
-    record({ user: userId, action: "user.calendar-link-revoked" });
-  }
+  return deleted.length > 0;
 }
 
 /**
@@ -89,7 +101,7 @@ export async function calendarLinkOwner(
   return owner;
 }
 
-/** A stored link as the API shows it: the feed's URL, with its key. */
+/** A stored link as the API shows it: its URL, with its key. */
 function describe(
   link: typeof calendarLinks.$inferSelect,
   origin: string

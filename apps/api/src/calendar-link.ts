@@ -3,7 +3,7 @@ import { NewCalendarLinkSchema } from "@mensal/shared";
 import { Router } from "express";
 import type { RecordActivity } from "./activity.ts";
 import { answer } from "./answer.ts";
-import type { Auth } from "./auth.ts";
+import { publicOrigin, type Auth } from "./auth.ts";
 import {
   generateCalendarLink,
   readCalendarLink,
@@ -65,11 +65,4 @@ export function calendarLinkRouter({
   });
 
   return router;
-}
-
-/** The origin the app is served from, as Better-Auth was configured with. */
-export function publicOrigin(auth: Auth): string {
-  const { baseURL } = auth.options;
-  if (typeof baseURL !== "string") throw new Error("No public origin");
-  return baseURL;
 }

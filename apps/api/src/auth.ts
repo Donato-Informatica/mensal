@@ -27,6 +27,7 @@ import {
   type RecordActivity,
   type SessionAction,
 } from "./activity.ts";
+import { deleteCalendarLink } from "./calendar-link-operations.ts";
 import { consoleEmail, type Email, type SendEmail } from "./email.ts";
 import {
   accountDeletedEmail,
@@ -133,16 +134,6 @@ export function createAuth({
       .delete(schema.apikeys)
       .where(eq(schema.apikeys.referenceId, userId));
   }
-  /**
-   * Deactivates the user's calendar link (PRD §6.6). The password event's
-   * `revoked` reports it, so it logs no `user.calendar-link-revoked` of its
-   * own, as revoked access tokens log none.
-   */
-  async function revokeCalendarLink(userId: string) {
-    await db
-      .delete(schema.calendarLinks)
-      .where(eq(schema.calendarLinks.userId, userId));
-  }
   return betterAuth({
     baseURL,
     secret,
@@ -157,7 +148,8 @@ export function createAuth({
       onPasswordReset: async ({ user }) => {
         // How a user takes a stolen account back (PRD §8.9).
         await revokeAccessTokens(user.id);
-        await revokeCalendarLink(user.id);
+        // Its `revoked` reports the link: no `user.calendar-link-revoked`.
+        await deleteCalendarLink(db, user.id);
         passwordReplaced(user, "user.password-reset", [
           "sessions",
           "access-tokens",
@@ -343,7 +335,7 @@ export function createAuth({
           // One box revokes every lasting credential (PRD §8.2).
           if (body.revokeAccessTokens === true) {
             await revokeAccessTokens(user.id);
-            await revokeCalendarLink(user.id);
+            await deleteCalendarLink(db, user.id);
             revoked.push("access-tokens", "calendar-link");
           }
           passwordReplaced(user, "user.password-changed", revoked);
@@ -369,6 +361,13 @@ export function createAuth({
 }
 
 export type Auth = ReturnType<typeof createAuth>;
+
+/** The origin the app is served from, as Better-Auth was configured with. */
+export function publicOrigin(auth: Auth): string {
+  const { baseURL } = auth.options;
+  if (typeof baseURL !== "string") throw new Error("No public origin");
+  return baseURL;
+}
 
 /**
  * The endpoints whose new session the activity log reports. Others that also
