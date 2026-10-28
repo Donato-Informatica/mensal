@@ -144,7 +144,7 @@ export type SessionAction = "user.sign-up" | "user.sign-in";
 export type PasswordAction = "user.password-changed" | "user.password-reset";
 
 /** What a password change can revoke besides the password itself. */
-export type Revocable = "sessions" | "access-tokens";
+export type Revocable = "sessions" | "access-tokens" | "calendar-link";
 
 /** The account actions on one access token (PRD §8.9). */
 export type AccessTokenAction =
