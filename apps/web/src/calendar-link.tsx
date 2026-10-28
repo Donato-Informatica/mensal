@@ -9,7 +9,12 @@ import {
   TextInput,
 } from "@mantine/core";
 import type { CalendarLink, CalendarLinkPayload } from "@mensal/shared";
-import { IconCheck, IconCopy } from "@tabler/icons-react";
+import {
+  IconBrandGoogle,
+  IconCalendarPlus,
+  IconCheck,
+  IconCopy,
+} from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useState } from "react";
@@ -137,30 +142,76 @@ function ShowLink({
   );
 }
 
-/** The link's URL and the way to copy it for any calendar. */
+/**
+ * The link's URL, the three ways to subscribe to it (PRD §7.18) and the two
+ * caveats of §6.7.
+ */
 function LinkDetails({ link }: { link: CalendarLink }) {
+  const webcal = webcalUrl(link.url);
   return (
     <>
       <TextInput label="Link" value={link.url} readOnly />
-      <CopyButton value={link.url}>
-        {({ copied, copy }) => (
-          <Button
-            variant="default"
-            leftSection={
-              copied ? (
-                <IconCheck size={18} aria-hidden="true" />
-              ) : (
-                <IconCopy size={18} aria-hidden="true" />
-              )
-            }
-            onClick={copy}
-          >
-            {copied ? "Copiado" : "Copiar link"}
-          </Button>
-        )}
-      </CopyButton>
+      <Stack gap="xs">
+        <CopyButton value={link.url}>
+          {({ copied, copy }) => (
+            <Button
+              variant="default"
+              leftSection={
+                copied ? (
+                  <IconCheck size={18} aria-hidden="true" />
+                ) : (
+                  <IconCopy size={18} aria-hidden="true" />
+                )
+              }
+              onClick={copy}
+            >
+              {copied ? "Copiado" : "Copiar link"}
+            </Button>
+          )}
+        </CopyButton>
+        <Button
+          component="a"
+          href={webcal}
+          variant="default"
+          leftSection={<IconCalendarPlus size={18} aria-hidden="true" />}
+        >
+          Abrir no calendário do dispositivo
+        </Button>
+        <Button
+          component="a"
+          href={googleSubscribeUrl(webcal)}
+          target="_blank"
+          rel="noopener noreferrer"
+          variant="default"
+          leftSection={<IconBrandGoogle size={18} aria-hidden="true" />}
+        >
+          Adicionar ao Google Agenda
+          <Text span size="xs" c="dimmed" ml={6}>
+            (no computador)
+          </Text>
+        </Button>
+      </Stack>
+      <Text size="sm" c="dimmed">
+        O Google Agenda e o Outlook ignoram o lembrete das contas, e o
+        Calendário da Apple o remove, a menos que você desative “Remover
+        alertas” ao assinar.
+      </Text>
+      <Text size="sm" c="dimmed">
+        Uma conta paga ou pulada pode levar até cerca de um dia para sair do seu
+        calendário.
+      </Text>
     </>
   );
+}
+
+/** The link in its `webcal://` form, which device calendars open to subscribe. */
+function webcalUrl(url: string): string {
+  return url.replace(/^https?:\/\//, "webcal://");
+}
+
+/** Google Calendar's subscribe link for a `webcal://` URL. */
+function googleSubscribeUrl(webcal: string): string {
+  return `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}`;
 }
 
 function GenerateLink({

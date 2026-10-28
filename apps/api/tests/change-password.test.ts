@@ -97,7 +97,7 @@ describe("changing the password", () => {
   describe("what it revokes, as the user chooses", () => {
     const next = "a brand new passphrase";
 
-    /** A user with a second device and two access tokens. */
+    /** A user with a second device, two access tokens and a calendar link. */
     async function withDeviceAndTokens() {
       const { email, userId } = await signUp(api);
       await approve(api, email);
@@ -110,7 +110,20 @@ describe("changing the password", () => {
         });
         expect(created.status).toBe(201);
       }
-      return { email, userId, here, elsewhere };
+      const generated = await request(api, "/api/v1/calendar-link", {
+        cookie: here,
+        body: { password },
+      });
+      expect(generated.status).toBe(201);
+      const calendarLink: string = (await generated.json()).link.url;
+      return { email, userId, here, elsewhere, calendarLink };
+    }
+
+    /** Whether the calendar link's feed still answers. */
+    async function feedWorks(calendarLink: string): Promise<boolean> {
+      const { status } = await fetch(calendarLink);
+      expect([200, 404]).toContain(status);
+      return status === 200;
     }
 
     async function tokensOf(userId: string): Promise<number> {
@@ -122,15 +135,24 @@ describe("changing the password", () => {
     }
 
     const combinations = [
-      { sessions: true, tokens: true, revoked: ["sessions", "access-tokens"] },
+      {
+        sessions: true,
+        tokens: true,
+        revoked: ["sessions", "access-tokens", "calendar-link"],
+      },
       { sessions: true, tokens: false, revoked: ["sessions"] },
-      { sessions: false, tokens: true, revoked: ["access-tokens"] },
+      {
+        sessions: false,
+        tokens: true,
+        revoked: ["access-tokens", "calendar-link"],
+      },
       { sessions: false, tokens: false, revoked: [] },
     ];
     it.each(combinations)(
-      "sessions $sessions, tokens $tokens: only that is revoked, this device stays signed in, and the activity says so",
+      "sessions $sessions, tokens and calendar link $tokens: only that is revoked, this device stays signed in, and the activity says so",
       async ({ sessions, tokens, revoked }) => {
-        const { email, userId, here, elsewhere } = await withDeviceAndTokens();
+        const { email, userId, here, elsewhere, calendarLink } =
+          await withDeviceAndTokens();
 
         const response = await changePassword(here, {
           currentPassword: password,
@@ -146,6 +168,7 @@ describe("changing the password", () => {
         expect(await sessionOf(current)).toMatchObject({ user: { email } });
         expect((await sessionOf(elsewhere)) === null).toBe(sessions);
         expect(await tokensOf(userId)).toBe(tokens ? 0 : 2);
+        expect(await feedWorks(calendarLink)).toBe(!tokens);
         expect(
           events.filter((event) => event.action === "user.password-changed")
         ).toEqual([
@@ -162,13 +185,21 @@ describe("changing the password", () => {
       [
         true,
         true,
-        "desconectados os outros dispositivos e revogados todos os tokens de acesso",
+        "desconectados os outros dispositivos e revogados todos os tokens de acesso e o link do calendário",
       ],
-      [true, false, "desconectados os outros dispositivos"],
-      [false, true, "revogados todos os tokens de acesso"],
+      [
+        true,
+        false,
+        "desconectados os outros dispositivos. Os tokens de acesso e o link do calendário continuam valendo",
+      ],
+      [
+        false,
+        true,
+        "revogados todos os tokens de acesso e o link do calendário",
+      ],
       [false, false, "Nada foi revogado"],
     ])(
-      "emails what was revoked (sessions %s, tokens %s)",
+      "emails what was revoked (sessions %s, tokens and calendar link %s)",
       async (sessions, tokens, phrase) => {
         const { here } = await withDeviceAndTokens();
         sent.length = 0;
@@ -188,7 +219,8 @@ describe("changing the password", () => {
     );
 
     it("revokes nothing unless asked", async () => {
-      const { userId, here, elsewhere, email } = await withDeviceAndTokens();
+      const { userId, here, elsewhere, email, calendarLink } =
+        await withDeviceAndTokens();
 
       await changePassword(here, {
         currentPassword: password,
@@ -197,10 +229,12 @@ describe("changing the password", () => {
 
       expect(await sessionOf(elsewhere)).toMatchObject({ user: { email } });
       expect(await tokensOf(userId)).toBe(2);
+      expect(await feedWorks(calendarLink)).toBe(true);
     });
 
     it("keeps everything when the current password is wrong", async () => {
-      const { userId, here, elsewhere, email } = await withDeviceAndTokens();
+      const { userId, here, elsewhere, email, calendarLink } =
+        await withDeviceAndTokens();
 
       const response = await changePassword(here, {
         currentPassword: "not my password",
@@ -212,6 +246,7 @@ describe("changing the password", () => {
       expect(response.status).toBe(400);
       expect(await sessionOf(elsewhere)).toMatchObject({ user: { email } });
       expect(await tokensOf(userId)).toBe(2);
+      expect(await feedWorks(calendarLink)).toBe(true);
     });
   });
 });
