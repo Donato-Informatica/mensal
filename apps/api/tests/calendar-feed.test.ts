@@ -146,6 +146,8 @@ describe("the calendar's events", () => {
     });
     expect(valueOf(event, "DTSTART")).toBe("20261020");
     expect(valueOf(event, "DTEND")).toBe("20261021");
+    // Stamped with the app's clock, as RFC 5545 requires of every event.
+    expect(valueOf(event, "DTSTAMP")).toBe("20261012T150000Z");
     expect(textOf(event, "SUMMARY")).toBe("Conserto do carro · R$ 850,00");
   });
 
@@ -281,6 +283,58 @@ describe("the calendar's events", () => {
     expect(valueOf(alarm!, "ACTION")).toBe("DISPLAY");
     expect(valueOf(alarm!, "TRIGGER")).toBe("PT9H");
     expect(textOf(alarm!, "DESCRIPTION")).toBe("Conserto do carro · R$ 850,00");
+  });
+
+  it("dates each event by its last change: the occurrence's, or the recurrence's for a virtual one", async () => {
+    const { cookie, userId } = await approvedUser();
+    const rent = await insertRecurrence(api.db, {
+      userId,
+      startPeriod: "2026-10-01",
+      dueDay: 25,
+      updatedAt: new Date("2026-10-01T12:00:00Z"),
+    });
+    const repair = await insertOccurrence(api.db, {
+      userId,
+      updatedAt: new Date("2026-10-05T12:34:56Z"),
+    });
+    const link = await generateLink(cookie);
+
+    const events = await eventsAt(link);
+
+    const virtual = eventWithUid(events, `${rent.id}_2026-10-01@mensal`);
+    expect(valueOf(virtual, "LAST-MODIFIED")).toBe("20261001T120000Z");
+    const oneOff = eventWithUid(events, `${repair.id}@mensal`);
+    expect(valueOf(oneOff, "LAST-MODIFIED")).toBe("20261005T123456Z");
+    expect(Number(valueOf(oneOff, "SEQUENCE"))).toBeGreaterThan(
+      Number(valueOf(virtual, "SEQUENCE"))
+    );
+  });
+
+  it("keeps a virtual occurrence's event, with a later sequence, once an edit materializes it", async () => {
+    const { cookie, userId } = await approvedUser();
+    const rent = await insertRecurrence(api.db, {
+      userId,
+      startPeriod: "2026-10-01",
+      dueDay: 25,
+      updatedAt: new Date("2026-10-01T12:00:00Z"),
+    });
+    const uid = `${rent.id}_2026-10-01@mensal`;
+    const link = await generateLink(cookie);
+    const before = eventWithUid(await eventsAt(link), uid);
+
+    const edited = await request(
+      api,
+      `/api/v1/occurrences/virtual_${rent.id}_2026-10-01`,
+      { cookie, method: "PATCH", body: { amount: 230000 } }
+    );
+    expect(edited.status).toBe(200);
+    const after = eventWithUid(await eventsAt(link), uid);
+
+    expect(textOf(after, "SUMMARY")).toBe("Aluguel · R$ 2.300,00");
+    expect(Number(valueOf(after, "SEQUENCE"))).toBeGreaterThan(
+      Number(valueOf(before, "SEQUENCE"))
+    );
+    expect(Number.isInteger(Number(valueOf(after, "SEQUENCE")))).toBe(true);
   });
 
   it("keeps overdue occurrences of earlier periods on their own due date", async () => {

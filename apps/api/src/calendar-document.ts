@@ -34,7 +34,8 @@ const PERIODS_AHEAD = 3;
 export async function calendarDocument(
   context: CalendarContext
 ): Promise<string> {
-  const items = await pendingOccurrences(context);
+  const stamp = dateTime(context.now());
+  const pending = await pendingOccurrences(context);
   return writeICalendar({
     name: "VCALENDAR",
     properties: [
@@ -45,8 +46,17 @@ export async function calendarDocument(
       ["X-WR-CALNAME", "Mensal"],
       ["X-WR-TIMEZONE", "America/Sao_Paulo"],
     ],
-    components: items.map((item) => event(item, context.origin)),
+    components: pending.map((occurrence) =>
+      event(occurrence, { stamp, origin: context.origin })
+    ),
   });
+}
+
+/** A pending occurrence the calendar shows, and when it last changed. */
+interface PendingOccurrence {
+  item: PeriodItem;
+  /** The occurrence's `updatedAt`, or its recurrence's for a virtual one. */
+  updatedAt: Date;
 }
 
 /**
@@ -58,7 +68,7 @@ async function pendingOccurrences({
   db,
   userId,
   now,
-}: CalendarContext): Promise<PeriodItem[]> {
+}: CalendarContext): Promise<PendingOccurrence[]> {
   const date = now();
   const first = currentPeriod(date);
   const last = shiftPeriod(first, PERIODS_AHEAD);
@@ -78,6 +88,12 @@ async function pendingOccurrences({
         and(eq(occurrences.userId, userId), lte(occurrences.period, last))
       ),
   ]);
+  const updatedAt = new Map(
+    [...userRecurrences, ...userOccurrences].map((row) => [
+      row.id,
+      row.updatedAt,
+    ])
+  );
   return Array.from({ length: PERIODS_AHEAD + 1 }, (_, n) =>
     resolvePeriod({
       period: shiftPeriod(first, n),
@@ -90,20 +106,30 @@ async function pendingOccurrences({
       ...payload.overdueFromPreviousPeriods,
       ...payload.items,
     ])
-    .filter((item) => item.status === "PENDING" && item.dueDate !== null);
+    .filter((item) => item.status === "PENDING" && item.dueDate !== null)
+    .map((item) => ({
+      item,
+      updatedAt: updatedAt.get(item.isVirtual ? item.recurrenceId! : item.id)!,
+    }));
 }
 
 /**
  * An all-day event on the occurrence's due date, reminding at 09:00 that day.
  * It names the period and links to it in the app; notes are never included.
  */
-function event(item: PeriodItem, origin: string): ICalendarComponent {
+function event(
+  { item, updatedAt }: PendingOccurrence,
+  { stamp, origin }: { stamp: string; origin: string }
+): ICalendarComponent {
   const dueDate = item.dueDate!;
   const title = text(summary(item));
   return {
     name: "VEVENT",
     properties: [
       ["UID", uid(item)],
+      ["DTSTAMP", stamp],
+      ["LAST-MODIFIED", dateTime(updatedAt)],
+      ["SEQUENCE", String(sequence(updatedAt))],
       ["DTSTART;VALUE=DATE", compactDate(dueDate)],
       ["DTEND;VALUE=DATE", compactDate(nextDay(dueDate))],
       ["SUMMARY", title],
@@ -121,6 +147,23 @@ function event(item: PeriodItem, origin: string): ICalendarComponent {
       },
     ],
   };
+}
+
+/** Where {@link sequence} counts from: before any occurrence was stored. */
+const SEQUENCE_EPOCH = Date.UTC(2020, 0, 1);
+
+/**
+ * The event's revision: the seconds from {@link SEQUENCE_EPOCH} to its last
+ * change, so it grows with each edit, materializing included, and fits
+ * iCalendar's 32-bit INTEGER until 2088.
+ */
+function sequence(updatedAt: Date): number {
+  return Math.floor((updatedAt.getTime() - SEQUENCE_EPOCH) / 1000);
+}
+
+/** An instant as an iCalendar UTC DATE-TIME, e.g. '20261012T150000Z'. */
+function dateTime(instant: Date): string {
+  return instant.toISOString().replace(/\.\d+/, "").replace(/[-:]/g, "");
 }
 
 /**
