@@ -16,10 +16,12 @@ import {
   type TestApi,
 } from "./api.ts";
 
+// Today is 2026-10-12 in São Paulo; a test that moves the clock puts it back.
+const noon = new Date("2026-10-12T15:00:00Z");
+let clock = noon;
 let api: TestApi;
 beforeAll(async () => {
-  // Today is 2026-10-12 in São Paulo.
-  api = await startApi({ now: () => new Date("2026-10-12T15:00:00Z") });
+  api = await startApi({ now: () => clock });
 });
 afterAll(async () => {
   await api.close();
@@ -108,6 +110,66 @@ describe("the calendar feed", () => {
     expect(withdrawn.status).toBe(403);
     expect(await withdrawn.json()).toEqual({ code: "USER_NOT_APPROVED" });
     expect((await read(theirLink)).status).toBe(200);
+  });
+
+  it("answers 429 after 60 reads of a link in an hour, for that link only", async () => {
+    const mine = await approvedUser();
+    const theirs = await approvedUser();
+    const myLink = await generateLink(mine.cookie);
+    const theirLink = await generateLink(theirs.cookie);
+
+    try {
+      for (let n = 1; n <= 60; n++) {
+        clock = new Date(noon.getTime() + n * 1000);
+        expect((await read(myLink)).status, `read ${n}`).toBe(200);
+      }
+      const limited = await read(myLink);
+      expect(limited.status).toBe(429);
+      expect(await limited.json()).toEqual({ code: "TOO_MANY_REQUESTS" });
+      expect((await read(theirLink)).status).toBe(200);
+
+      // An hour after the first read, one more is allowed.
+      clock = new Date(noon.getTime() + 3600 * 1000 + 1000);
+      expect((await read(myLink)).status).toBe(200);
+      expect((await read(myLink)).status).toBe(429);
+    } finally {
+      clock = noon;
+    }
+  });
+
+  it("never materializes a virtual occurrence", async () => {
+    const { cookie, userId } = await approvedUser();
+    await insertRecurrence(api.db, { userId, startPeriod: "2026-10-01" });
+    const link = await generateLink(cookie);
+
+    expect(await eventsAt(link)).toHaveLength(4);
+
+    for (const month of ["2026-10", "2026-11", "2026-12", "2027-01"]) {
+      const response = await request(api, `/api/v1/periods/${month}`, {
+        cookie,
+      });
+      const { items } = await response.json();
+      expect(items, month).toHaveLength(1);
+      expect(items[0].isVirtual, month).toBe(true);
+    }
+  });
+
+  it("never shows another user's occurrences", async () => {
+    const mine = await approvedUser();
+    const theirs = await approvedUser();
+    const myRepair = await insertOccurrence(api.db, { userId: mine.userId });
+    await insertOccurrence(api.db, { userId: theirs.userId });
+    await insertRecurrence(api.db, {
+      userId: theirs.userId,
+      startPeriod: "2026-10-01",
+    });
+    const link = await generateLink(mine.cookie);
+
+    const events = await eventsAt(link);
+
+    expect(events.map((event) => valueOf(event, "UID"))).toEqual([
+      `${myRepair.id}@mensal`,
+    ]);
   });
 });
 
