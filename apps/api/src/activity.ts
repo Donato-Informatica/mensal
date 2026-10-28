@@ -150,10 +150,15 @@ export type Revocable = "sessions" | "access-tokens";
 export type AccessTokenAction =
   "user.access-token-created" | "user.access-token-revoked";
 
+/** The account actions on the calendar link (PRD §6.6): never its key. */
+export type CalendarLinkAction =
+  "user.calendar-link-created" | "user.calendar-link-revoked";
+
 /**
  * Signing up or in, replacing the password, changing the name (never naming
  * it), creating or revoking an access token (named by its id, never its
- * secret), or deleting the account, by the user's id. A failed
+ * secret), generating or revoking the calendar link (never its key), or
+ * deleting the account, by the user's id. A failed
  * sign-in has no user: it names the attempted email and the client's address
  * instead, to spot credential stuffing.
  */
@@ -164,6 +169,7 @@ type AccountReport =
         | SessionAction
         | "user.password-reset"
         | "user.name-changed"
+        | CalendarLinkAction
         | "user.deleted";
     }
   | { user: string; action: "user.password-changed"; revoked: Revocable[] }
