@@ -11,6 +11,7 @@ import {
   isInEffect,
   NameSchema,
   NewAccessTokenSchema,
+  NewCalendarLinkSchema,
   NewOneOffSchema,
   NewRecurrenceSchema,
   OccurrenceViewSchema,
@@ -24,6 +25,7 @@ import {
   parseSummariesQuery,
   summarizeRange,
   today,
+  type CalendarLink,
   type CreatedAccessToken,
   type Occurrence,
   type Recurrence,
@@ -482,6 +484,45 @@ export function fakeApi() {
     return new Response(null, { status: 204 });
   }
 
+  /** The calendar link of each account that has one, by account id. */
+  const calendarLinks = new Map<string, CalendarLink>();
+
+  function newCalendarLink(): CalendarLink {
+    return {
+      url: `${window.location.origin}/api/calendar.ics?key=key-${uuid()}`,
+      createdAt: "2026-10-01T12:00:00.000Z",
+    };
+  }
+
+  /** GET /api/v1/calendar-link, behind the approval gate. */
+  function getCalendarLink(): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    return json(200, { link: calendarLinks.get(signedIn.id) ?? null });
+  }
+
+  /** POST /api/v1/calendar-link: replaces the link, given the password (PRD §6.6). */
+  function postCalendarLink(body: unknown): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const input = NewCalendarLinkSchema.safeParse(body);
+    if (!input.success) return json(400, { code: "INVALID_INPUT" });
+    if (input.data.password !== signedIn.password) {
+      return json(400, { code: "INVALID_PASSWORD" });
+    }
+    const link = newCalendarLink();
+    calendarLinks.set(signedIn.id, link);
+    return json(201, { link });
+  }
+
+  /** DELETE /api/v1/calendar-link: done also when there is none. */
+  function deleteCalendarLink(): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    calendarLinks.delete(signedIn.id);
+    return new Response(null, { status: 204 });
+  }
+
   const passwordChanges: {
     revokeOtherSessions: boolean;
     revokeAccessTokens: boolean;
@@ -574,6 +615,11 @@ export function fakeApi() {
         revokeOtherSessions: asked.revokeOtherSessions === true,
         revokeAccessTokens: asked.revokeAccessTokens === true,
       });
+      // One box revokes the access tokens and the calendar link (PRD §8.2).
+      if (asked.revokeAccessTokens === true) {
+        accessTokens.delete(signedIn.id);
+        calendarLinks.delete(signedIn.id);
+      }
       return json(200, { token: null, user: sessionOf(signedIn).user });
     },
     // Immediate and permanent, with the current password (ADR-0005); its
@@ -590,6 +636,7 @@ export function fakeApi() {
       signedIn.recurrences = [];
       signedIn.occurrences = [];
       accessTokens.delete(signedIn.id);
+      calendarLinks.delete(signedIn.id);
       signedIn = undefined;
       return json(200, { success: true, message: "User deleted" });
     },
@@ -632,6 +679,13 @@ export function fakeApi() {
       }
       if (request.method === "GET" && pathname === "/api/v1/data") {
         return getData();
+      }
+      if (pathname === "/api/v1/calendar-link") {
+        if (request.method === "GET") return getCalendarLink();
+        if (request.method === "DELETE") return deleteCalendarLink();
+        if (request.method === "POST") {
+          return postCalendarLink(await request.json().catch(() => ({})));
+        }
       }
       const accessTokenMatch = /^\/api\/v1\/access-tokens\/([^/]+)$/.exec(
         pathname
@@ -758,6 +812,19 @@ export function fakeApi() {
     accessTokensOf(email: string): readonly FakeAccessToken[] {
       const account = accounts.get(email);
       return account ? tokensOf(account) : [];
+    },
+
+    /** Seeds a calendar link for the account, as if generated before. */
+    addCalendarLink(email: string): CalendarLink {
+      const link = newCalendarLink();
+      calendarLinks.set(accounts.get(email)!.id, link);
+      return link;
+    },
+
+    /** The account's calendar link as the database holds it, or undefined. */
+    calendarLinkOf(email: string): CalendarLink | undefined {
+      const account = accounts.get(email);
+      return account && calendarLinks.get(account.id);
     },
 
     /** Seeds a recurrence for the account, as through Drizzle Studio. */

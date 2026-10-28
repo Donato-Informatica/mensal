@@ -49,7 +49,10 @@ export function passwordChangedEmail({
   name: string;
   at: Date;
   forgotPasswordURL: string;
-  /** What the change signed out or revoked; a reset always revokes both. */
+  /**
+   * What the change signed out or revoked; the access tokens and the calendar
+   * link go together, and a reset always revokes everything.
+   */
   revoked: Revocable[];
   reset: boolean;
 }): Email {
@@ -57,14 +60,14 @@ export function passwordChangedEmail({
   const sessions = revoked.includes("sessions");
   const tokens = revoked.includes("access-tokens");
   const revocation = reset
-    ? "Por segurança, todos os dispositivos foram desconectados e todos os tokens de acesso foram revogados."
+    ? "Por segurança, todos os dispositivos foram desconectados e foram revogados todos os tokens de acesso e o link do calendário."
     : sessions && tokens
-      ? "Foram desconectados os outros dispositivos e revogados todos os tokens de acesso."
+      ? "Foram desconectados os outros dispositivos e revogados todos os tokens de acesso e o link do calendário."
       : sessions
-        ? "Foram desconectados os outros dispositivos. Os tokens de acesso continuam valendo."
+        ? "Foram desconectados os outros dispositivos. Os tokens de acesso e o link do calendário continuam valendo."
         : tokens
-          ? "Foram revogados todos os tokens de acesso. Os outros dispositivos continuam conectados."
-          : "Nada foi revogado: os outros dispositivos continuam conectados e os tokens de acesso continuam valendo.";
+          ? "Foram revogados todos os tokens de acesso e o link do calendário. Os outros dispositivos continuam conectados."
+          : "Nada foi revogado: os outros dispositivos continuam conectados, e os tokens de acesso e o link do calendário continuam valendo.";
   return {
     to,
     subject: "Sua senha do Mensal foi alterada",
@@ -103,7 +106,7 @@ export function accountDeletedEmail({
 }): Email {
   const deleted = `Sua conta no Mensal foi excluída em ${when(at)} (horário de Brasília).`;
   const erased =
-    "Todas as suas recorrências, contas e tokens de acesso foram apagados e não podem ser recuperados.";
+    "Todas as suas recorrências, contas e tokens de acesso, e o link do calendário, foram apagados e não podem ser recuperados.";
   const notYou =
     "Se foi você, não precisa fazer nada. Se não foi você, responda este e-mail.";
   return {

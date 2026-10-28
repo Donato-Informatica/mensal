@@ -101,5 +101,19 @@ describe("links to the guide", () => {
       });
       expect(link).toHaveAttribute("href", guideHref("mcp"));
     });
+
+    it("from Link do calendário, below the caveats, to the calendar section", async () => {
+      api.addCalendarLink(email);
+      const user = userEvent.setup();
+      await chooseFromAccountMenu("Link do calendário", user);
+      const dialog = await screen.findByRole("dialog", {
+        name: "Link do calendário",
+      });
+
+      const link = await within(dialog).findByRole("link", {
+        name: "Como adicionar ao seu calendário",
+      });
+      expect(link).toHaveAttribute("href", guideHref("calendario"));
+    });
   });
 });

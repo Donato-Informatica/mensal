@@ -207,6 +207,33 @@ describe("the API description's responses", () => {
       `/api/v1/access-tokens/${token.id}`,
       404
     );
+    await call("GET /api/v1/calendar-link", "/api/v1/calendar-link", 200);
+    const { link } = await call(
+      "POST /api/v1/calendar-link",
+      "/api/v1/calendar-link",
+      201,
+      { password }
+    );
+    await call("POST /api/v1/calendar-link", "/api/v1/calendar-link", 400, {
+      password: "wrong",
+    });
+    // iCalendar, not JSON: the media type it is served as is the one declared.
+    const calendar = await fetch(link.url);
+    expect(calendar.status).toBe(200);
+    expect(
+      Object.keys(
+        buildOpenApiSpec().paths["/api/calendar.ics"]?.get?.responses[200]
+          ?.content ?? {}
+      )
+    ).toEqual([calendar.headers.get("content-type")?.split(";")[0]]);
+    await call("DELETE /api/v1/calendar-link", "/api/v1/calendar-link", 204);
+    const gone = await fetch(link.url);
+    expect(gone.status).toBe(404);
+    expectDocumented(
+      "GET /api/calendar.ics",
+      404,
+      (await gone.text()) || undefined
+    );
     await call(
       "GET /api/v1/recurrences/{id}",
       `/api/v1/recurrences/${randomUUID()}`,

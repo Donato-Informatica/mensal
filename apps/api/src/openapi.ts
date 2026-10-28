@@ -1,8 +1,10 @@
 import {
   AccessTokenSchema,
+  CalendarLinkPayloadSchema,
   CreatedAccessTokenSchema,
   MAX_SUMMARY_PERIODS,
   NewAccessTokenSchema,
+  NewCalendarLinkSchema,
   NewOneOffSchema,
   NewRecurrenceSchema,
   OccurrenceEditSchema,
@@ -19,12 +21,18 @@ import { z } from "zod";
 
 type Schema = Record<string, unknown>;
 
-/** A response; its body, if any, by media type (the data archive's is a ZIP). */
+/**
+ * A response; its body, if any, by media type (the data archive's is a ZIP,
+ * the calendar link's is iCalendar).
+ */
 interface Response {
   description: string;
   headers?: Record<string, { description: string; schema: Schema }>;
   content?: Partial<
-    Record<"application/json" | "application/zip", { schema: Schema }>
+    Record<
+      "application/json" | "application/zip" | "text/calendar",
+      { schema: Schema }
+    >
   >;
 }
 
@@ -201,6 +209,76 @@ export function buildOpenApiSpec() {
           404: notFound("ACCESS_TOKEN_NOT_FOUND"),
         },
       }),
+    },
+    "/api/v1/calendar-link": {
+      get: secured({
+        tags: ["Calendar link"],
+        summary:
+          "Get the user's calendar link (the secret, read-only address their calendar app reads), or null",
+        responses: {
+          200: ok("The calendar link", output(CalendarLinkPayloadSchema)),
+        },
+      }),
+      post: secured({
+        tags: ["Calendar link"],
+        summary:
+          "Generate a new calendar link, replacing the current one, which stops working at once",
+        requestBody: body(NewCalendarLinkSchema),
+        responses: {
+          201: ok("The new calendar link", output(CalendarLinkPayloadSchema)),
+          400: ok("The input is invalid, or the current password is wrong", {
+            oneOf: [
+              invalidInput.content["application/json"].schema,
+              refusal("", "INVALID_PASSWORD").content["application/json"]
+                .schema,
+            ],
+          }),
+          429: refusal(
+            "Too many wrong passwords in a minute",
+            "TOO_MANY_ATTEMPTS"
+          ),
+        },
+      }),
+      delete: secured({
+        tags: ["Calendar link"],
+        summary: "Deactivate the calendar link; done also when there is none",
+        responses: { 204: noContent },
+      }),
+    },
+    "/api/calendar.ics": {
+      get: {
+        tags: ["Calendar link"],
+        summary:
+          "The calendar a calendar link serves, for a calendar app to add: each pending occurrence with a due date, from the overdue ones through the current period and the next 3, as an all-day event with an alarm at 09:00. No session: the key is the only credential. Read-only",
+        parameters: [
+          {
+            name: "key",
+            in: "query",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description:
+              "The calendar, named Mensal, sent with `Cache-Control: no-store`",
+            content: {
+              "text/calendar": {
+                schema: { type: "string", contentMediaType: "text/calendar" },
+              },
+            },
+          },
+          403: refusal("The link's owner is not approved", "USER_NOT_APPROVED"),
+          404: {
+            description:
+              "No such link: the key is missing, unknown, replaced or deactivated. No body",
+          },
+          429: refusal(
+            "The link was read 60 times in the last hour",
+            "TOO_MANY_REQUESTS"
+          ),
+        },
+      },
     },
     "/api/v1/data": {
       get: secured({

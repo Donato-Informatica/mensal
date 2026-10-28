@@ -14,6 +14,7 @@ export const guideSections = [
   "configuracoes",
   "instalar",
   "mcp",
+  "calendario",
   "conta",
 ] as const;
 

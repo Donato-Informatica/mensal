@@ -14,6 +14,10 @@ describe("errorMessage", () => {
     ["PASSWORD_TOO_LONG", "A senha deve ter no máximo 128 caracteres."],
     ["UNAUTHENTICATED", "Sua sessão expirou. Entre novamente."],
     ["USER_NOT_APPROVED", "Sua conta ainda aguarda aprovação."],
+    [
+      "TOO_MANY_ATTEMPTS",
+      "Muitas tentativas com a senha errada. Aguarde um minuto e tente de novo.",
+    ],
     ["INVALID_PERIOD", "Mês inválido."],
     ["INVALID_INPUT", "Confira os campos e tente novamente."],
     ["START_PERIOD_IN_PAST", "O início não pode ser antes do mês atual."],

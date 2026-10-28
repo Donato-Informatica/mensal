@@ -311,3 +311,22 @@ export const NewAccessTokenSchema = z.strictObject({
   currentPassword: z.string().min(1),
 });
 export type NewAccessToken = z.output<typeof NewAccessTokenSchema>;
+
+/** The user's calendar link (PRD §6.6): its address and when it was made. */
+export const CalendarLinkSchema = z.object({
+  url: z.url(),
+  createdAt: z.iso.datetime(),
+});
+export type CalendarLink = z.infer<typeof CalendarLinkSchema>;
+
+/** What `GET` and `POST /calendar-link` answer: the link, or null for none. */
+export const CalendarLinkPayloadSchema = z.object({
+  link: CalendarLinkSchema.nullable(),
+});
+export type CalendarLinkPayload = z.infer<typeof CalendarLinkPayloadSchema>;
+
+/** The body of `POST /calendar-link`: the current password. */
+export const NewCalendarLinkSchema = z.strictObject({
+  password: z.string().min(1),
+});
+export type NewCalendarLink = z.output<typeof NewCalendarLinkSchema>;

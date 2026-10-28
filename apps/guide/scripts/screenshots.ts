@@ -9,8 +9,9 @@ import type { Browser, BrowserContext } from "playwright";
 import { captures, demoUser, type Capture } from "./captures.ts";
 import {
   exampleOrigin,
+  fakeCalendarKey,
   fakeToken,
-  redactTokens,
+  redactSecrets,
   type RealToken,
 } from "./redact.ts";
 
@@ -113,18 +114,30 @@ async function take(
   });
   try {
     const page = await context.newPage();
-    // Every token the app creates during the steps, to keep off the capture.
+    // Every token the app creates during the steps, and every calendar link
+    // key it shows, to keep off the capture.
     const tokens: RealToken[] = [];
+    const calendarKeys: string[] = [];
     const reading: Promise<void>[] = [];
     page.on("response", (response) => {
-      if (
-        response.request().method() === "POST" &&
-        new URL(response.url()).pathname === "/api/v1/access-tokens" &&
-        response.ok()
-      ) {
+      if (!response.ok()) return;
+      const method = response.request().method();
+      const { pathname } = new URL(response.url());
+      if (method === "POST" && pathname === "/api/v1/access-tokens") {
         reading.push(
           response.json().then(({ token, prefix }: RealToken) => {
             tokens.push({ token, prefix });
+          })
+        );
+      }
+      if (
+        (method === "GET" || method === "POST") &&
+        pathname === "/api/v1/calendar-link"
+      ) {
+        reading.push(
+          response.json().then(({ link }: { link: { url: string } | null }) => {
+            const key = link && new URL(link.url).searchParams.get("key");
+            if (key) calendarKeys.push(key);
           })
         );
       }
@@ -155,12 +168,17 @@ async function take(
     await page.waitForTimeout(600);
 
     await Promise.all(reading);
-    const leaked = await page.evaluate(redactTokens, {
+    const leaked = await page.evaluate(redactSecrets, {
       tokens,
-      fake: fakeToken,
+      fakeToken,
+      calendarKeys,
+      fakeCalendarKey,
       origin: { real: new URL(webUrl).origin, shown: exampleOrigin },
     });
-    if (leaked) fail(`${name}: a real access token is still on the page.`);
+    if (leaked)
+      fail(
+        `${name}: a real access token or calendar link key is still on the page.`
+      );
 
     await page.screenshot({ path: join(outDir, `${name}.png`) });
   } finally {

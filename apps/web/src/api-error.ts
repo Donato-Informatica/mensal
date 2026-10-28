@@ -36,6 +36,10 @@ const messages = new Map<string, string>([
   // /api/v1
   ["UNAUTHENTICATED", "Sua sessão expirou. Entre novamente."],
   ["USER_NOT_APPROVED", "Sua conta ainda aguarda aprovação."],
+  [
+    "TOO_MANY_ATTEMPTS",
+    "Muitas tentativas com a senha errada. Aguarde um minuto e tente de novo.",
+  ],
   ["ACCESS_TOKEN_NOT_FOUND", "Este token já não existe."],
   ["INVALID_PERIOD", "Mês inválido."],
   ["INVALID_INPUT", "Confira os campos e tente novamente."],

@@ -27,6 +27,7 @@ import {
   type RecordActivity,
   type SessionAction,
 } from "./activity.ts";
+import { deleteCalendarLink } from "./calendar-link-operations.ts";
 import { consoleEmail, type Email, type SendEmail } from "./email.ts";
 import {
   accountDeletedEmail,
@@ -68,7 +69,9 @@ export interface AuthOptions {
 /**
  * Better-Auth on the app's own `db`: email + password, sessions in HttpOnly
  * SameSite=Lax cookies, and password-reset links sent by `email` (PRD §8.2,
- * ADR-0003); a reset signs the user out everywhere and revokes every access token, while a password change revokes what the user chose (PRD §8.2). The anonymous endpoints are
+ * ADR-0003); a reset signs the user out everywhere and revokes every access
+ * token and the calendar link, while a password change revokes what the user
+ * chose (PRD §8.2). The anonymous endpoints are
  * rate limited per client IP, read from the proxy's `X-Forwarded-For`
  * (PRD §8.6). The user's name is trimmed and checked (PRD §8.2). A user can
  * delete their own account at once with the current password, and is emailed
@@ -145,9 +148,12 @@ export function createAuth({
       onPasswordReset: async ({ user }) => {
         // How a user takes a stolen account back (PRD §8.9).
         await revokeAccessTokens(user.id);
+        // Its `revoked` reports the link: no `user.calendar-link-revoked`.
+        await deleteCalendarLink(db, user.id);
         passwordReplaced(user, "user.password-reset", [
           "sessions",
           "access-tokens",
+          "calendar-link",
         ]);
       },
       revokeSessionsOnPasswordReset: true,
@@ -326,9 +332,11 @@ export function createAuth({
           };
           const revoked: Revocable[] = [];
           if (body.revokeOtherSessions === true) revoked.push("sessions");
+          // One box revokes every lasting credential (PRD §8.2).
           if (body.revokeAccessTokens === true) {
             await revokeAccessTokens(user.id);
-            revoked.push("access-tokens");
+            await deleteCalendarLink(db, user.id);
+            revoked.push("access-tokens", "calendar-link");
           }
           passwordReplaced(user, "user.password-changed", revoked);
           return;
@@ -353,6 +361,13 @@ export function createAuth({
 }
 
 export type Auth = ReturnType<typeof createAuth>;
+
+/** The origin the app is served from, as Better-Auth was configured with. */
+export function publicOrigin(auth: Auth): string {
+  const { baseURL } = auth.options;
+  if (typeof baseURL !== "string") throw new Error("No public origin");
+  return baseURL;
+}
 
 /**
  * The endpoints whose new session the activity log reports. Others that also

@@ -143,6 +143,11 @@ describe("password reset", () => {
         subject: "Sua senha do Mensal foi alterada",
       }),
     ]);
+    for (const body of [sent[0]?.text, sent[0]?.html]) {
+      expect(body).toContain(
+        "revogados todos os tokens de acesso e o link do calendário"
+      );
+    }
   });
 
   it("signs the user out of every device", async () => {
@@ -157,4 +162,30 @@ describe("password reset", () => {
 
     expect(await session.json()).toBeNull();
   });
+
+  it("deactivates the user's calendar link, and only theirs", async () => {
+    const { email, cookie } = await signUp(api);
+    await approve(api, email);
+    const other = await signUp(api);
+    await approve(api, other.email);
+    const link = await calendarLink(cookie);
+    const otherLink = await calendarLink(other.cookie);
+    expect((await fetch(link)).status).toBe(200);
+
+    const reset = await requestReset(email);
+    await resetPassword(await tokenFrom(reset), "a brand new passphrase");
+
+    expect((await fetch(link)).status).toBe(404);
+    expect((await fetch(otherLink)).status).toBe(200);
+  });
 });
+
+/** Generates the user's calendar link and returns its URL. */
+async function calendarLink(cookie: string): Promise<string> {
+  const response = await request(api, "/api/v1/calendar-link", {
+    cookie,
+    body: { password },
+  });
+  expect(response.status).toBe(201);
+  return (await response.json()).link.url;
+}

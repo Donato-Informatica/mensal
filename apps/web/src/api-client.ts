@@ -3,8 +3,10 @@ import {
   monthOf,
   today,
   type AccessToken,
+  type CalendarLinkPayload,
   type CreatedAccessToken,
   type NewAccessToken,
+  type NewCalendarLink,
   type NewOneOff,
   type NewRecurrence,
   type Occurrence,
@@ -74,6 +76,17 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
       send<void>(`/access-tokens/${encodeURIComponent(id)}`, {
         method: "DELETE",
       }),
+
+    /** The user's calendar link (PRD §6.6), or null when they have none. */
+    calendarLink: () => send<CalendarLinkPayload>("/calendar-link"),
+
+    /** Generates a new calendar link, proven with the password, replacing the current one. */
+    generateCalendarLink: (input: NewCalendarLink) =>
+      sendJson<CalendarLinkPayload>("POST", "/calendar-link", input),
+
+    /** Deactivates the calendar link; done also when there is none. */
+    revokeCalendarLink: () =>
+      send<void>("/calendar-link", { method: "DELETE" }),
 
     /**
      * The archive of everything the user entered (PRD §6.5), with the file
