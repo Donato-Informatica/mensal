@@ -74,11 +74,11 @@ describe("redactSecrets", () => {
   it("replaces a calendar link's key with the fake one, in text, fields and links", () => {
     const key = "Zq81RealCalendarKey0123456789abcdefghijklmno";
     const url = `http://localhost:5173/api/calendar.ics?key=${key}`;
-    const webcal = url.replace("http://", "webcal://");
+    const deviceCalendarUrl = url.replace("http://", "webcal://");
     document.body.innerHTML = `
       <label>Link <input value="${url}" readonly /></label>
-      <a href="${webcal}">Abrir no calendário do dispositivo</a>
-      <a href="https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}">Adicionar ao Google Agenda</a>
+      <a href="${deviceCalendarUrl}">Abrir no calendário do dispositivo</a>
+      <a href="https://calendar.google.com/calendar/r?cid=${encodeURIComponent(deviceCalendarUrl)}">Adicionar ao Google Agenda</a>
       <p>${url}</p>`;
 
     const remaining = redactSecrets({

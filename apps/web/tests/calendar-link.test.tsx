@@ -78,20 +78,20 @@ describe("the calendar link", () => {
   it("opens the link in the device's calendar and in Google Calendar, through its webcal:// form", async () => {
     const { url } = api.addCalendarLink(email);
     const { host, pathname, search } = new URL(url);
-    const webcal = `webcal://${host}${pathname}${search}`;
+    const deviceCalendarUrl = `webcal://${host}${pathname}${search}`;
     const dialog = await openCalendarLink();
 
     expect(
       await within(dialog).findByRole("link", {
         name: "Abrir no calendário do dispositivo",
       })
-    ).toHaveAttribute("href", webcal);
+    ).toHaveAttribute("href", deviceCalendarUrl);
     const google = within(dialog).getByRole("link", {
       name: /Adicionar ao Google Agenda/,
     });
     expect(google).toHaveAttribute(
       "href",
-      `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}`
+      `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(deviceCalendarUrl)}`
     );
     expect(google).toHaveAccessibleName(/no computador/);
   });

@@ -218,14 +218,14 @@ describe("the API description's responses", () => {
       password: "wrong",
     });
     // iCalendar, not JSON: the media type it is served as is the one declared.
-    const feed = await fetch(link.url);
-    expect(feed.status).toBe(200);
+    const calendar = await fetch(link.url);
+    expect(calendar.status).toBe(200);
     expect(
       Object.keys(
         buildOpenApiSpec().paths["/api/calendar.ics"]?.get?.responses[200]
           ?.content ?? {}
       )
-    ).toEqual([feed.headers.get("content-type")?.split(";")[0]]);
+    ).toEqual([calendar.headers.get("content-type")?.split(";")[0]]);
     await call("DELETE /api/v1/calendar-link", "/api/v1/calendar-link", 204);
     const gone = await fetch(link.url);
     expect(gone.status).toBe(404);

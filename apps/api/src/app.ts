@@ -9,7 +9,7 @@ import {
 } from "./activity.ts";
 import { accessTokensRouter } from "./access-tokens.ts";
 import type { Auth } from "./auth.ts";
-import { calendarFeedRouter } from "./calendar-feed.ts";
+import { calendarIcsRouter } from "./calendar-ics.ts";
 import { calendarLinkRouter } from "./calendar-link.ts";
 import { dataRouter } from "./data.ts";
 import { docsRouter } from "./docs.ts";
@@ -70,7 +70,7 @@ export function createApp({
   );
 
   // Authenticated by the calendar link's key alone (PRD §6.7, ADR-0008).
-  app.use("/api/calendar.ics", calendarFeedRouter({ auth, db, now }));
+  app.use("/api/calendar.ics", calendarIcsRouter({ auth, db, now }));
 
   const v1 = express.Router();
   v1.use(requireApprovedUser(auth));

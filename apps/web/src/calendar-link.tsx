@@ -112,7 +112,7 @@ function ShowLink({
           dia do vencimento.
         </Text>
         <Text>
-          Ao assiná-lo, a descrição e o valor de cada conta pendente passam a
+          Ao adicioná-lo, a descrição e o valor de cada conta pendente passam a
           ficar guardados também com o provedor do seu calendário.
         </Text>
         <DialogActions>
@@ -144,11 +144,11 @@ function ShowLink({
 }
 
 /**
- * The link's URL, the three ways to subscribe to it (PRD §7.18), the two
+ * The link's URL, the three ways to add it to a calendar (PRD §7.18), the two
  * caveats of §6.7 and the guide's step by step.
  */
 function LinkDetails({ link }: { link: CalendarLink }) {
-  const webcal = webcalUrl(link.url);
+  const deviceUrl = deviceCalendarUrl(link.url);
   return (
     <>
       <TextInput label="Link" value={link.url} readOnly />
@@ -172,7 +172,7 @@ function LinkDetails({ link }: { link: CalendarLink }) {
         </CopyButton>
         <Button
           component="a"
-          href={webcal}
+          href={deviceUrl}
           variant="default"
           leftSection={<IconCalendarPlus size={18} aria-hidden="true" />}
         >
@@ -180,7 +180,7 @@ function LinkDetails({ link }: { link: CalendarLink }) {
         </Button>
         <Button
           component="a"
-          href={googleSubscribeUrl(webcal)}
+          href={googleAgendaUrl(deviceUrl)}
           target="_blank"
           rel="noopener noreferrer"
           variant="default"
@@ -195,25 +195,27 @@ function LinkDetails({ link }: { link: CalendarLink }) {
       <Text size="sm" c="dimmed">
         O Google Agenda e o Outlook ignoram o lembrete das contas, e o
         Calendário da Apple o remove, a menos que você desative “Remover
-        alertas” ao assinar.
+        alertas” ao adicioná-lo.
       </Text>
       <Text size="sm" c="dimmed">
         Uma conta paga ou pulada pode levar até cerca de um dia para sair do seu
         calendário.
       </Text>
-      <GuideLink section="calendario">Como assinar no seu calendário</GuideLink>
+      <GuideLink section="calendario">
+        Como adicionar ao seu calendário
+      </GuideLink>
     </>
   );
 }
 
-/** The link in its `webcal://` form, which device calendars open to subscribe. */
-function webcalUrl(url: string): string {
+/** The link in its `webcal://` form, which device calendars open to add it. */
+function deviceCalendarUrl(url: string): string {
   return url.replace(/^https?:\/\//, "webcal://");
 }
 
-/** Google Calendar's subscribe link for a `webcal://` URL. */
-function googleSubscribeUrl(webcal: string): string {
-  return `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}`;
+/** Google Agenda's address that adds the calendar at a `webcal://` URL. */
+function googleAgendaUrl(deviceUrl: string): string {
+  return `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(deviceUrl)}`;
 }
 
 function GenerateLink({
@@ -251,7 +253,7 @@ function GenerateLink({
         {replacing && (
           <Alert color="yellow" variant="light">
             O link atual deixará de funcionar em todos os calendários que o
-            assinaram.
+            usam.
           </Alert>
         )}
         {generate.error && !wrongPassword && (
@@ -309,9 +311,9 @@ function ConfirmDeactivation({
         </Alert>
       )}
       <Text>
-        O link deixará de funcionar em todos os calendários que o assinaram, e
-        suas contas sairão deles na próxima atualização. Você pode gerar um novo
-        link quando quiser.
+        O link deixará de funcionar em todos os calendários que o usam, e suas
+        contas sairão deles na próxima atualização. Você pode gerar um novo link
+        quando quiser.
       </Text>
       <DialogActions>
         <Button variant="default" onClick={onCancel} data-autofocus>

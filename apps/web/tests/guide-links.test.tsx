@@ -111,7 +111,7 @@ describe("links to the guide", () => {
       });
 
       const link = await within(dialog).findByRole("link", {
-        name: "Como assinar no seu calendário",
+        name: "Como adicionar ao seu calendário",
       });
       expect(link).toHaveAttribute("href", guideHref("calendario"));
     });

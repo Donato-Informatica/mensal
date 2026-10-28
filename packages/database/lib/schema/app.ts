@@ -128,7 +128,7 @@ export const occurrences = pgTable(
 /**
  * The user's calendar link (PRD §6.6, ADR-0008): at most one per user, its key
  * in plain text, since whoever reads the database already reads what the
- * link's feed exposes. Not a Better-Auth field: it never travels with the
+ * link exposes. Not a Better-Auth field: it never travels with the
  * session.
  */
 export const calendarLinks = pgTable("calendar_links", {

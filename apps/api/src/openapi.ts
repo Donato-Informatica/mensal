@@ -23,7 +23,7 @@ type Schema = Record<string, unknown>;
 
 /**
  * A response; its body, if any, by media type (the data archive's is a ZIP,
- * the calendar feed's is iCalendar).
+ * the calendar link's is iCalendar).
  */
 interface Response {
   description: string;
@@ -214,7 +214,7 @@ export function buildOpenApiSpec() {
       get: secured({
         tags: ["Calendar link"],
         summary:
-          "Get the user's calendar link (the secret, read-only address of their calendar feed), or null",
+          "Get the user's calendar link (the secret, read-only address their calendar app reads), or null",
         responses: {
           200: ok("The calendar link", output(CalendarLinkPayloadSchema)),
         },
@@ -249,7 +249,7 @@ export function buildOpenApiSpec() {
       get: {
         tags: ["Calendar link"],
         summary:
-          "The calendar a calendar link serves, for a calendar app to subscribe to: each pending occurrence with a due date, from the overdue ones through the current period and the next 3, as an all-day event with an alarm at 09:00. No session: the key is the only credential. Read-only",
+          "The calendar a calendar link serves, for a calendar app to add: each pending occurrence with a due date, from the overdue ones through the current period and the next 3, as an all-day event with an alarm at 09:00. No session: the key is the only credential. Read-only",
         parameters: [
           {
             name: "key",

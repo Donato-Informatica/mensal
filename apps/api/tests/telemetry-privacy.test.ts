@@ -106,7 +106,7 @@ describe("telemetry privacy and identity", () => {
     });
     await request(api, "/api/health");
 
-    // A calendar app reading the feed, whose events carry the recurrence's
+    // A calendar app reading the calendar link, whose events carry the recurrence's
     // description and amount.
     const linkResponse = await request(api, "/api/v1/calendar-link", {
       cookie,
@@ -114,10 +114,10 @@ describe("telemetry privacy and identity", () => {
     });
     const { link } = (await linkResponse.json()) as { link: { url: string } };
     const calendarKey = new URL(link.url).searchParams.get("key")!;
-    const feed = await (await fetch(link.url)).text();
-    expect(feed).toContain(secrets.recurrence);
+    const calendar = await (await fetch(link.url)).text();
+    expect(calendar).toContain(secrets.recurrence);
     // R$ 87.654,32, its comma escaped.
-    expect(feed).toContain("87.654\\,32");
+    expect(calendar).toContain("87.654\\,32");
 
     const tokenResponse = await request(api, "/api/v1/access-tokens", {
       cookie,
@@ -218,12 +218,12 @@ describe("telemetry privacy and identity", () => {
     expect(mcp.length).toBeGreaterThan(0);
     for (const span of mcp)
       expect(span.attributes["enduser.id"]).toBe(user.userId);
-    // The feed read was traced, by its path alone, and carries its owner.
-    const feedReads = requests.filter(
+    // The calendar link's read was traced, by its path alone, and carries its owner.
+    const calendarReads = requests.filter(
       (s) => s.attributes["url.path"] === "/api/calendar.ics"
     );
-    expect(feedReads.length).toBe(1);
-    expect(feedReads[0]!.attributes["enduser.id"]).toBe(user.userId);
+    expect(calendarReads.length).toBe(1);
+    expect(calendarReads[0]!.attributes["enduser.id"]).toBe(user.userId);
 
     // Health checks leave no trace, not even their query.
     expect(JSON.stringify(spans.map((s) => s.attributes))).not.toContain(

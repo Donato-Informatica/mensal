@@ -13,7 +13,7 @@ import { identifyRequest } from "./telemetry-context.ts";
  * missing, unknown or deactivated key answers 404 with no body; a link read
  * too often, 429; an unapproved owner, 403, checked on every read.
  */
-export function calendarFeedRouter({
+export function calendarIcsRouter({
   auth,
   db,
   now,

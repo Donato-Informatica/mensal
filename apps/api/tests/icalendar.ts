@@ -1,5 +1,5 @@
 /**
- * A minimal iCalendar reader (RFC 5545) for the feed's tests, so they assert
+ * A minimal iCalendar reader (RFC 5545) for the calendar link's tests, so they assert
  * on components and properties, never on the text as a whole: folding and
  * property order are not part of the contract.
  */

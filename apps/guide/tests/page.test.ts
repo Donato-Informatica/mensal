@@ -150,6 +150,9 @@ describe("guide page", () => {
     expect(text).toContain("Google Agenda");
     expect(text).toContain("Calendário da Apple");
     expect(text).toContain("Remover alertas");
+    // The glossary's word is adding the link, never subscribing to it.
+    expect(text).toContain("Adicionar ao Google Agenda");
+    expect(text).not.toMatch(/assin/i);
   });
 
   it("links home, to Entrar and to Criar conta", () => {

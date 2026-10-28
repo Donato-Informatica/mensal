@@ -50,7 +50,7 @@ function read(link: string) {
   return fetch(api.url + link);
 }
 
-describe("the calendar feed", () => {
+describe("the calendar a calendar link serves", () => {
   it("answers a valid link with a calendar named Mensal", async () => {
     const { cookie } = await approvedUser();
     const link = await generateLink(cookie);

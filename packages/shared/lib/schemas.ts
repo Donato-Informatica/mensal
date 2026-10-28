@@ -312,7 +312,7 @@ export const NewAccessTokenSchema = z.strictObject({
 });
 export type NewAccessToken = z.output<typeof NewAccessTokenSchema>;
 
-/** The user's calendar link (PRD §6.6): the feed's address and when it was made. */
+/** The user's calendar link (PRD §6.6): its address and when it was made. */
 export const CalendarLinkSchema = z.object({
   url: z.url(),
   createdAt: z.iso.datetime(),

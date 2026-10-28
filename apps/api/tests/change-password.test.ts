@@ -119,8 +119,8 @@ describe("changing the password", () => {
       return { email, userId, here, elsewhere, calendarLink };
     }
 
-    /** Whether the calendar link's feed still answers. */
-    async function feedWorks(calendarLink: string): Promise<boolean> {
+    /** Whether the calendar link still answers. */
+    async function calendarLinkWorks(calendarLink: string): Promise<boolean> {
       const { status } = await fetch(calendarLink);
       expect([200, 404]).toContain(status);
       return status === 200;
@@ -168,7 +168,7 @@ describe("changing the password", () => {
         expect(await sessionOf(current)).toMatchObject({ user: { email } });
         expect((await sessionOf(elsewhere)) === null).toBe(sessions);
         expect(await tokensOf(userId)).toBe(tokens ? 0 : 2);
-        expect(await feedWorks(calendarLink)).toBe(!tokens);
+        expect(await calendarLinkWorks(calendarLink)).toBe(!tokens);
         expect(
           events.filter((event) => event.action === "user.password-changed")
         ).toEqual([
@@ -229,7 +229,7 @@ describe("changing the password", () => {
 
       expect(await sessionOf(elsewhere)).toMatchObject({ user: { email } });
       expect(await tokensOf(userId)).toBe(2);
-      expect(await feedWorks(calendarLink)).toBe(true);
+      expect(await calendarLinkWorks(calendarLink)).toBe(true);
     });
 
     it("keeps everything when the current password is wrong", async () => {
@@ -246,7 +246,7 @@ describe("changing the password", () => {
       expect(response.status).toBe(400);
       expect(await sessionOf(elsewhere)).toMatchObject({ user: { email } });
       expect(await tokensOf(userId)).toBe(2);
-      expect(await feedWorks(calendarLink)).toBe(true);
+      expect(await calendarLinkWorks(calendarLink)).toBe(true);
     });
   });
 });
