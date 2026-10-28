@@ -20,6 +20,7 @@ import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { useState } from "react";
 import { ApiError, errorMessage } from "./api-error.ts";
 import { DialogActions } from "./dialog-actions.tsx";
+import { GuideLink } from "./guide-link.tsx";
 
 const calendarLinkKey = ["calendar-link"];
 
@@ -143,8 +144,8 @@ function ShowLink({
 }
 
 /**
- * The link's URL, the three ways to subscribe to it (PRD §7.18) and the two
- * caveats of §6.7.
+ * The link's URL, the three ways to subscribe to it (PRD §7.18), the two
+ * caveats of §6.7 and the guide's step by step.
  */
 function LinkDetails({ link }: { link: CalendarLink }) {
   const webcal = webcalUrl(link.url);
@@ -200,6 +201,7 @@ function LinkDetails({ link }: { link: CalendarLink }) {
         Uma conta paga ou pulada pode levar até cerca de um dia para sair do seu
         calendário.
       </Text>
+      <GuideLink section="calendario">Como assinar no seu calendário</GuideLink>
     </>
   );
 }

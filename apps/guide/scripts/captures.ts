@@ -120,6 +120,25 @@ export const captures: Capture[] = [
     },
   },
   {
+    name: "calendario",
+    path: "/",
+    viewport: "desktop",
+    // The link, generated if the demo user has none; the script fakes its key.
+    steps: async (page) => {
+      await openAccountMenuItem(page, "Link do calendário");
+      const dialog = page.getByRole("dialog", { name: "Link do calendário" });
+      const copy = dialog.getByRole("button", { name: "Copiar link" });
+      const generate = dialog.getByRole("button", { name: "Gerar link" });
+      await copy.or(generate).first().waitFor();
+      if (await generate.isVisible()) {
+        await generate.click();
+        await dialog.getByLabel("Senha atual").fill(demoUser.password);
+        await dialog.getByRole("button", { name: "Gerar link" }).click();
+      }
+      await copy.waitFor();
+    },
+  },
+  {
     name: "conta",
     path: "/",
     viewport: "desktop",

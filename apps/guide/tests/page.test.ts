@@ -38,6 +38,7 @@ describe("guide sections", () => {
       "configuracoes",
       "instalar",
       "mcp",
+      "calendario",
       "conta",
     ]);
   });
@@ -138,6 +139,17 @@ describe("guide page", () => {
     expect(mcp.textContent).toContain("Authorization: Bearer");
     expect(mcp.textContent).toContain("quais contas vencem esta semana?");
     expect(mcp.textContent).toContain("liquide a conta de luz");
+  });
+
+  it("shows the calendar link screen and steps for Google and Apple", () => {
+    const calendar = page.getElementById("calendario")!;
+    const shot = calendar.querySelector("img")?.getAttribute("src");
+    expect(shot).toBe("./screenshots/calendario.png");
+    const text = calendar.textContent ?? "";
+    expect(text).toContain("Link do calendário");
+    expect(text).toContain("Google Agenda");
+    expect(text).toContain("Calendário da Apple");
+    expect(text).toContain("Remover alertas");
   });
 
   it("links home, to Entrar and to Criar conta", () => {

@@ -59,6 +59,7 @@
           <li><a href="#configuracoes">Configurações</a></li>
           <li><a href="#instalar">Instalar o app</a></li>
           <li><a href="#mcp">Agentes e tokens de acesso</a></li>
+          <li><a href="#calendario">Lembretes no seu calendário</a></li>
           <li><a href="#conta">Sua conta</a></li>
         </ol>
       </nav>
@@ -541,6 +542,108 @@ http_headers = { Authorization = "Bearer &lt;token&gt;" }</code></pre>
         </p>
       </section>
 
+      <section id="calendario">
+        <h2>Lembretes no seu calendário</h2>
+        <p>
+          O Mensal não envia avisos. Com o <strong>Link do calendário</strong>,
+          as suas contas pendentes aparecem no calendário que você já usa, como
+          o Google Agenda ou o Calendário da Apple: cada uma como um evento de
+          dia inteiro no dia do vencimento, com um lembrete às 9h desse dia.
+        </p>
+        <p>
+          Entram as entradas e as saídas pendentes com vencimento, do mês atual
+          e dos 3 meses seguintes, e as atrasadas de meses anteriores, no dia em
+          que venceram. Cada evento mostra a descrição e o valor (ou “A
+          definir”), com “Entrada:” na frente das entradas, e traz a competência
+          e um link para aquele mês no Mensal. As observações nunca vão para o
+          calendário. Contas sem vencimento, liquidadas ou puladas ficam de
+          fora.
+        </p>
+
+        <h3>1. Gerar o link</h3>
+        <img
+          class="shot"
+          src="./screenshots/calendario.png"
+          alt="O diálogo Link do calendário com um link gerado: o endereço do link, os botões Copiar link, Abrir no calendário do dispositivo e Adicionar ao Google Agenda (no computador), os dois avisos sobre lembretes e atualização e os botões Desativar, Gerar novo link e Fechar."
+          width="1280"
+          height="800"
+          loading="lazy"
+        />
+        <ol class="steps">
+          <li>
+            Abra o menu da conta e escolha <strong>Link do calendário</strong>.
+          </li>
+          <li>
+            Toque em <strong>Gerar link</strong> e informe a
+            <strong>Senha atual</strong>. Ao assinar o link, a descrição e o
+            valor de cada conta pendente passam a ficar guardados também com o
+            provedor do seu calendário.
+          </li>
+          <li>
+            O link aparece sempre que você abrir essa tela, para assinar em
+            outro aparelho depois. Trate-o como uma senha: quem tiver o link vê
+            as suas contas pendentes.
+          </li>
+        </ol>
+
+        <h3>2. Assinar no Google Agenda</h3>
+        <ol class="steps">
+          <li>
+            Faça isso num computador: os apps do Google Agenda para celular não
+            adicionam uma agenda por link. Depois, os eventos aparecem também no
+            celular.
+          </li>
+          <li>
+            Toque em <strong>Copiar link</strong>. No Google Agenda, ao lado de
+            <strong>Outras agendas</strong>, toque em <strong>+</strong>,
+            escolha <strong>Do URL</strong>, cole o link e confirme. O botão
+            <strong>Adicionar ao Google Agenda</strong> faz o mesmo de uma vez,
+            quando o Google o aceita.
+          </li>
+          <li>
+            O Google ignora o lembrete do link. Para ser avisado, abra as
+            configurações da agenda <strong>Mensal</strong> no Google Agenda e,
+            em <strong>Notificações de eventos de dia inteiro</strong>, adicione
+            uma notificação, por exemplo no mesmo dia, às 9h.
+          </li>
+        </ol>
+
+        <h3>3. Assinar no Calendário da Apple</h3>
+        <ol class="steps">
+          <li>
+            No iPhone, no iPad ou no Mac, toque em
+            <strong>Abrir no calendário do dispositivo</strong>. O Calendário
+            abre pronto para assinar o link.
+          </li>
+          <li>
+            Antes de confirmar, desative <strong>Remover alertas</strong>.
+            Ligada, como vem, ela apaga o lembrete das 9h.
+          </li>
+          <li>Confirme a assinatura. A agenda aparece com o nome Mensal.</li>
+        </ol>
+
+        <h3>Quando o calendário se atualiza</h3>
+        <p>
+          Quem busca o link é o seu calendário, no ritmo dele, e não há como
+          apressá-lo: uma conta liquidada ou pulada pode levar até cerca de um
+          dia para sair do calendário, e até lá ainda pode lembrar você.
+        </p>
+
+        <h3>Gerar um novo link ou desativar</h3>
+        <ol class="steps">
+          <li>
+            <strong>Gerar novo link</strong> pede a senha atual e substitui o
+            link: o atual deixa de funcionar em todos os calendários que o
+            assinaram, e você assina o novo onde quiser.
+          </li>
+          <li>
+            <strong>Desativar</strong> pede só uma confirmação, e o link deixa
+            de funcionar em todos os calendários que o assinaram. Para tirar a
+            agenda Mensal de um calendário, cancele a assinatura nele.
+          </li>
+        </ol>
+      </section>
+
       <section id="conta">
         <h2>Sua conta</h2>
         <p>
@@ -550,7 +653,7 @@ http_headers = { Authorization = "Bearer &lt;token&gt;" }</code></pre>
         <img
           class="shot"
           src="./screenshots/conta.png"
-          alt="O menu da conta aberto, com o nome e o e-mail no topo e os itens Configurações, Alterar nome, Alterar senha, Tokens de acesso, Baixar meus dados, Guia, Sair e Excluir conta."
+          alt="O menu da conta aberto, com o nome e o e-mail no topo e os itens Configurações, Alterar nome, Alterar senha, Tokens de acesso, Link do calendário, Baixar meus dados, Guia, Sair e Excluir conta."
           width="1280"
           height="800"
           loading="lazy"
