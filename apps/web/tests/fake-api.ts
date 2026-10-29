@@ -580,6 +580,25 @@ export function fakeApi() {
     return json(200, { mine: false });
   }
 
+  /** DELETE /api/v1/reminders/device: only the user's own; done also when none. */
+  function deleteReminderDevice(body: unknown): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const input = ReminderDeviceCheckSchema.safeParse(body);
+    if (!input.success) return json(400, { code: "INVALID_INPUT" });
+    if (reminderDevices.get(input.data.endpoint) === signedIn.id)
+      reminderDevices.delete(input.data.endpoint);
+    return new Response(null, { status: 204 });
+  }
+
+  /** DELETE /api/v1/reminders: every device of the user. */
+  function deleteAllReminderDevices(): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    deleteRemindersOf(signedIn);
+    return new Response(null, { status: 204 });
+  }
+
   function deleteRemindersOf(account: Account) {
     for (const [endpoint, id] of reminderDevices)
       if (id === account.id) reminderDevices.delete(endpoint);
@@ -750,11 +769,17 @@ export function fakeApi() {
           return postCalendarLink(await request.json().catch(() => ({})));
         }
       }
-      if (request.method === "GET" && pathname === "/api/v1/reminders") {
-        return getReminders();
+      if (pathname === "/api/v1/reminders") {
+        if (request.method === "GET") return getReminders();
+        if (request.method === "DELETE") return deleteAllReminderDevices();
       }
-      if (request.method === "PUT" && pathname === "/api/v1/reminders/device") {
-        return putReminderDevice(await request.json().catch(() => ({})));
+      if (pathname === "/api/v1/reminders/device") {
+        if (request.method === "PUT") {
+          return putReminderDevice(await request.json().catch(() => ({})));
+        }
+        if (request.method === "DELETE") {
+          return deleteReminderDevice(await request.json().catch(() => ({})));
+        }
       }
       if (
         request.method === "POST" &&

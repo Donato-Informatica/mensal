@@ -56,7 +56,7 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
   }
 
   function sendJson<T>(
-    method: "POST" | "PUT" | "PATCH",
+    method: "POST" | "PUT" | "PATCH" | "DELETE",
     path: string,
     body: unknown
   ): Promise<T> {
@@ -107,6 +107,14 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
       sendJson<ReminderDeviceCheckResult>("POST", "/reminders/device/check", {
         endpoint,
       }),
+
+    /** Turns reminders off for this browser's endpoint; done also when it had none. */
+    turnReminderDeviceOff: (endpoint: string) =>
+      sendJson<void>("DELETE", "/reminders/device", { endpoint }),
+
+    /** Turns reminders off on every device of the user. */
+    turnRemindersOffEverywhere: () =>
+      send<void>("/reminders", { method: "DELETE" }),
 
     /**
      * The archive of everything the user entered (PRD §6.5), with the file
