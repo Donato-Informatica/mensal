@@ -234,6 +234,37 @@ describe("the API description's responses", () => {
       404,
       (await gone.text()) || undefined
     );
+    await call("GET /api/v1/reminders", "/api/v1/reminders", 200);
+    const device = {
+      endpoint: `https://push.example/send/${randomUUID()}`,
+      keys: { p256dh: "p256dh", auth: "auth" },
+    };
+    await call(
+      "PUT /api/v1/reminders/device",
+      "/api/v1/reminders/device",
+      200,
+      device
+    );
+    await call(
+      "PUT /api/v1/reminders/device",
+      "/api/v1/reminders/device",
+      400,
+      {
+        endpoint: "not a url",
+      }
+    );
+    await call(
+      "POST /api/v1/reminders/device/check",
+      "/api/v1/reminders/device/check",
+      200,
+      { endpoint: device.endpoint }
+    );
+    await call(
+      "POST /api/v1/reminders/device/check",
+      "/api/v1/reminders/device/check",
+      400,
+      {}
+    );
     await call(
       "GET /api/v1/recurrences/{id}",
       `/api/v1/recurrences/${randomUUID()}`,
@@ -243,6 +274,34 @@ describe("the API description's responses", () => {
       direction: "SIDEWAYS",
     });
     expect(userId).toBeTypeOf("string");
+  });
+
+  it("cover reminders on a server without VAPID keys", async () => {
+    const unconfigured = await startApi({ reminders: null });
+    try {
+      const user = await signUp(unconfigured);
+      await approve(unconfigured, user.email);
+      const read = await request(unconfigured, "/api/v1/reminders", {
+        cookie: user.cookie,
+      });
+      expectDocumented("GET /api/v1/reminders", 200, await read.json());
+      const refused = await request(unconfigured, "/api/v1/reminders/device", {
+        cookie: user.cookie,
+        method: "PUT",
+        body: {
+          endpoint: `https://push.example/send/${randomUUID()}`,
+          keys: { p256dh: "p256dh", auth: "auth" },
+        },
+      });
+      expect(refused.status).toBe(409);
+      expectDocumented(
+        "PUT /api/v1/reminders/device",
+        409,
+        await refused.json()
+      );
+    } finally {
+      await unconfigured.close();
+    }
   });
 
   it("cover the health check and the refusal of an anonymous request", async () => {

@@ -138,3 +138,22 @@ export const calendarLinks = pgTable("calendar_links", {
   key: text().notNull().unique(),
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 });
+
+/**
+ * A reminder device (PRD §6.8, ADR-0009): one browser's push registration,
+ * belonging to one user at a time (`endpoint` is unique across users). Kept
+ * in plain text: a registration only lets its holder send to that browser.
+ * `sessionId` is the session that last registered or checked it, without a
+ * foreign key, so the device outlives that session.
+ */
+export const reminderDevices = pgTable("reminder_devices", {
+  id: uuid().primaryKey().defaultRandom(),
+  userId: text()
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  endpoint: text().notNull().unique(),
+  p256dh: text().notNull(),
+  auth: text().notNull(),
+  sessionId: text().notNull(),
+  createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+});

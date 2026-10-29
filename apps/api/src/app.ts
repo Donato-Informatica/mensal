@@ -21,6 +21,8 @@ import { occurrencesRouter } from "./occurrences.ts";
 import { passwordConfirmation } from "./password-confirmation.ts";
 import { periodsRouter } from "./periods.ts";
 import { recurrencesRouter } from "./recurrences.ts";
+import type { Reminders } from "./reminder-operations.ts";
+import { remindersRouter } from "./reminders.ts";
 import { summariesRouter } from "./summaries.ts";
 import { requireApprovedUser } from "./require-approved-user.ts";
 
@@ -33,6 +35,11 @@ export interface AppOptions {
   log?: Log;
   /** Where the activity log goes (PRD §8.7); the console by default. */
   activity?: Activity;
+  /**
+   * The VAPID public key and the `push` sink reminders go through (PRD §6.8);
+   * off when omitted. The server signs with its VAPID keys, tests capture.
+   */
+  reminders?: Reminders;
 }
 
 export function createApp({
@@ -41,6 +48,7 @@ export function createApp({
   now = () => new Date(),
   log = exportedLog((message) => console.error(message)),
   activity = consoleActivity,
+  reminders,
 }: AppOptions) {
   const record = activityRecorder(activity, now, log);
   const app = express();
@@ -92,6 +100,7 @@ export function createApp({
   v1.use("/occurrences", occurrencesRouter({ db, now, record }));
   v1.use("/periods", periodsRouter({ db, now, record }));
   v1.use("/recurrences", recurrencesRouter({ db, now, record }));
+  v1.use("/reminders", remindersRouter({ db, reminders, record, log }));
   v1.use("/summaries", summariesRouter({ db, now, record }));
   app.use("/api/v1", v1);
 

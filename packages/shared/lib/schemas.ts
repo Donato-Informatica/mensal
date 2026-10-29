@@ -330,3 +330,47 @@ export const NewCalendarLinkSchema = z.strictObject({
   password: z.string().min(1),
 });
 export type NewCalendarLink = z.output<typeof NewCalendarLinkSchema>;
+
+/**
+ * What `GET /reminders` answers (PRD §6.8): the server's VAPID public key, or
+ * null when reminders are not configured, and the user's device count.
+ */
+export const RemindersPayloadSchema = z.object({
+  publicKey: z.string().nullable(),
+  deviceCount: z.int().nonnegative(),
+});
+export type RemindersPayload = z.infer<typeof RemindersPayloadSchema>;
+
+/** A push service endpoint: a capability URL, so it travels in bodies only. */
+const PushEndpointSchema = z.url({ protocol: /^https$/ }).max(2048);
+
+/**
+ * The body of `PUT /reminders/device`: the browser's push registration, as
+ * `PushSubscription.toJSON()` gives it (other fields are ignored).
+ */
+export const ReminderDeviceSchema = z.object({
+  endpoint: PushEndpointSchema,
+  keys: z.object({
+    p256dh: z.string().min(1).max(256),
+    auth: z.string().min(1).max(256),
+  }),
+});
+export type ReminderDevice = z.output<typeof ReminderDeviceSchema>;
+
+/** What `PUT /reminders/device` answers: the user's devices, this one included. */
+export const ReminderDeviceCountSchema = z.object({
+  deviceCount: z.int().nonnegative(),
+});
+export type ReminderDeviceCount = z.infer<typeof ReminderDeviceCountSchema>;
+
+/** The body of `POST /reminders/device/check`: the browser's endpoint. */
+export const ReminderDeviceCheckSchema = z.object({
+  endpoint: PushEndpointSchema,
+});
+export type ReminderDeviceCheck = z.output<typeof ReminderDeviceCheckSchema>;
+
+/** What `POST /reminders/device/check` answers: whether it is the user's. */
+export const ReminderDeviceCheckResultSchema = z.object({ mine: z.boolean() });
+export type ReminderDeviceCheckResult = z.infer<
+  typeof ReminderDeviceCheckResultSchema
+>;

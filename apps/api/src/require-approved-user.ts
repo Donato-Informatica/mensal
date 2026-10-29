@@ -9,13 +9,15 @@ declare global {
     interface Locals {
       /** The verified, approved user making the request. Set by requireApprovedUser. */
       userId: string;
+      /** The session the request came with. Set by requireApprovedUser. */
+      sessionId: string;
     }
   }
 }
 
 /**
  * Lets through only signed-in users an administrator has approved, and puts
- * their id in `res.locals.userId`. Everyone else gets 401 or 403.
+ * their id in `res.locals.userId` (and their session's in `sessionId`). Everyone else gets 401 or 403.
  */
 export function requireApprovedUser(auth: Auth): RequestHandler {
   return async (req, res, next) => {
@@ -31,6 +33,7 @@ export function requireApprovedUser(auth: Auth): RequestHandler {
       return;
     }
     res.locals.userId = session.user.id;
+    res.locals.sessionId = session.session.id;
     identifyRequest(req, session.user.id);
     next();
   };

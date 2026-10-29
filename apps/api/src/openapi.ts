@@ -13,6 +13,11 @@ import {
   RecurrenceEditSchema,
   RecurrenceListQuerySchema,
   RecurrenceSchema,
+  ReminderDeviceCheckResultSchema,
+  ReminderDeviceCheckSchema,
+  ReminderDeviceCountSchema,
+  ReminderDeviceSchema,
+  RemindersPayloadSchema,
   StatusChangeSchema,
   SummariesPayloadSchema,
   VirtualOccurrenceSchema,
@@ -243,6 +248,50 @@ export function buildOpenApiSpec() {
         tags: ["Calendar link"],
         summary: "Deactivate the calendar link; done also when there is none",
         responses: { 204: noContent },
+      }),
+    },
+    "/api/v1/reminders": {
+      get: secured({
+        tags: ["Reminders"],
+        summary:
+          "Get the server's VAPID public key for browsers to register with (null when reminders are not configured here) and how many devices have reminders on",
+        responses: {
+          200: ok("The reminders", output(RemindersPayloadSchema)),
+        },
+      }),
+    },
+    "/api/v1/reminders/device": {
+      put: secured({
+        tags: ["Reminders"],
+        summary:
+          "Turn reminders on for the calling device, by its push registration; idempotent on the endpoint, taking it over from another user. A device new to the user is sent a confirmation",
+        requestBody: body(ReminderDeviceSchema),
+        responses: {
+          200: ok(
+            "Reminders are on for the device",
+            output(ReminderDeviceCountSchema)
+          ),
+          400: invalidInput,
+          409: refusal(
+            "Reminders are not configured on this server",
+            "REMINDERS_UNAVAILABLE"
+          ),
+        },
+      }),
+    },
+    "/api/v1/reminders/device/check": {
+      post: secured({
+        tags: ["Reminders"],
+        summary:
+          "Whether the browser's push endpoint is the user's; another user's registration of it is deleted",
+        requestBody: body(ReminderDeviceCheckSchema),
+        responses: {
+          200: ok(
+            "Whether the device is the user's",
+            output(ReminderDeviceCheckResultSchema)
+          ),
+          400: invalidInput,
+        },
       }),
     },
     "/api/calendar.ics": {

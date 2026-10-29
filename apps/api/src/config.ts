@@ -6,6 +6,15 @@ export interface Config {
   port: number;
   /** Resend's key and sender (ADR-0003); unset sends emails to the log. */
   email?: { apiKey: string; from: string };
+  /** The VAPID keys reminders are signed with (PRD §6.8); unset, they are off. */
+  vapid?: Vapid;
+}
+
+export interface Vapid {
+  publicKey: string;
+  privateKey: string;
+  /** A `mailto:` address push services can reach the operator at. */
+  subject: string;
 }
 
 /** The placeholder `BETTER_AUTH_SECRET` shipped in `.env.example`. */
@@ -14,7 +23,8 @@ const exampleSecret = "change-me-to-a-long-random-string";
 /**
  * The API's settings, read from `env` (see `.env.example`). In production it
  * refuses a guessable secret or a plain-http origin (PRD §8.6). Resend's key
- * and sender come as a pair, or not at all.
+ * and sender come as a pair, or not at all; the three VAPID variables all
+ * together, or none (PRD §8.4).
  */
 export function readConfig(env: Record<string, string | undefined>): Config {
   function required(name: string): string {
@@ -32,6 +42,15 @@ export function readConfig(env: Record<string, string | undefined>): Config {
       email: {
         apiKey: required("RESEND_API_KEY"),
         from: required("EMAIL_FROM"),
+      },
+    }),
+    ...((env.VAPID_PUBLIC_KEY ||
+      env.VAPID_PRIVATE_KEY ||
+      env.VAPID_SUBJECT) && {
+      vapid: {
+        publicKey: required("VAPID_PUBLIC_KEY"),
+        privateKey: required("VAPID_PRIVATE_KEY"),
+        subject: required("VAPID_SUBJECT"),
       },
     }),
   };

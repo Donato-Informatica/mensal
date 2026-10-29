@@ -193,6 +193,28 @@ describe("GET /api/v1/data", () => {
     expect(text(files["ocorrencias.csv"])).toBe(csv(occurrencesHeader));
   });
 
+  it("leaves the user's reminder devices out", async () => {
+    const { cookie } = await approvedUser();
+    const endpoint = "https://push.example/send/a-capability-url";
+    const turnedOn = await request(api, "/api/v1/reminders/device", {
+      cookie,
+      method: "PUT",
+      body: { endpoint, keys: { p256dh: "p256dh-key", auth: "auth-secret" } },
+    });
+    expect(turnedOn.status).toBe(200);
+
+    const { files } = await download(cookie);
+
+    expect(Object.keys(files).sort()).toEqual([
+      "ocorrencias.csv",
+      "perfil.csv",
+      "recorrencias.csv",
+    ]);
+    for (const bytes of Object.values(files))
+      for (const secret of [endpoint, "p256dh-key", "auth-secret"])
+        expect(new TextDecoder().decode(bytes)).not.toContain(secret);
+  });
+
   it("is refused to a user awaiting approval", async () => {
     const { cookie } = await signUp(api);
 

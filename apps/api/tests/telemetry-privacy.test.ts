@@ -143,11 +143,30 @@ describe("telemetry privacy and identity", () => {
     });
     await client.close();
 
+    // Turning reminders on for a device, by its capability URL and keys.
+    const pushDevice = {
+      endpoint: "https://push.example/send/SentinelEndpointRTY",
+      keys: { p256dh: "SentinelP256dhFGH", auth: "SentinelAuthVBN" },
+    };
+    const turnedOn = await request(api, "/api/v1/reminders/device", {
+      cookie,
+      method: "PUT",
+      body: pushDevice,
+    });
+    expect(turnedOn.status).toBe(200);
+    await request(api, "/api/v1/reminders/device/check", {
+      cookie,
+      body: { endpoint: pushDevice.endpoint },
+    });
+
     const spans = exporter.getFinishedSpans();
     const records = logExporter.getFinishedLogRecords();
     // The flows above did produce activity records.
     expect(
       records.some((r) => r.attributes.action === "occurrence.create")
+    ).toBe(true);
+    expect(
+      records.some((r) => r.attributes.action === "user.reminders-on")
     ).toBe(true);
     const exported = JSON.stringify([
       spans.map(({ name, attributes, events, resource, links }) => ({
@@ -174,6 +193,10 @@ describe("telemetry privacy and identity", () => {
       "Test User",
       token,
       password,
+      "SentinelEndpointRTY",
+      pushDevice.keys.p256dh,
+      pushDevice.keys.auth,
+      "Lembretes ativados",
     ];
     for (const value of forbidden) expect(exported).not.toContain(value);
 

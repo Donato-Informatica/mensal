@@ -157,7 +157,8 @@ export type CalendarLinkAction =
 /**
  * Signing up or in, replacing the password, changing the name (never naming
  * it), creating or revoking an access token (named by its id, never its
- * secret), generating or revoking the calendar link (never its key), or
+ * secret), generating or revoking the calendar link (never its key), turning
+ * reminders on for a device (named by its id, never its endpoint), or
  * deleting the account, by the user's id. A failed
  * sign-in has no user: it names the attempted email and the client's address
  * instead, to spot credential stuffing.
@@ -174,6 +175,7 @@ type AccountReport =
     }
   | { user: string; action: "user.password-changed"; revoked: Revocable[] }
   | { user: string; action: AccessTokenAction; id: string }
+  | { user: string; action: "user.reminders-on"; id: string }
   | {
       action: "user.sign-in-failed";
       email: string;
