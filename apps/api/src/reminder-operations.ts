@@ -133,6 +133,46 @@ export async function checkReminderDevice(
   });
 }
 
+/**
+ * Turns reminders off for the calling device; done also when the user had
+ * none there. Another user's registration of the endpoint is left alone.
+ */
+export async function turnRemindersOff(
+  { db, userId, record }: ReminderContext,
+  endpoint: string
+): Promise<void> {
+  const removed = await db
+    .delete(reminderDevices)
+    .where(
+      and(
+        eq(reminderDevices.endpoint, endpoint),
+        eq(reminderDevices.userId, userId)
+      )
+    )
+    .returning({ id: reminderDevices.id });
+  for (const { id } of removed) {
+    record({ user: userId, action: "user.reminders-off", id });
+  }
+}
+
+/**
+ * Turns reminders off on every device of the user, logged as one line
+ * without a device id; nothing is logged when there were none.
+ */
+export async function turnRemindersOffEverywhere({
+  db,
+  userId,
+  record,
+}: ReminderContext): Promise<void> {
+  const removed = await db
+    .delete(reminderDevices)
+    .where(eq(reminderDevices.userId, userId))
+    .returning({ id: reminderDevices.id });
+  if (removed.length > 0) {
+    record({ user: userId, action: "user.reminders-off" });
+  }
+}
+
 async function deviceCount(db: Database, userId: string): Promise<number> {
   const [row] = await db
     .select({ value: count() })

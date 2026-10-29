@@ -266,6 +266,19 @@ describe("the API description's responses", () => {
       {}
     );
     await call(
+      "DELETE /api/v1/reminders/device",
+      "/api/v1/reminders/device",
+      204,
+      { endpoint: device.endpoint }
+    );
+    await call(
+      "DELETE /api/v1/reminders/device",
+      "/api/v1/reminders/device",
+      400,
+      {}
+    );
+    await call("DELETE /api/v1/reminders", "/api/v1/reminders", 204);
+    await call(
       "GET /api/v1/recurrences/{id}",
       `/api/v1/recurrences/${randomUUID()}`,
       404

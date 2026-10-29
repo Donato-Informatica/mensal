@@ -158,6 +158,11 @@ describe("telemetry privacy and identity", () => {
       cookie,
       body: { endpoint: pushDevice.endpoint },
     });
+    await request(api, "/api/v1/reminders/device", {
+      cookie,
+      method: "DELETE",
+      body: { endpoint: pushDevice.endpoint },
+    });
 
     const spans = exporter.getFinishedSpans();
     const records = logExporter.getFinishedLogRecords();

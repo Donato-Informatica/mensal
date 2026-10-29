@@ -284,6 +284,105 @@ describe("POST /api/v1/reminders/device/check", () => {
   });
 });
 
+function turnOffHere(cookie: string, endpoint: string) {
+  return request(api, "/api/v1/reminders/device", {
+    cookie,
+    method: "DELETE",
+    body: { endpoint },
+  });
+}
+
+function turnOffEverywhere(cookie: string) {
+  return request(api, "/api/v1/reminders", { cookie, method: "DELETE" });
+}
+
+describe("DELETE /api/v1/reminders/device", () => {
+  it("turns reminders off for that device only", async () => {
+    const { cookie, userId } = await approvedUser();
+    const device = newDevice();
+    await turnOn(cookie, device);
+    await turnOn(cookie);
+    const turnedOn = events.find((e) => e.action === "user.reminders-on");
+    const id = turnedOn && "id" in turnedOn ? turnedOn.id : undefined;
+    expect(id).toBeTypeOf("string");
+    events.length = 0;
+
+    const response = await turnOffHere(cookie, device.endpoint);
+
+    expect(response.status).toBe(204);
+    expect(await remindersOf(cookie)).toEqual({ publicKey, deviceCount: 1 });
+    expect(await (await check(cookie, device.endpoint)).json()).toEqual({
+      mine: false,
+    });
+    expect(events).toEqual([
+      {
+        at: expect.any(String),
+        user: userId,
+        action: "user.reminders-off",
+        id,
+      },
+    ]);
+  });
+
+  it("answers 204 also when the device had none, logging nothing", async () => {
+    const { cookie } = await approvedUser();
+    events.length = 0;
+
+    const response = await turnOffHere(cookie, newDevice().endpoint);
+
+    expect(response.status).toBe(204);
+    expect(events).toEqual([]);
+  });
+
+  it("never turns off another user's registration of the endpoint", async () => {
+    const owner = await approvedUser();
+    const other = await approvedUser();
+    const device = newDevice();
+    await turnOn(owner.cookie, device);
+
+    const response = await turnOffHere(other.cookie, device.endpoint);
+
+    expect(response.status).toBe(204);
+    expect((await remindersOf(owner.cookie)).deviceCount).toBe(1);
+  });
+
+  it("refuses a body without an endpoint", async () => {
+    const { cookie } = await approvedUser();
+
+    const response = await request(api, "/api/v1/reminders/device", {
+      cookie,
+      method: "DELETE",
+      body: {},
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      code: "INVALID_INPUT",
+      fields: ["endpoint"],
+    });
+  });
+});
+
+describe("DELETE /api/v1/reminders", () => {
+  it("turns reminders off on every device of the user, and none of another's", async () => {
+    const { cookie, userId } = await approvedUser();
+    const other = await approvedUser();
+    await turnOn(cookie);
+    await turnOn(cookie);
+    await turnOn(other.cookie);
+    events.length = 0;
+
+    const response = await turnOffEverywhere(cookie);
+
+    expect(response.status).toBe(204);
+    expect(await remindersOf(cookie)).toEqual({ publicKey, deviceCount: 0 });
+    expect((await remindersOf(other.cookie)).deviceCount).toBe(1);
+    expect(events).toEqual([
+      { at: expect.any(String), user: userId, action: "user.reminders-off" },
+    ]);
+  });
+});
+
 describe("the reminders routes", () => {
   it("never show one user's devices to another", async () => {
     const owner = await approvedUser();
@@ -302,6 +401,8 @@ describe("the reminders routes", () => {
       await request(api, "/api/v1/reminders", { cookie }),
       await turnOn(cookie),
       await check(cookie, newDevice().endpoint),
+      await turnOffHere(cookie, newDevice().endpoint),
+      await turnOffEverywhere(cookie),
     ];
 
     for (const response of responses) {
