@@ -38,15 +38,17 @@
       </div>
     </header>
 
-    <main class="column">
-      <h1>Guia do Mensal</h1>
-      <p class="lead">
-        O Mensal prevê as entradas e saídas de cada mês e registra o que já foi
-        pago ou recebido. Ele responde a duas perguntas: quais contas vencem
-        neste mês e quanto vai sobrar, e se uma conta já foi liquidada.
-      </p>
+    <main class="page">
+      <div class="intro">
+        <h1>Guia do Mensal</h1>
+        <p class="lead">
+          O Mensal prevê as entradas e saídas de cada mês e registra o que já
+          foi pago ou recebido. Ele responde a duas perguntas: quais contas
+          vencem neste mês e quanto vai sobrar, e se uma conta já foi liquidada.
+        </p>
+      </div>
 
-      <nav class="toc" aria-label="Conteúdo">
+      <nav class="toc" id="conteudo" aria-label="Conteúdo">
         <h2 class="caption">Conteúdo</h2>
         <ol>
           <li><a href="#cadastro">Criar conta e aprovação</a></li>
@@ -64,629 +66,643 @@
         </ol>
       </nav>
 
-      <section id="cadastro">
-        <h2>Criar conta e aprovação</h2>
-        <p>
-          O cadastro é aberto a qualquer pessoa, mas cada conta nova passa por
-          uma aprovação feita à mão por um administrador antes do primeiro
-          acesso. Enquanto ela não vem, o Mensal mostra a tela
-          <strong>Aguardando aprovação</strong>.
-        </p>
-        <img
-          class="shot shot-phone"
-          src="./screenshots/cadastro.png"
-          alt="A tela Criar conta, com os campos Nome, E-mail e Senha e o aviso de que a conta passa por aprovação antes do primeiro acesso."
-          width="390"
-          height="844"
-          loading="lazy"
-        />
-        <ol class="steps">
-          <li>
-            Abra <a href="/cadastro">Criar conta</a> e informe seu nome, seu
-            e-mail e uma senha de pelo menos 8 caracteres.
-          </li>
-          <li>
-            Toque em <strong>Criar conta</strong>. Você entra direto na tela
-            <strong>Aguardando aprovação</strong>: a conta existe, mas ainda não
-            pode ser usada.
-          </li>
-          <li>
-            Quando a conta for aprovada, recarregue a página. O Mensal não envia
-            e-mail avisando da aprovação.
-          </li>
-        </ol>
-        <p>
-          Enquanto aguarda, você pode sair ou excluir a conta pela mesma tela.
-        </p>
-      </section>
+      <div class="content">
+        <section id="cadastro">
+          <h2>Criar conta e aprovação</h2>
+          <p>
+            O cadastro é aberto a qualquer pessoa, mas cada conta nova passa por
+            uma aprovação feita à mão por um administrador antes do primeiro
+            acesso. Enquanto ela não vem, o Mensal mostra a tela
+            <strong>Aguardando aprovação</strong>.
+          </p>
+          <img
+            class="shot shot-phone"
+            src="./screenshots/cadastro.png"
+            alt="A tela Criar conta, com os campos Nome, E-mail e Senha e o aviso de que a conta passa por aprovação antes do primeiro acesso."
+            width="390"
+            height="844"
+            loading="lazy"
+          />
+          <ol class="steps" role="list">
+            <li>
+              Abra <a href="/cadastro">Criar conta</a> e informe seu nome, seu
+              e-mail e uma senha de pelo menos 8 caracteres.
+            </li>
+            <li>
+              Toque em <strong>Criar conta</strong>. Você entra direto na tela
+              <strong>Aguardando aprovação</strong>: a conta existe, mas ainda
+              não pode ser usada.
+            </li>
+            <li>
+              Quando a conta for aprovada, recarregue a página. O Mensal não
+              envia e-mail avisando da aprovação.
+            </li>
+          </ol>
+          <p>
+            Enquanto aguarda, você pode sair ou excluir a conta pela mesma tela.
+          </p>
+        </section>
 
-      <section id="mes">
-        <h2>O mês</h2>
-        <p>
-          A tela do mês mostra todas as contas de uma competência: as que vêm
-          das suas recorrências e as avulsas. Nada precisa ser preparado: todo
-          mês já abre pronto, inclusive os que ainda não chegaram.
-        </p>
-        <img
-          class="shot shot-phone"
-          src="./screenshots/mes.png"
-          alt="A tela do mês de Outubro 2026: a Sobra prevista em destaque, os blocos Entradas e Saídas com Previsto e Realizado, e o grupo Atrasadas com uma conta de setembro."
-          width="390"
-          height="844"
-          loading="lazy"
-        />
-        <ol class="steps">
-          <li>
-            Use as setas ao lado do nome do mês, ou as teclas ← e →, para ir a
-            outros meses. Longe do mês corrente, <strong>Mês atual</strong>
-            traz você de volta.
-          </li>
-          <li>
-            Leia o resumo: a <strong>Sobra prevista</strong> é o Previsto das
-            Entradas menos o Previsto das Saídas. Em cada bloco,
-            <strong>Previsto</strong> soma as contas pendentes e liquidadas, e
-            <strong>Realizado</strong> só as liquidadas. Contas “A definir” e
-            puladas ficam fora do Previsto.
-          </li>
-          <li>
-            Percorra os grupos, nesta ordem: <strong>Atrasadas</strong>,
-            <strong>Vencem hoje</strong>, <strong>A vencer no mês</strong> e
-            <strong>Liquidadas e puladas</strong>. No mês atual, Atrasadas
-            também lista as contas de meses anteriores que ficaram para trás,
-            cada uma marcada com a sua competência; elas não entram no resumo do
-            mês.
-          </li>
-          <li>
-            Toque no nome de uma conta para editar a descrição, o valor, o
-            vencimento ou as observações dela.
-          </li>
-        </ol>
-        <p>
-          O <strong>×</strong> do resumo o esconde; ele volta em
-          <a href="#configuracoes">Configurações</a>.
-        </p>
-      </section>
+        <section id="mes">
+          <h2>O mês</h2>
+          <p>
+            A tela do mês mostra todas as contas de uma competência: as que vêm
+            das suas recorrências e as avulsas. Nada precisa ser preparado: todo
+            mês já abre pronto, inclusive os que ainda não chegaram.
+          </p>
+          <img
+            class="shot shot-phone"
+            src="./screenshots/mes.png"
+            alt="A tela do mês de Outubro 2026: a Sobra prevista em destaque, os blocos Entradas e Saídas com Previsto e Realizado, e o grupo Atrasadas com uma conta de setembro."
+            width="390"
+            height="844"
+            loading="lazy"
+          />
+          <ol class="steps" role="list">
+            <li>
+              Use as setas ao lado do nome do mês, ou as teclas ← e →, para ir a
+              outros meses. Longe do mês corrente, <strong>Mês atual</strong>
+              traz você de volta.
+            </li>
+            <li>
+              Leia o resumo: a <strong>Sobra prevista</strong> é o Previsto das
+              Entradas menos o Previsto das Saídas. Em cada bloco,
+              <strong>Previsto</strong> soma as contas pendentes e liquidadas, e
+              <strong>Realizado</strong> só as liquidadas. Contas “A definir” e
+              puladas ficam fora do Previsto.
+            </li>
+            <li>
+              Percorra os grupos, nesta ordem: <strong>Atrasadas</strong>,
+              <strong>Vencem hoje</strong>, <strong>A vencer no mês</strong> e
+              <strong>Liquidadas e puladas</strong>. No mês atual, Atrasadas
+              também lista as contas de meses anteriores que ficaram para trás,
+              cada uma marcada com a sua competência; elas não entram no resumo
+              do mês.
+            </li>
+            <li>
+              Toque no nome de uma conta para editar a descrição, o valor, o
+              vencimento ou as observações dela.
+            </li>
+          </ol>
+          <p>
+            O <strong>×</strong> do resumo o esconde; ele volta em
+            <a href="#configuracoes">Configurações</a>.
+          </p>
+        </section>
 
-      <section id="liquidar">
-        <h2>Liquidar e pular</h2>
-        <p>
-          Liquidar registra que uma conta foi paga ou recebida; é um toque só.
-          Pular dispensa a conta de uma recorrência em um único mês, sem mexer
-          nos outros.
-        </p>
-        <img
-          class="shot shot-phone"
-          src="./screenshots/liquidar.png"
-          alt="A conta Freelance, com valor A definir, ao ser liquidada: um balão pede só o Valor, já preenchido com R$ 1.200, e o botão Liquidar."
-          width="390"
-          height="844"
-          loading="lazy"
-        />
-        <ol class="steps">
-          <li>
-            Marque a caixa à esquerda da conta. Se a confirmação estiver ligada
-            em Configurações, confirme em <strong>Liquidar</strong>. A conta vai
-            para Liquidadas e puladas, com a data de hoje.
-          </li>
-          <li>
-            Se o valor for <strong>“A definir”</strong>, como uma fatura que
-            muda todo mês, a caixa abre um balão que pede só o
-            <strong>Valor</strong>. Informe-o e toque em
-            <strong>Liquidar</strong>.
-          </li>
-          <li>
-            Para pular a conta neste mês, abra o menu
-            <strong>⋯</strong> dela e escolha <strong>Pular</strong>. No mesmo
-            menu, <strong>Retomar</strong> desfaz o pulo.
-          </li>
-          <li>
-            Mudou de ideia? O aviso que aparece embaixo tem
-            <strong>Desfazer</strong>; desmarcar a caixa também devolve a conta
-            para pendente.
-          </li>
-        </ol>
-      </section>
+        <section id="liquidar">
+          <h2>Liquidar e pular</h2>
+          <p>
+            Liquidar registra que uma conta foi paga ou recebida; é um toque só.
+            Pular dispensa a conta de uma recorrência em um único mês, sem mexer
+            nos outros.
+          </p>
+          <img
+            class="shot shot-phone"
+            src="./screenshots/liquidar.png"
+            alt="A conta Freelance, com valor A definir, ao ser liquidada: um balão pede só o Valor, já preenchido com R$ 1.200, e o botão Liquidar."
+            width="390"
+            height="844"
+            loading="lazy"
+          />
+          <ol class="steps" role="list">
+            <li>
+              Marque a caixa à esquerda da conta. Se a confirmação estiver
+              ligada em Configurações, confirme em <strong>Liquidar</strong>. A
+              conta vai para Liquidadas e puladas, com a data de hoje.
+            </li>
+            <li>
+              Se o valor for <strong>“A definir”</strong>, como uma fatura que
+              muda todo mês, a caixa abre um balão que pede só o
+              <strong>Valor</strong>. Informe-o e toque em
+              <strong>Liquidar</strong>.
+            </li>
+            <li>
+              Para pular a conta neste mês, abra o menu
+              <strong>⋯</strong> dela e escolha <strong>Pular</strong>. No mesmo
+              menu, <strong>Retomar</strong> desfaz o pulo.
+            </li>
+            <li>
+              Mudou de ideia? O aviso que aparece embaixo tem
+              <strong>Desfazer</strong>; desmarcar a caixa também devolve a
+              conta para pendente.
+            </li>
+          </ol>
+        </section>
 
-      <section id="avulsa">
-        <h2>Contas avulsas</h2>
-        <p>
-          Uma conta avulsa acontece uma vez só e não vem de nenhuma recorrência:
-          o conserto do carro, uma consulta, a venda de algo usado. Contas
-          anuais e o histórico de meses passados também entram como avulsas.
-        </p>
-        <img
-          class="shot"
-          src="./screenshots/avulsa.png"
-          alt="O diálogo Nova conta avulsa em Outubro 2026, com a escolha entre Saída e Entrada e os campos Descrição, Valor, A definir, Vencimento e Observações."
-          width="1280"
-          height="800"
-          loading="lazy"
-        />
-        <ol class="steps">
-          <li>
-            Vá ao mês em que a conta acontece e toque em
-            <strong>Nova avulsa</strong>.
-          </li>
-          <li>
-            Escolha <strong>Saída</strong> ou <strong>Entrada</strong> e
-            preencha a <strong>Descrição</strong> e o <strong>Valor</strong>, ou
-            marque <strong>A definir</strong> se ainda não souber quanto será.
-          </li>
-          <li>
-            Se quiser, informe o <strong>Vencimento</strong>, sempre dentro do
-            mês, e <strong>Observações</strong>. Toque em
-            <strong>Criar conta</strong>.
-          </li>
-          <li>
-            Para apagar uma avulsa, use <strong>Excluir</strong> no menu
-            <strong>⋯</strong> dela. Para mudá-la de mês, exclua-a e crie de
-            novo no mês certo.
-          </li>
-        </ol>
-      </section>
+        <section id="avulsa">
+          <h2>Contas avulsas</h2>
+          <p>
+            Uma conta avulsa acontece uma vez só e não vem de nenhuma
+            recorrência: o conserto do carro, uma consulta, a venda de algo
+            usado. Contas anuais e o histórico de meses passados também entram
+            como avulsas.
+          </p>
+          <img
+            class="shot"
+            src="./screenshots/avulsa.png"
+            alt="O diálogo Nova conta avulsa em Outubro 2026, com a escolha entre Saída e Entrada e os campos Descrição, Valor, A definir, Vencimento e Observações."
+            width="1280"
+            height="800"
+            loading="lazy"
+          />
+          <ol class="steps" role="list">
+            <li>
+              Vá ao mês em que a conta acontece e toque em
+              <strong>Nova avulsa</strong>.
+            </li>
+            <li>
+              Escolha <strong>Saída</strong> ou <strong>Entrada</strong> e
+              preencha a <strong>Descrição</strong> e o <strong>Valor</strong>,
+              ou marque <strong>A definir</strong> se ainda não souber quanto
+              será.
+            </li>
+            <li>
+              Se quiser, informe o <strong>Vencimento</strong>, sempre dentro do
+              mês, e <strong>Observações</strong>. Toque em
+              <strong>Criar conta</strong>.
+            </li>
+            <li>
+              Para apagar uma avulsa, use <strong>Excluir</strong> no menu
+              <strong>⋯</strong> dela. Para mudá-la de mês, exclua-a e crie de
+              novo no mês certo.
+            </li>
+          </ol>
+        </section>
 
-      <section id="recorrencias">
-        <h2>Recorrências</h2>
-        <p>
-          Uma recorrência é um compromisso mensal, como o aluguel ou o salário:
-          ela gera uma conta em cada mês, do início até ser encerrada. Parcelas
-          são recorrências com término.
-        </p>
-        <img
-          class="shot"
-          src="./screenshots/recorrencias.png"
-          alt="A tela Recorrências, com o filtro Ativas e Todas, a lista de recorrências com dia de vencimento e valor, e o menu do Aluguel aberto com Editar, Encerrar e Excluir recorrência."
-          width="1280"
-          height="800"
-          loading="lazy"
-        />
-        <ol class="steps">
-          <li>
-            Abra <strong>Recorrências</strong> no topo e toque em
-            <strong>Nova recorrência</strong>. Escolha Saída ou Entrada e
-            informe a Descrição, o Valor (ou “A definir”), o
-            <strong>Dia do vencimento</strong>, o <strong>Início</strong>, que
-            não pode ser antes do mês atual, e, se houver, o
-            <strong>Término</strong>.
-          </li>
-          <li>
-            Para editar, use <strong>Editar recorrência</strong> no menu
-            <strong>⋯</strong> da recorrência, aqui ou numa conta dela na tela
-            do mês. A mudança vale para os meses em que a conta ainda não foi
-            tocada; contas já liquidadas, puladas ou editadas ficam como estão.
-          </li>
-          <li>
-            Para parar, use <strong>Encerrar recorrência</strong> e escolha o
-            <strong>Último mês</strong>. Nada é apagado: as contas já
-            registradas continuam lá.
-          </li>
-          <li>
-            <strong>Excluir recorrência</strong> só funciona enquanto ela não
-            tem contas registradas. Se já tiver, o Mensal oferece encerrá-la,
-            para não perder o histórico.
-          </li>
-        </ol>
-      </section>
+        <section id="recorrencias">
+          <h2>Recorrências</h2>
+          <p>
+            Uma recorrência é um compromisso mensal, como o aluguel ou o
+            salário: ela gera uma conta em cada mês, do início até ser
+            encerrada. Parcelas são recorrências com término.
+          </p>
+          <img
+            class="shot"
+            src="./screenshots/recorrencias.png"
+            alt="A tela Recorrências, com o filtro Ativas e Todas, a lista de recorrências com dia de vencimento e valor, e o menu do Aluguel aberto com Editar, Encerrar e Excluir recorrência."
+            width="1280"
+            height="800"
+            loading="lazy"
+          />
+          <ol class="steps" role="list">
+            <li>
+              Abra <strong>Recorrências</strong> no topo e toque em
+              <strong>Nova recorrência</strong>. Escolha Saída ou Entrada e
+              informe a Descrição, o Valor (ou “A definir”), o
+              <strong>Dia do vencimento</strong>, o <strong>Início</strong>, que
+              não pode ser antes do mês atual, e, se houver, o
+              <strong>Término</strong>.
+            </li>
+            <li>
+              Para editar, use <strong>Editar recorrência</strong> no menu
+              <strong>⋯</strong> da recorrência, aqui ou numa conta dela na tela
+              do mês. A mudança vale para os meses em que a conta ainda não foi
+              tocada; contas já liquidadas, puladas ou editadas ficam como
+              estão.
+            </li>
+            <li>
+              Para parar, use <strong>Encerrar recorrência</strong> e escolha o
+              <strong>Último mês</strong>. Nada é apagado: as contas já
+              registradas continuam lá.
+            </li>
+            <li>
+              <strong>Excluir recorrência</strong> só funciona enquanto ela não
+              tem contas registradas. Se já tiver, o Mensal oferece encerrá-la,
+              para não perder o histórico.
+            </li>
+          </ol>
+        </section>
 
-      <section id="visualizacao">
-        <h2>Lista, Tabela e Exportar CSV</h2>
-        <p>
-          As contas do mês podem aparecer como lista, agrupada, ou como uma
-          tabela com todas as colunas lado a lado. Exportar CSV baixa as contas
-          do mês para abrir numa planilha.
-        </p>
-        <img
-          class="shot"
-          src="./screenshots/tabela.png"
-          alt="A Tabela de Outubro 2026, com as colunas Descrição, Vencimento, Tipo, Valor, Situação, Liquidada em, Origem e Notas, ao lado do botão Exportar CSV."
-          width="1280"
-          height="800"
-          loading="lazy"
-        />
-        <ol class="steps">
-          <li>
-            Na barra acima das contas, escolha <strong>Lista</strong> ou
-            <strong>Tabela</strong>. A escolha fica salva na sua conta e vale em
-            todos os meses e dispositivos.
-          </li>
-          <li>
-            Na Tabela, cada linha mostra a Situação (Atrasada, Vence hoje, A
-            vencer, Liquidada ou Pulada) e a Origem (Avulsa ou Recorrência). A
-            caixa e o menu <strong>⋯</strong> funcionam como na lista.
-          </li>
-          <li>
-            Toque em <strong>Exportar CSV</strong> para baixar
-            <code>mensal-AAAA-MM.csv</code>, com as contas do próprio mês na
-            ordem da tabela. As atrasadas de meses anteriores ficam de fora,
-            para que juntar vários meses nunca conte uma conta duas vezes.
-          </li>
-        </ol>
-      </section>
+        <section id="visualizacao">
+          <h2>Lista, Tabela e Exportar CSV</h2>
+          <p>
+            As contas do mês podem aparecer como lista, agrupada, ou como uma
+            tabela com todas as colunas lado a lado. Exportar CSV baixa as
+            contas do mês para abrir numa planilha.
+          </p>
+          <img
+            class="shot"
+            src="./screenshots/tabela.png"
+            alt="A Tabela de Outubro 2026, com as colunas Descrição, Vencimento, Tipo, Valor, Situação, Liquidada em, Origem e Notas, ao lado do botão Exportar CSV."
+            width="1280"
+            height="800"
+            loading="lazy"
+          />
+          <ol class="steps" role="list">
+            <li>
+              Na barra acima das contas, escolha <strong>Lista</strong> ou
+              <strong>Tabela</strong>. A escolha fica salva na sua conta e vale
+              em todos os meses e dispositivos.
+            </li>
+            <li>
+              Na Tabela, cada linha mostra a Situação (Atrasada, Vence hoje, A
+              vencer, Liquidada ou Pulada) e a Origem (Avulsa ou Recorrência). A
+              caixa e o menu <strong>⋯</strong> funcionam como na lista.
+            </li>
+            <li>
+              Toque em <strong>Exportar CSV</strong> para baixar
+              <code>mensal-AAAA-MM.csv</code>, com as contas do próprio mês na
+              ordem da tabela. As atrasadas de meses anteriores ficam de fora,
+              para que juntar vários meses nunca conte uma conta duas vezes.
+            </li>
+          </ol>
+        </section>
 
-      <section id="evolucao">
-        <h2>Evolução</h2>
-        <p>
-          A Evolução põe lado a lado o Previsto, o Realizado e a Sobra prevista
-          de vários meses seguidos, para ver como eles mudam de um mês para o
-          outro.
-        </p>
-        <img
-          class="shot"
-          src="./screenshots/evolucao.png"
-          alt="A Evolução de Mai 2026 a Out 2026, em linhas: Entradas e Saídas, Previsto e Realizado, e a Sobra prevista, com o gráfico Sobra acumulada abaixo."
-          width="1280"
-          height="800"
-          loading="lazy"
-        />
-        <ol class="steps">
-          <li>
-            No resumo do mês, toque no ícone <strong>Evolução</strong>. Ela
-            mostra os meses que terminam no mês em tela, mesmo que ele esteja no
-            futuro.
-          </li>
-          <li>
-            Escolha <strong>3</strong>, <strong>6</strong> ou
-            <strong>12 meses</strong>, e <strong>Linhas</strong> ou
-            <strong>Barras</strong>. Toque num item da legenda para esconder ou
-            mostrar essa série.
-          </li>
-          <li>
-            Abaixo, o gráfico <strong>Sobra acumulada</strong> soma a Sobra
-            prevista mês a mês, a partir de zero no primeiro mês.
-          </li>
-          <li>
-            Abra <strong>Ver valores</strong> para ler os números de cada mês
-            numa tabela.
-          </li>
-        </ol>
-      </section>
+        <section id="evolucao">
+          <h2>Evolução</h2>
+          <p>
+            A Evolução põe lado a lado o Previsto, o Realizado e a Sobra
+            prevista de vários meses seguidos, para ver como eles mudam de um
+            mês para o outro.
+          </p>
+          <img
+            class="shot"
+            src="./screenshots/evolucao.png"
+            alt="A Evolução de Mai 2026 a Out 2026, em linhas: Entradas e Saídas, Previsto e Realizado, e a Sobra prevista, com o gráfico Sobra acumulada abaixo."
+            width="1280"
+            height="800"
+            loading="lazy"
+          />
+          <ol class="steps" role="list">
+            <li>
+              No resumo do mês, toque no ícone <strong>Evolução</strong>. Ela
+              mostra os meses que terminam no mês em tela, mesmo que ele esteja
+              no futuro.
+            </li>
+            <li>
+              Escolha <strong>3</strong>, <strong>6</strong> ou
+              <strong>12 meses</strong>, e <strong>Linhas</strong> ou
+              <strong>Barras</strong>. Toque num item da legenda para esconder
+              ou mostrar essa série.
+            </li>
+            <li>
+              Abaixo, o gráfico <strong>Sobra acumulada</strong> soma a Sobra
+              prevista mês a mês, a partir de zero no primeiro mês.
+            </li>
+            <li>
+              Abra <strong>Ver valores</strong> para ler os números de cada mês
+              numa tabela.
+            </li>
+          </ol>
+        </section>
 
-      <section id="configuracoes">
-        <h2>Configurações</h2>
-        <p>
-          As Configurações mudam como o Mensal se comporta para você, nunca os
-          seus dados. Elas ficam na sua conta: valem igual em todos os
-          dispositivos em que você entrar.
-        </p>
-        <img
-          class="shot shot-phone"
-          src="./screenshots/configuracoes.png"
-          alt="O diálogo Configurações no tema Claro, com Tema, Visualização, Mostrar resumo de entradas e saídas e Confirmar antes de liquidar, pular ou voltar uma conta para pendente."
-          width="390"
-          height="844"
-          loading="lazy"
-        />
-        <ol class="steps">
-          <li>
-            Abra o menu da conta, no canto superior direito, e escolha
-            <strong>Configurações</strong>.
-          </li>
-          <li>
-            Em <strong>Tema</strong>, escolha Escuro, Claro ou Automático, que
-            segue o tema do dispositivo. Em <strong>Visualização</strong>,
-            escolha Lista ou Tabela.
-          </li>
-          <li>
-            Ligue ou desligue
-            <strong>Mostrar resumo de entradas e saídas</strong> e
-            <strong
-              >Confirmar antes de liquidar, pular ou voltar uma conta para
-              pendente</strong
-            >.
-          </li>
-        </ol>
-        <p>Cada mudança vale na hora; não há botão de salvar.</p>
-      </section>
+        <section id="configuracoes">
+          <h2>Configurações</h2>
+          <p>
+            As Configurações mudam como o Mensal se comporta para você, nunca os
+            seus dados. Elas ficam na sua conta: valem igual em todos os
+            dispositivos em que você entrar.
+          </p>
+          <img
+            class="shot shot-phone"
+            src="./screenshots/configuracoes.png"
+            alt="O diálogo Configurações no tema Claro, com Tema, Visualização, Mostrar resumo de entradas e saídas e Confirmar antes de liquidar, pular ou voltar uma conta para pendente."
+            width="390"
+            height="844"
+            loading="lazy"
+          />
+          <ol class="steps" role="list">
+            <li>
+              Abra o menu da conta, no canto superior direito, e escolha
+              <strong>Configurações</strong>.
+            </li>
+            <li>
+              Em <strong>Tema</strong>, escolha Escuro, Claro ou Automático, que
+              segue o tema do dispositivo. Em <strong>Visualização</strong>,
+              escolha Lista ou Tabela.
+            </li>
+            <li>
+              Ligue ou desligue
+              <strong>Mostrar resumo de entradas e saídas</strong> e
+              <strong
+                >Confirmar antes de liquidar, pular ou voltar uma conta para
+                pendente</strong
+              >.
+            </li>
+          </ol>
+          <p>Cada mudança vale na hora; não há botão de salvar.</p>
+        </section>
 
-      <section id="instalar">
-        <h2>Instalar o app</h2>
-        <p>
-          O Mensal pode ficar na tela inicial do celular ou do computador e
-          abrir em janela própria, como um app. Ele é instalado pelo próprio
-          navegador; não há loja de aplicativos.
-        </p>
-        <ol class="steps">
-          <li>
-            No Android, abra o Mensal no Chrome, toque no menu
-            <strong>⋮</strong> e escolha <strong>Instalar app</strong> ou
-            <strong>Adicionar à tela inicial</strong>.
-          </li>
-          <li>
-            No iPhone, abra o Mensal no Safari, toque em
-            <strong>Compartilhar</strong> e escolha
-            <strong>Adicionar à Tela de Início</strong>.
-          </li>
-          <li>
-            No computador, no Chrome ou no Edge, use o ícone de instalar na
-            barra de endereço ou o menu do navegador.
-          </li>
-        </ol>
-        <p>
-          O Mensal funciona só com internet. Sem conexão o app abre, mas mostra
-          “Sem conexão. O Mensal volta a funcionar quando a conexão voltar.” e
-          fica travado até ela voltar; nenhum dado fica guardado no aparelho.
-          Este guia também precisa de internet.
-        </p>
-      </section>
+        <section id="instalar">
+          <h2>Instalar o app</h2>
+          <p>
+            O Mensal pode ficar na tela inicial do celular ou do computador e
+            abrir em janela própria, como um app. Ele é instalado pelo próprio
+            navegador; não há loja de aplicativos.
+          </p>
+          <ol class="steps" role="list">
+            <li>
+              No Android, abra o Mensal no Chrome, toque no menu
+              <strong>⋮</strong> e escolha <strong>Instalar app</strong> ou
+              <strong>Adicionar à tela inicial</strong>.
+            </li>
+            <li>
+              No iPhone, abra o Mensal no Safari, toque em
+              <strong>Compartilhar</strong> e escolha
+              <strong>Adicionar à Tela de Início</strong>.
+            </li>
+            <li>
+              No computador, no Chrome ou no Edge, use o ícone de instalar na
+              barra de endereço ou o menu do navegador.
+            </li>
+          </ol>
+          <p>
+            O Mensal funciona só com internet. Sem conexão o app abre, mas
+            mostra “Sem conexão. O Mensal volta a funcionar quando a conexão
+            voltar.” e fica travado até ela voltar; nenhum dado fica guardado no
+            aparelho. Este guia também precisa de internet.
+          </p>
+        </section>
 
-      <section id="mcp">
-        <h2>Agentes e tokens de acesso</h2>
-        <p>
-          Um agente de IA seu, como o Claude Code ou o Codex, pode ler e alterar
-          os seus dados no Mensal: ver o mês, liquidar uma conta, criar uma
-          avulsa ou uma recorrência. Ele se conecta pelo servidor MCP do Mensal,
-          usando um token de acesso que você cria e pode revogar quando quiser.
-        </p>
-        <h3>1. Criar um token de acesso</h3>
-        <img
-          class="shot"
-          src="./screenshots/tokens.png"
-          alt="O diálogo Tokens de acesso logo depois de criar um token: o aviso para copiá-lo agora, o token com botão de copiar, o Comando do Claude Code e o Bloco do Codex, prontos para copiar."
-          width="1280"
-          height="800"
-          loading="lazy"
-        />
-        <ol class="steps">
-          <li>
-            Abra o menu da conta e escolha <strong>Tokens de acesso</strong>.
-          </li>
-          <li>
-            Toque em <strong>Criar token</strong>, dê um nome que lembre o
-            agente que vai usá-lo (por exemplo, “Claude Code”), informe a
-            <strong>Senha atual</strong> e toque em <strong>Criar</strong>.
-          </li>
-          <li>
-            Copie o token agora: ele não será mostrado novamente. Ao lado dele
-            estão o comando do Claude Code e o bloco do Codex já preenchidos com
-            o token e o endereço do seu Mensal.
-          </li>
-        </ol>
-        <p>
-          Cada token pode ler e alterar tudo o que você pode. Guarde-o como uma
-          senha e crie um token para cada agente.
-        </p>
+        <section id="mcp">
+          <h2>Agentes e tokens de acesso</h2>
+          <p>
+            Um agente de IA seu, como o Claude Code ou o Codex, pode ler e
+            alterar os seus dados no Mensal: ver o mês, liquidar uma conta,
+            criar uma avulsa ou uma recorrência. Ele se conecta pelo servidor
+            MCP do Mensal, usando um token de acesso que você cria e pode
+            revogar quando quiser.
+          </p>
+          <h3>1. Criar um token de acesso</h3>
+          <img
+            class="shot"
+            src="./screenshots/tokens.png"
+            alt="O diálogo Tokens de acesso logo depois de criar um token: o aviso para copiá-lo agora, o token com botão de copiar, o Comando do Claude Code e o Bloco do Codex, prontos para copiar."
+            width="1280"
+            height="800"
+            loading="lazy"
+          />
+          <ol class="steps" role="list">
+            <li>
+              Abra o menu da conta e escolha <strong>Tokens de acesso</strong>.
+            </li>
+            <li>
+              Toque em <strong>Criar token</strong>, dê um nome que lembre o
+              agente que vai usá-lo (por exemplo, “Claude Code”), informe a
+              <strong>Senha atual</strong> e toque em <strong>Criar</strong>.
+            </li>
+            <li>
+              Copie o token agora: ele não será mostrado novamente. Ao lado dele
+              estão o comando do Claude Code e o bloco do Codex já preenchidos
+              com o token e o endereço do seu Mensal.
+            </li>
+          </ol>
+          <p>
+            Cada token pode ler e alterar tudo o que você pode. Guarde-o como
+            uma senha e crie um token para cada agente.
+          </p>
 
-        <h3>2. Conectar o Claude Code</h3>
-        <ol class="steps">
-          <li>
-            Copie o <strong>Comando do Claude Code</strong> da tela do token, ou
-            monte-o trocando <code>&lt;endereço do Mensal&gt;</code> pelo
-            endereço em que você usa o Mensal e <code>&lt;token&gt;</code> pelo
-            seu token:
-            <pre
-              class="code"
-            ><code>claude mcp add --transport http mensal &lt;endereço do Mensal&gt;/api/mcp --header "Authorization: Bearer &lt;token&gt;"</code></pre>
-          </li>
-          <li>Rode o comando num terminal.</li>
-          <li>
-            Abra o Claude Code e confira com <code>/mcp</code> que o servidor
-            <code>mensal</code> aparece conectado.
-          </li>
-        </ol>
+          <h3>2. Conectar o Claude Code</h3>
+          <ol class="steps" role="list">
+            <li>
+              Copie o <strong>Comando do Claude Code</strong> da tela do token,
+              ou monte-o trocando <code>&lt;endereço do Mensal&gt;</code> pelo
+              endereço em que você usa o Mensal e
+              <code>&lt;token&gt;</code> pelo seu token:
+              <pre
+                class="code"
+              ><code>claude mcp add --transport http mensal &lt;endereço do Mensal&gt;/api/mcp --header "Authorization: Bearer &lt;token&gt;"</code></pre>
+            </li>
+            <li>Rode o comando num terminal.</li>
+            <li>
+              Abra o Claude Code e confira com <code>/mcp</code> que o servidor
+              <code>mensal</code> aparece conectado.
+            </li>
+          </ol>
 
-        <h3>3. Conectar o Codex</h3>
-        <ol class="steps">
-          <li>
-            Copie o <strong>Bloco do Codex</strong> da tela do token, ou monte-o
-            com o endereço do Mensal e o seu token:
-            <pre class="code"><code>[mcp_servers.mensal]
+          <h3>3. Conectar o Codex</h3>
+          <ol class="steps" role="list">
+            <li>
+              Copie o <strong>Bloco do Codex</strong> da tela do token, ou
+              monte-o com o endereço do Mensal e o seu token:
+              <pre class="code"><code>[mcp_servers.mensal]
 url = "&lt;endereço do Mensal&gt;/api/mcp"
 http_headers = { Authorization = "Bearer &lt;token&gt;" }</code></pre>
-          </li>
-          <li>
-            Cole o bloco no arquivo <code>~/.codex/config.toml</code> e salve.
-          </li>
-          <li>Abra o Codex de novo para ele carregar o servidor.</li>
-        </ol>
+            </li>
+            <li>
+              Cole o bloco no arquivo <code>~/.codex/config.toml</code> e salve.
+            </li>
+            <li>Abra o Codex de novo para ele carregar o servidor.</li>
+          </ol>
 
-        <h3>Outros clientes</h3>
-        <p>
-          Qualquer cliente MCP que consiga enviar o cabeçalho
-          <code>Authorization: Bearer &lt;token&gt;</code> para
-          <code>&lt;endereço do Mensal&gt;/api/mcp</code> funciona. Os
-          conectores personalizados do claude.ai não funcionam: eles pedem
-          OAuth, e o Mensal aceita só tokens de acesso.
-        </p>
-
-        <h3>Exemplos de conversa</h3>
-        <p>
-          Peça em português, com as palavras do Mensal. As ações de excluir vêm
-          marcadas como destrutivas, para que o cliente peça a sua confirmação
-          antes. Os valores abaixo são só exemplos.
-        </p>
-        <figure class="transcript">
-          <figcaption>Exemplo: as contas da semana</figcaption>
+          <h3>Outros clientes</h3>
           <p>
-            <span class="speaker">Você</span> quais contas vencem esta semana?
+            Qualquer cliente MCP que consiga enviar o cabeçalho
+            <code>Authorization: Bearer &lt;token&gt;</code> para
+            <code>&lt;endereço do Mensal&gt;/api/mcp</code> funciona. Os
+            conectores personalizados do claude.ai não funcionam: eles pedem
+            OAuth, e o Mensal aceita só tokens de acesso.
+          </p>
+
+          <h3>Exemplos de conversa</h3>
+          <p>
+            Peça em português, com as palavras do Mensal. As ações de excluir
+            vêm marcadas como destrutivas, para que o cliente peça a sua
+            confirmação antes. Os valores abaixo são só exemplos.
+          </p>
+          <figure class="transcript">
+            <figcaption>Exemplo: as contas da semana</figcaption>
+            <p>
+              <span class="speaker">Você</span> quais contas vencem esta semana?
+            </p>
+            <p>
+              <span class="speaker">Agente</span> Hoje vence a Conta de luz, de
+              R$ 189,90. Até domingo vence ainda a Fatura do cartão, de R$
+              2.430,50. A Internet de setembro continua atrasada.
+            </p>
+          </figure>
+          <figure class="transcript">
+            <figcaption>Exemplo: liquidar uma conta</figcaption>
+            <p><span class="speaker">Você</span> liquide a conta de luz</p>
+            <p>
+              <span class="speaker">Agente</span> Pronto: a Conta de luz de
+              outubro, de R$ 189,90, foi liquidada com a data de hoje.
+            </p>
+          </figure>
+          <figure class="transcript">
+            <figcaption>Exemplo: uma conta avulsa</figcaption>
+            <p>
+              <span class="speaker">Você</span> registre uma saída avulsa de R$
+              350 para o dentista, vencendo dia 12 do mês que vem
+            </p>
+            <p>
+              <span class="speaker">Agente</span> Criei a avulsa “Dentista”, uma
+              saída de R$ 350,00 com vencimento em 12 de novembro.
+            </p>
+          </figure>
+
+          <h3>Revogar um token</h3>
+          <ol class="steps" role="list">
+            <li>
+              Em <strong>Tokens de acesso</strong>, toque no ícone de lixeira do
+              token.
+            </li>
+            <li>
+              Confirme em <strong>Revogar token</strong>. O agente que o usa
+              perde o acesso na hora.
+            </li>
+          </ol>
+          <p>
+            Redefinir a senha revoga todos os tokens; ao alterar a senha, você
+            escolhe se quer revogá-los.
+          </p>
+        </section>
+
+        <section id="calendario">
+          <h2>Lembretes no seu calendário</h2>
+          <p>
+            O Mensal não envia avisos. Com o
+            <strong>Link do calendário</strong>, as suas contas pendentes
+            aparecem no calendário que você já usa, como o Google Agenda ou o
+            Calendário da Apple: cada uma como um evento de dia inteiro no dia
+            do vencimento, com um lembrete às 9h desse dia.
           </p>
           <p>
-            <span class="speaker">Agente</span> Hoje vence a Conta de luz, de R$
-            189,90. Até domingo vence ainda a Fatura do cartão, de R$ 2.430,50.
-            A Internet de setembro continua atrasada.
+            Entram as entradas e as saídas pendentes com vencimento, do mês
+            atual e dos 3 meses seguintes, e as atrasadas de meses anteriores,
+            no dia em que venceram. Cada evento mostra a descrição e o valor (ou
+            “A definir”), com “Entrada:” na frente das entradas, e traz a
+            competência e um link para aquele mês no Mensal. As observações
+            nunca vão para o calendário. Contas sem vencimento, liquidadas ou
+            puladas ficam de fora.
           </p>
-        </figure>
-        <figure class="transcript">
-          <figcaption>Exemplo: liquidar uma conta</figcaption>
-          <p><span class="speaker">Você</span> liquide a conta de luz</p>
+
+          <h3>1. Gerar o link</h3>
+          <img
+            class="shot"
+            src="./screenshots/calendario.png"
+            alt="O diálogo Link do calendário com um link gerado: o endereço do link, os botões Copiar link, Abrir no calendário do dispositivo e Adicionar ao Google Agenda (no computador), os dois avisos sobre lembretes e atualização e os botões Desativar, Gerar novo link e Fechar."
+            width="1280"
+            height="800"
+            loading="lazy"
+          />
+          <ol class="steps" role="list">
+            <li>
+              Abra o menu da conta e escolha
+              <strong>Link do calendário</strong>.
+            </li>
+            <li>
+              Toque em <strong>Gerar link</strong> e informe a
+              <strong>Senha atual</strong>. Ao adicionar o link, a descrição e o
+              valor de cada conta pendente passam a ficar guardados também com o
+              provedor do seu calendário.
+            </li>
+            <li>
+              O link aparece sempre que você abrir essa tela, para adicioná-lo
+              em outro aparelho depois. Trate-o como uma senha: quem tiver o
+              link vê as suas contas pendentes.
+            </li>
+          </ol>
+
+          <h3>2. Adicionar ao Google Agenda</h3>
+          <ol class="steps" role="list">
+            <li>
+              Faça isso num computador: os apps do Google Agenda para celular
+              não adicionam uma agenda por link. Depois, os eventos aparecem
+              também no celular.
+            </li>
+            <li>
+              Toque em <strong>Copiar link</strong>. No Google Agenda, ao lado
+              de <strong>Outras agendas</strong>, toque em <strong>+</strong>,
+              escolha <strong>Do URL</strong>, cole o link e confirme. O botão
+              <strong>Adicionar ao Google Agenda</strong> faz o mesmo de uma
+              vez, quando o Google o aceita.
+            </li>
+            <li>
+              O Google ignora o lembrete do link. Para ser avisado, abra as
+              configurações da agenda <strong>Mensal</strong> no Google Agenda
+              e, em <strong>Notificações de eventos de dia inteiro</strong>,
+              adicione uma notificação, por exemplo no mesmo dia, às 9h.
+            </li>
+          </ol>
+
+          <h3>3. Adicionar ao Calendário da Apple</h3>
+          <ol class="steps" role="list">
+            <li>
+              No iPhone, no iPad ou no Mac, toque em
+              <strong>Abrir no calendário do dispositivo</strong>. O Calendário
+              abre pronto para adicionar o link.
+            </li>
+            <li>
+              Antes de confirmar, desative <strong>Remover alertas</strong>.
+              Ligada, como vem, ela apaga o lembrete das 9h.
+            </li>
+            <li>Confirme. A agenda aparece com o nome Mensal.</li>
+          </ol>
+
+          <h3>Quando o calendário se atualiza</h3>
           <p>
-            <span class="speaker">Agente</span> Pronto: a Conta de luz de
-            outubro, de R$ 189,90, foi liquidada com a data de hoje.
+            Quem busca o link é o seu calendário, no ritmo dele, e não há como
+            apressá-lo: uma conta liquidada ou pulada pode levar até cerca de um
+            dia para sair do calendário, e até lá ainda pode lembrar você.
           </p>
-        </figure>
-        <figure class="transcript">
-          <figcaption>Exemplo: uma conta avulsa</figcaption>
+
+          <h3>Gerar um novo link ou desativar</h3>
+          <ol class="steps" role="list">
+            <li>
+              <strong>Gerar novo link</strong> pede a senha atual e substitui o
+              link: o atual deixa de funcionar em todos os calendários que o
+              usam, e você adiciona o novo onde quiser.
+            </li>
+            <li>
+              <strong>Desativar</strong> pede só uma confirmação, e o link deixa
+              de funcionar em todos os calendários que o usam. Para tirar a
+              agenda Mensal de um calendário, remova-a nele.
+            </li>
+          </ol>
+        </section>
+
+        <section id="conta">
+          <h2>Sua conta</h2>
           <p>
-            <span class="speaker">Você</span> registre uma saída avulsa de R$
-            350 para o dentista, vencendo dia 12 do mês que vem
+            No menu da conta, no canto superior direito, ficam o seu nome, a sua
+            senha, uma cópia dos seus dados e a exclusão da conta.
           </p>
-          <p>
-            <span class="speaker">Agente</span> Criei a avulsa “Dentista”, uma
-            saída de R$ 350,00 com vencimento em 12 de novembro.
-          </p>
-        </figure>
-
-        <h3>Revogar um token</h3>
-        <ol class="steps">
-          <li>
-            Em <strong>Tokens de acesso</strong>, toque no ícone de lixeira do
-            token.
-          </li>
-          <li>
-            Confirme em <strong>Revogar token</strong>. O agente que o usa perde
-            o acesso na hora.
-          </li>
-        </ol>
-        <p>
-          Redefinir a senha revoga todos os tokens; ao alterar a senha, você
-          escolhe se quer revogá-los.
-        </p>
-      </section>
-
-      <section id="calendario">
-        <h2>Lembretes no seu calendário</h2>
-        <p>
-          O Mensal não envia avisos. Com o <strong>Link do calendário</strong>,
-          as suas contas pendentes aparecem no calendário que você já usa, como
-          o Google Agenda ou o Calendário da Apple: cada uma como um evento de
-          dia inteiro no dia do vencimento, com um lembrete às 9h desse dia.
-        </p>
-        <p>
-          Entram as entradas e as saídas pendentes com vencimento, do mês atual
-          e dos 3 meses seguintes, e as atrasadas de meses anteriores, no dia em
-          que venceram. Cada evento mostra a descrição e o valor (ou “A
-          definir”), com “Entrada:” na frente das entradas, e traz a competência
-          e um link para aquele mês no Mensal. As observações nunca vão para o
-          calendário. Contas sem vencimento, liquidadas ou puladas ficam de
-          fora.
-        </p>
-
-        <h3>1. Gerar o link</h3>
-        <img
-          class="shot"
-          src="./screenshots/calendario.png"
-          alt="O diálogo Link do calendário com um link gerado: o endereço do link, os botões Copiar link, Abrir no calendário do dispositivo e Adicionar ao Google Agenda (no computador), os dois avisos sobre lembretes e atualização e os botões Desativar, Gerar novo link e Fechar."
-          width="1280"
-          height="800"
-          loading="lazy"
-        />
-        <ol class="steps">
-          <li>
-            Abra o menu da conta e escolha <strong>Link do calendário</strong>.
-          </li>
-          <li>
-            Toque em <strong>Gerar link</strong> e informe a
-            <strong>Senha atual</strong>. Ao adicionar o link, a descrição e o
-            valor de cada conta pendente passam a ficar guardados também com o
-            provedor do seu calendário.
-          </li>
-          <li>
-            O link aparece sempre que você abrir essa tela, para adicioná-lo em
-            outro aparelho depois. Trate-o como uma senha: quem tiver o link vê
-            as suas contas pendentes.
-          </li>
-        </ol>
-
-        <h3>2. Adicionar ao Google Agenda</h3>
-        <ol class="steps">
-          <li>
-            Faça isso num computador: os apps do Google Agenda para celular não
-            adicionam uma agenda por link. Depois, os eventos aparecem também no
-            celular.
-          </li>
-          <li>
-            Toque em <strong>Copiar link</strong>. No Google Agenda, ao lado de
-            <strong>Outras agendas</strong>, toque em <strong>+</strong>,
-            escolha <strong>Do URL</strong>, cole o link e confirme. O botão
-            <strong>Adicionar ao Google Agenda</strong> faz o mesmo de uma vez,
-            quando o Google o aceita.
-          </li>
-          <li>
-            O Google ignora o lembrete do link. Para ser avisado, abra as
-            configurações da agenda <strong>Mensal</strong> no Google Agenda e,
-            em <strong>Notificações de eventos de dia inteiro</strong>, adicione
-            uma notificação, por exemplo no mesmo dia, às 9h.
-          </li>
-        </ol>
-
-        <h3>3. Adicionar ao Calendário da Apple</h3>
-        <ol class="steps">
-          <li>
-            No iPhone, no iPad ou no Mac, toque em
-            <strong>Abrir no calendário do dispositivo</strong>. O Calendário
-            abre pronto para adicionar o link.
-          </li>
-          <li>
-            Antes de confirmar, desative <strong>Remover alertas</strong>.
-            Ligada, como vem, ela apaga o lembrete das 9h.
-          </li>
-          <li>Confirme. A agenda aparece com o nome Mensal.</li>
-        </ol>
-
-        <h3>Quando o calendário se atualiza</h3>
-        <p>
-          Quem busca o link é o seu calendário, no ritmo dele, e não há como
-          apressá-lo: uma conta liquidada ou pulada pode levar até cerca de um
-          dia para sair do calendário, e até lá ainda pode lembrar você.
-        </p>
-
-        <h3>Gerar um novo link ou desativar</h3>
-        <ol class="steps">
-          <li>
-            <strong>Gerar novo link</strong> pede a senha atual e substitui o
-            link: o atual deixa de funcionar em todos os calendários que o usam,
-            e você adiciona o novo onde quiser.
-          </li>
-          <li>
-            <strong>Desativar</strong> pede só uma confirmação, e o link deixa
-            de funcionar em todos os calendários que o usam. Para tirar a agenda
-            Mensal de um calendário, remova-a nele.
-          </li>
-        </ol>
-      </section>
-
-      <section id="conta">
-        <h2>Sua conta</h2>
-        <p>
-          No menu da conta, no canto superior direito, ficam o seu nome, a sua
-          senha, uma cópia dos seus dados e a exclusão da conta.
-        </p>
-        <img
-          class="shot"
-          src="./screenshots/conta.png"
-          alt="O menu da conta aberto, com o nome e o e-mail no topo e os itens Configurações, Alterar nome, Alterar senha, Tokens de acesso, Link do calendário, Baixar meus dados, Guia, Sair e Excluir conta."
-          width="1280"
-          height="800"
-          loading="lazy"
-        />
-        <ol class="steps">
-          <li>
-            <strong>Alterar nome</strong>: troque o nome pelo qual o Mensal
-            chama você. Ele não muda o seu e-mail nem como você entra.
-          </li>
-          <li>
-            <strong>Alterar senha</strong>: informe a senha atual e a nova duas
-            vezes. Deixe marcados
-            <strong>Desconectar dos outros dispositivos</strong> e
-            <strong
-              >Revogar todos os tokens de acesso e o link do calendário</strong
-            >, a não ser que tenha um motivo para mantê-los. Esqueceu a senha?
-            Na tela de entrada, use <strong>Esqueci a senha</strong> para
-            receber por e-mail um link que vale por 1 hora.
-          </li>
-          <li>
-            <strong>Baixar meus dados</strong>: baixa um arquivo ZIP com tudo o
-            que você cadastrou, em três planilhas CSV: o seu perfil, as suas
-            recorrências e as suas contas.
-          </li>
-          <li>
-            <strong>Excluir conta</strong>: apaga para sempre a conta e todas as
-            recorrências, contas e tokens de acesso, e o link do calendário.
-            Antes, o Mensal oferece baixar os seus dados; para confirmar,
-            informe a senha atual e digite o seu e-mail. Isso não pode ser
-            desfeito.
-          </li>
-        </ol>
-      </section>
+          <img
+            class="shot"
+            src="./screenshots/conta.png"
+            alt="O menu da conta aberto, com o nome e o e-mail no topo e os itens Configurações, Alterar nome, Alterar senha, Tokens de acesso, Link do calendário, Baixar meus dados, Guia, Sair e Excluir conta."
+            width="1280"
+            height="800"
+            loading="lazy"
+          />
+          <ol class="steps" role="list">
+            <li>
+              <strong>Alterar nome</strong>: troque o nome pelo qual o Mensal
+              chama você. Ele não muda o seu e-mail nem como você entra.
+            </li>
+            <li>
+              <strong>Alterar senha</strong>: informe a senha atual e a nova
+              duas vezes. Deixe marcados
+              <strong>Desconectar dos outros dispositivos</strong> e
+              <strong
+                >Revogar todos os tokens de acesso e o link do
+                calendário</strong
+              >, a não ser que tenha um motivo para mantê-los. Esqueceu a senha?
+              Na tela de entrada, use <strong>Esqueci a senha</strong> para
+              receber por e-mail um link que vale por 1 hora.
+            </li>
+            <li>
+              <strong>Baixar meus dados</strong>: baixa um arquivo ZIP com tudo
+              o que você cadastrou, em três planilhas CSV: o seu perfil, as suas
+              recorrências e as suas contas.
+            </li>
+            <li>
+              <strong>Excluir conta</strong>: apaga para sempre a conta e todas
+              as recorrências, contas e tokens de acesso, e o link do
+              calendário. Antes, o Mensal oferece baixar os seus dados; para
+              confirmar, informe a senha atual e digite o seu e-mail. Isso não
+              pode ser desfeito.
+            </li>
+          </ol>
+        </section>
+      </div>
     </main>
+
+    <footer class="footer">
+      <span>Mensal</span>
+      <a href="#conteudo">Voltar ao conteúdo</a>
+    </footer>
   </body>
 </html>

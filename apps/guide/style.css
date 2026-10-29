@@ -8,14 +8,24 @@
   --body: #cccccc;
   --muted: #888888;
   --hairline: #2a2a2a;
+  --hairline-strong: #3a3a3a;
   --canvas: #0a0a0a;
   --surface-card: #1a1a1a;
   --on-primary: #0a0a0a;
   --font:
     "Inter Variable", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* The page: the contents rail beside a reading column from 64em. */
+  --rail: 232px;
+  --column: 760px;
+  --page: calc(var(--rail) + 56px + var(--column));
+  --header: 64px;
+  --gutter: 16px;
 
   color-scheme: dark;
+  scrollbar-color: var(--hairline-strong) var(--canvas);
 }
 
 *,
@@ -24,8 +34,10 @@
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -36,6 +48,13 @@ body {
   font-size: 16px;
   line-height: 1.55;
   overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--on-primary);
 }
 
 img {
@@ -45,6 +64,12 @@ img {
 
 a {
   color: var(--primary);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
 }
 
 :focus-visible {
@@ -52,21 +77,27 @@ a {
   outline-offset: 2px;
 }
 
-/* Header: the lockup on the left, Entrar and Criar conta on the right. */
+/* Header: the lockup on the left, Entrar and Criar conta on the right,
+   kept in reach while reading and aligned with the page below. */
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 64px;
-  padding: 0 16px;
+  min-height: var(--header);
+  padding: 0 max(var(--gutter), (100% - var(--page)) / 2);
   border-bottom: 1px solid var(--hairline);
+  background: var(--canvas);
 }
 
 .lockup {
   display: flex;
   align-items: center;
   gap: 10px;
+  border-radius: 8px;
   color: var(--primary);
   font-size: 18px;
   font-weight: 700;
@@ -84,6 +115,7 @@ a {
   align-items: center;
   height: 36px;
   padding: 0 14px;
+  border: 1px solid var(--hairline-strong);
   border-radius: 8px;
   background: var(--surface-card);
   color: var(--ink);
@@ -92,22 +124,54 @@ a {
   line-height: 1;
   white-space: nowrap;
   text-decoration: none;
+  transition:
+    background-color 150ms ease-out,
+    border-color 150ms ease-out;
+}
+
+.button:hover {
+  border-color: var(--muted);
 }
 
 .button-primary {
+  border-color: var(--primary);
   background: var(--primary);
   color: var(--on-primary);
 }
 
+.button-primary:hover,
 .button-primary:active {
+  border-color: var(--primary-active);
   background: var(--primary-active);
 }
 
-/* One centred column for reading. */
-.column {
-  max-width: 760px;
+/* The page: on phones and tablets one column, the contents after the
+   introduction; from 64em the contents stay in a rail on the left. */
+.page {
+  max-width: calc(var(--column) + 2 * var(--gutter));
   margin: 0 auto;
-  padding: 32px 16px 64px;
+  padding: 32px var(--gutter) 0;
+}
+
+@media (min-width: 64em) {
+  .page {
+    display: grid;
+    grid-template-columns: var(--rail) minmax(0, var(--column));
+    grid-template-rows: auto 1fr;
+    column-gap: 56px;
+    max-width: calc(var(--page) + 2 * var(--gutter));
+    padding-top: 48px;
+  }
+
+  .intro,
+  .content {
+    grid-column: 2;
+  }
+
+  .toc {
+    grid-column: 1;
+    grid-row: 1 / 3;
+  }
 }
 
 h1 {
@@ -117,6 +181,7 @@ h1 {
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -1px;
+  text-wrap: balance;
 }
 
 h2 {
@@ -125,10 +190,34 @@ h2 {
   font-size: 20px;
   font-weight: 700;
   line-height: 1.4;
+  text-wrap: balance;
+}
+
+h3 {
+  margin: 32px 0 12px;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+
+p,
+li {
+  text-wrap: pretty;
+}
+
+/* Running text keeps a readable measure; screenshots and code take the
+   column's full width. */
+.lead,
+.content p,
+.steps {
+  max-width: 68ch;
 }
 
 .lead {
   margin: 0 0 32px;
+  font-size: 18px;
 }
 
 .caption {
@@ -136,19 +225,32 @@ h2 {
   color: var(--muted);
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.4;
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
 
+/* Contents: a panel on phones, a sticky rail from 64em. */
 .toc {
   padding: 20px;
+  border: 1px solid var(--hairline-strong);
   border-radius: 12px;
   background: var(--surface-card);
+  scroll-margin-top: calc(var(--header) + 16px);
 }
 
 .toc ol {
   margin: 0;
-  padding-left: 20px;
+  padding-left: 24px;
+}
+
+.toc li {
+  padding: 2px 0;
+}
+
+.toc li::marker {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .toc a {
@@ -161,23 +263,39 @@ h2 {
   text-decoration: underline;
 }
 
+@media (min-width: 64em) {
+  .toc {
+    position: sticky;
+    top: calc(var(--header) + 48px);
+    align-self: start;
+    max-height: calc(100vh - var(--header) - 64px);
+    overflow-y: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    font-size: 14px;
+  }
+
+  .toc ol {
+    padding-left: 28px;
+  }
+
+  .toc li {
+    padding: 4px 0;
+  }
+}
+
 section {
+  display: flow-root;
   padding-top: 32px;
   margin-top: 32px;
   border-top: 1px solid var(--hairline);
-  scroll-margin-top: 16px;
+  scroll-margin-top: var(--header);
 }
 
 section p {
   margin: 0 0 16px;
-}
-
-h3 {
-  margin: 24px 0 12px;
-  color: var(--ink);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.4;
 }
 
 strong {
@@ -186,39 +304,71 @@ strong {
 }
 
 /* A screenshot of the app: desktop ones fill the column, phone ones stay
-   phone-sized. */
+   phone-sized, beside the steps once there is room. */
 .shot {
   display: block;
   width: 100%;
-  margin: 0 0 20px;
+  margin: 8px 0 24px;
   border: 1px solid var(--hairline);
   border-radius: 12px;
+  background: var(--surface-card);
 }
 
 .shot-phone {
   max-width: 320px;
 }
 
+@media (min-width: 48em) {
+  .shot-phone {
+    float: right;
+    width: 280px;
+    margin: 4px 0 24px 40px;
+  }
+}
+
+/* Steps: each number in a small round badge, beside its text. */
 .steps {
   margin: 0 0 16px;
-  padding-left: 24px;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
 }
 
-.steps li {
-  margin-bottom: 10px;
+.steps > li {
+  position: relative;
+  min-height: 24px;
+  margin-bottom: 12px;
+  padding-left: 40px;
+  counter-increment: step;
 }
 
-.steps li::marker {
-  color: var(--muted);
+.steps > li::before {
+  content: counter(step);
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-top: 0.5px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 9999px;
+  background: var(--surface-card);
+  color: var(--ink);
+  font-size: 12px;
   font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 code {
-  padding: 1px 4px;
+  padding: 1px 5px;
+  border: 1px solid var(--hairline);
   border-radius: 4px;
   background: var(--surface-card);
   color: var(--ink);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--mono);
   font-size: 0.875em;
 }
 
@@ -226,46 +376,79 @@ code {
 .code {
   margin: 10px 0 0;
   padding: 12px 14px;
-  border: 1px solid var(--hairline);
+  border: 1px solid var(--hairline-strong);
   border-radius: 8px;
   background: var(--surface-card);
+  line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .code code {
   padding: 0;
+  border: 0;
   background: none;
 }
 
-/* A conversation with an agent, as text. */
+/* A conversation with an agent, as text: your turn in white, the agent's
+   in grey, each under its speaker. */
 .transcript {
   margin: 0 0 16px;
   padding: 16px 20px;
+  border: 1px solid var(--hairline-strong);
   border-radius: 12px;
   background: var(--surface-card);
 }
 
 .transcript figcaption {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   color: var(--muted);
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.4;
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
 
 .transcript p {
-  margin: 0 0 8px;
+  margin: 0;
 }
 
-.transcript p:last-child {
-  margin-bottom: 0;
+.transcript p + p {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+}
+
+.transcript p:first-of-type {
+  color: var(--ink);
 }
 
 .speaker {
   display: block;
-  color: var(--primary);
+  color: var(--muted);
   font-size: 14px;
   font-weight: 600;
+}
+
+/* The end of the page: back to the contents. */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: calc(var(--page) + 2 * var(--gutter));
+  margin: 64px auto 0;
+  padding: 24px var(--gutter) 32px;
+  border-top: 1px solid var(--hairline);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.footer a {
+  color: var(--body);
+}
+
+.footer a:hover {
+  color: var(--ink);
 }
