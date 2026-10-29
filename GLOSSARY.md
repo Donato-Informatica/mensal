@@ -34,6 +34,11 @@ A private, read-only address a user gives their own calendar app, so it shows th
 _UI (pt-BR)_: Link do calendário
 _Avoid_: feed, subscription, iCal, webcal, token
 
+**Reminder**:
+A message Mensal itself sends each morning, to every device on which the user turned reminders on, about their pending occurrences due that day and those overdue.
+_UI (pt-BR)_: Lembrete (the screen: Lembretes)
+_Avoid_: notification, alert, push
+
 **Download data**:
 To take away a copy of everything the user entered: their profile, recurrences and occurrences.
 _UI (pt-BR)_: Baixar meus dados
