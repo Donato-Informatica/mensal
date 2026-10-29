@@ -173,6 +173,45 @@ export async function turnRemindersOffEverywhere({
   }
 }
 
+/**
+ * Deletes every reminder device of the user, logging nothing: the password
+ * reset's own event reports it (PRD §8.2).
+ */
+export async function deleteReminderDevices(
+  db: Database,
+  userId: string
+): Promise<void> {
+  await db.delete(reminderDevices).where(eq(reminderDevices.userId, userId));
+}
+
+/**
+ * Keeps only the user's reminder devices bound to `session`, and binds them to
+ * `successor`, the session that replaces it, so a later change from there
+ * keeps them too. Logs nothing: the password change's own event reports it
+ * (PRD §8.2).
+ */
+export async function keepRemindersOfSession(
+  db: Database,
+  userId: string,
+  session: string,
+  successor: string
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(reminderDevices)
+      .where(
+        and(
+          eq(reminderDevices.userId, userId),
+          ne(reminderDevices.sessionId, session)
+        )
+      );
+    await tx
+      .update(reminderDevices)
+      .set({ sessionId: successor })
+      .where(eq(reminderDevices.userId, userId));
+  });
+}
+
 async function deviceCount(db: Database, userId: string): Promise<number> {
   const [row] = await db
     .select({ value: count() })
