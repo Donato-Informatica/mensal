@@ -534,6 +534,8 @@ export function fakeApi() {
   const reminderDevices = new Map<string, string>();
   /** Every endpoint sent the confirmation, oldest first. */
   const confirmations: string[] = [];
+  /** Whether every `/api/v1/reminders` route answers 500. */
+  let remindersDown = false;
 
   function deviceCountOf(account: Account): number {
     return [...reminderDevices.values()].filter((id) => id === account.id)
@@ -741,6 +743,9 @@ export function fakeApi() {
       if (down) return serverError();
       const request = new Request(input, init);
       const { pathname, searchParams } = new URL(request.url);
+      if (remindersDown && pathname.startsWith("/api/v1/reminders")) {
+        return serverError();
+      }
       if (request.method === "GET" && pathname === "/api/v1/recurrences") {
         return getRecurrences(searchParams);
       }
@@ -930,6 +935,11 @@ export function fakeApi() {
     /** Turns reminders off on this server, as without VAPID keys (PRD §8.4). */
     disableReminders() {
       reminderPublicKey = null;
+    },
+
+    /** Makes the reminders routes, and only them, fail with 500. */
+    breakReminders() {
+      remindersDown = true;
     },
 
     /** Seeds a reminder device for the account, as if turned on before. */

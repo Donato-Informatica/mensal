@@ -35,6 +35,10 @@ import {
   resetPasswordEmail,
 } from "./emails.ts";
 import { exportedLog, type Log } from "./log.ts";
+import {
+  deleteReminderDevices,
+  keepRemindersOfSession,
+} from "./reminder-operations.ts";
 
 /** What every access token starts with, so a leaked one is recognizable. */
 export const accessTokenPrefix = "mensal_";
@@ -70,8 +74,8 @@ export interface AuthOptions {
  * Better-Auth on the app's own `db`: email + password, sessions in HttpOnly
  * SameSite=Lax cookies, and password-reset links sent by `email` (PRD §8.2,
  * ADR-0003); a reset signs the user out everywhere and revokes every access
- * token and the calendar link, while a password change revokes what the user
- * chose (PRD §8.2). The anonymous endpoints are
+ * token, the calendar link and every reminder device, while a password change
+ * revokes what the user chose (PRD §8.2). The anonymous endpoints are
  * rate limited per client IP, read from the proxy's `X-Forwarded-For`
  * (PRD §8.6). The user's name is trimmed and checked (PRD §8.2). A user can
  * delete their own account at once with the current password, and is emailed
@@ -150,6 +154,7 @@ export function createAuth({
         await revokeAccessTokens(user.id);
         // Its `revoked` reports the link: no `user.calendar-link-revoked`.
         await deleteCalendarLink(db, user.id);
+        await deleteReminderDevices(db, user.id);
         passwordReplaced(user, "user.password-reset", [
           "sessions",
           "access-tokens",
@@ -331,7 +336,19 @@ export function createAuth({
             revokeAccessTokens?: boolean;
           };
           const revoked: Revocable[] = [];
-          if (body.revokeOtherSessions === true) revoked.push("sessions");
+          if (body.revokeOtherSessions === true) {
+            // This device keeps its reminders; the others lose them (§6.8).
+            const { session, newSession } = ctx.context;
+            if (session && newSession) {
+              await keepRemindersOfSession(
+                db,
+                user.id,
+                session.session.id,
+                newSession.session.id
+              );
+            }
+            revoked.push("sessions");
+          }
           // One box revokes every lasting credential (PRD §8.2).
           if (body.revokeAccessTokens === true) {
             await revokeAccessTokens(user.id);
