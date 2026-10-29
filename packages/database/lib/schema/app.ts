@@ -6,6 +6,7 @@ import {
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
   smallint,
   text,
   timestamp,
@@ -157,3 +158,21 @@ export const reminderDevices = pgTable("reminder_devices", {
   sessionId: text().notNull(),
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 });
+
+/**
+ * A user's reminder of one day (PRD §6.8, ADR-0009), inserted before it is
+ * sent: only the run that inserts the row sends, so a user gets at most one
+ * reminder a day across restarts and replicas. Days with nothing to remind
+ * get a row too. `date` is the day in America/Sao_Paulo.
+ */
+export const reminderSends = pgTable(
+  "reminder_sends",
+  {
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    date: date({ mode: "string" }).notNull(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.date] })]
+);
