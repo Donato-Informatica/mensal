@@ -38,6 +38,7 @@ describe("guide sections", () => {
       "configuracoes",
       "instalar",
       "mcp",
+      "lembretes",
       "calendario",
       "conta",
     ]);
@@ -139,6 +140,31 @@ describe("guide page", () => {
     expect(mcp.textContent).toContain("Authorization: Bearer");
     expect(mcp.textContent).toContain("quais contas vencem esta semana?");
     expect(mcp.textContent).toContain("liquide a conta de luz");
+  });
+
+  it("shows the Lembretes screen: what, when, per device, how on each platform, and unblocking", () => {
+    const reminders = page.getElementById("lembretes")!;
+    const shot = reminders.querySelector("img")?.getAttribute("src");
+    expect(shot).toBe("./screenshots/lembretes.png");
+    const text = reminders.textContent ?? "";
+    expect(text).toContain("9h");
+    expect(text).toMatch(/vencem no dia/);
+    expect(text).toMatch(/atrasadas/);
+    expect(text).toMatch(/sem (os )?valores|nunca .*valor/i);
+    expect(text).toMatch(/cada (dispositivo|aparelho)/i);
+    expect(text).toContain("Ativar neste dispositivo");
+    expect(text).toContain("Android");
+    expect(text).toContain("iOS 16.4");
+    expect(text).toContain("Bloqueado pelo navegador");
+    expect(reminders.querySelector("a[href='#instalar']")).not.toBeNull();
+  });
+
+  it("presents the calendar link as the alternative to reminders", () => {
+    const calendar = page.getElementById("calendario")!;
+    expect(calendar.querySelector("h2 + p")?.textContent).toMatch(
+      /prefere ver no calendário\?/i
+    );
+    expect(calendar.textContent).not.toContain("O Mensal não envia avisos");
   });
 
   it("shows the calendar link screen and steps for Google and Apple", () => {

@@ -153,10 +153,13 @@ function RemindersScreen({ onClose }: { onClose: () => void }) {
   const error = turnOn.error ?? turnOff.error;
   return (
     <Stack gap="md">
-      <Text>
-        Todo dia às 9h, neste dispositivo, você recebe um lembrete das contas
-        que vencem no dia e das atrasadas.
-      </Text>
+      <Stack gap={4} align="flex-start">
+        <Text>
+          Todo dia às 9h, neste dispositivo, você recebe um lembrete das contas
+          que vencem no dia e das atrasadas.
+        </Text>
+        <GuideLink section="lembretes">Como funcionam os lembretes</GuideLink>
+      </Stack>
       <Group gap="xs">
         <Text fw={500}>Neste dispositivo:</Text>
         <DeviceBadge device={device} />

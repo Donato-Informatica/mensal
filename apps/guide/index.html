@@ -61,7 +61,8 @@
           <li><a href="#configuracoes">Configurações</a></li>
           <li><a href="#instalar">Instalar o app</a></li>
           <li><a href="#mcp">Agentes e tokens de acesso</a></li>
-          <li><a href="#calendario">Lembretes no seu calendário</a></li>
+          <li><a href="#lembretes">Lembretes</a></li>
+          <li><a href="#calendario">Contas no seu calendário</a></li>
           <li><a href="#conta">Sua conta</a></li>
         </ol>
       </nav>
@@ -549,10 +550,109 @@ http_headers = { Authorization = "Bearer &lt;token&gt;" }</code></pre>
           </p>
         </section>
 
-        <section id="calendario">
-          <h2>Lembretes no seu calendário</h2>
+        <section id="lembretes">
+          <h2>Lembretes</h2>
           <p>
-            O Mensal não envia avisos. Com o
+            Todo dia às 9h, o Mensal avisa no celular ou no computador quais
+            contas vencem no dia e quais estão atrasadas, para você não perder
+            um vencimento. O lembrete chega como uma notificação do sistema,
+            mesmo com o Mensal fechado.
+          </p>
+          <img
+            class="shot"
+            src="./screenshots/lembretes.png"
+            alt="O diálogo Lembretes: a frase sobre o lembrete diário das 9h, o link Como funcionam os lembretes, Neste dispositivo com o selo Ativado e os botões Fechar e Desativar neste dispositivo."
+            width="1280"
+            height="800"
+            loading="lazy"
+          />
+          <p>
+            O lembrete nomeia as contas só pela descrição, sem os valores e sem
+            as observações, porque aparece na tela de bloqueio. Por exemplo:
+            “Vence hoje: Aluguel”, ou “2 contas vencem hoje”, com a lista das
+            contas e “+ 1 atrasada”. As entradas vêm com “Entrada:” na frente.
+            Num dia sem contas vencendo nem atrasadas, não chega nada. Tocar no
+            lembrete abre o Mensal.
+          </p>
+          <p>
+            Os lembretes são ativados em cada dispositivo, um por um: ativar no
+            celular não ativa no computador. Você recebe um lembrete por dia em
+            cada dispositivo ativado.
+          </p>
+
+          <h3>1. Ativar no Android ou no computador</h3>
+          <ol class="steps" role="list">
+            <li>
+              Abra o Mensal no navegador do dispositivo, abra o menu da conta e
+              escolha <strong>Lembretes</strong>.
+            </li>
+            <li>
+              Toque em <strong>Ativar neste dispositivo</strong> e, quando o
+              navegador perguntar, permita as notificações.
+            </li>
+            <li>
+              Pronto: <strong>Neste dispositivo</strong> passa a mostrar
+              <strong>Ativado</strong>. Para parar, toque em
+              <strong>Desativar neste dispositivo</strong>.
+            </li>
+          </ol>
+
+          <h3>2. Ativar no iPhone ou no iPad</h3>
+          <ol class="steps" role="list">
+            <li>
+              No iPhone e no iPad, os lembretes só funcionam no app instalado na
+              tela inicial, com iOS 16.4 ou mais recente. Pelo Safari, a tela
+              Lembretes mostra <strong>Indisponível</strong>.
+            </li>
+            <li>
+              Instale o app, como em
+              <a href="#instalar">Instalar o app</a>, e abra o Mensal pelo ícone
+              na tela inicial.
+            </li>
+            <li>
+              No menu da conta, escolha <strong>Lembretes</strong>, toque em
+              <strong>Ativar neste dispositivo</strong> e permita as
+              notificações.
+            </li>
+          </ol>
+
+          <h3>Se as notificações foram bloqueadas</h3>
+          <p>
+            Se você recusou as notificações, a tela Lembretes mostra
+            <strong>Bloqueado pelo navegador</strong>, e o Mensal não consegue
+            pedir de novo: só você pode desfazer isso.
+          </p>
+          <ol class="steps" role="list">
+            <li>
+              No computador e no Android, toque no ícone ao lado do endereço do
+              site, abra as configurações do site e permita as
+              <strong>Notificações</strong>. No iPhone e no iPad, abra
+              <strong>Ajustes</strong>, depois <strong>Notificações</strong>,
+              escolha <strong>Mensal</strong> e permita as notificações.
+            </li>
+            <li>
+              Abra a tela <strong>Lembretes</strong> de novo e toque em
+              <strong>Ativar neste dispositivo</strong>.
+            </li>
+          </ol>
+
+          <h3>Outros dispositivos</h3>
+          <p>
+            A tela Lembretes mostra em quantos outros dispositivos os lembretes
+            estão ativados, e
+            <strong>Desativar em todos os dispositivos</strong> desativa todos
+            de uma vez, depois de uma confirmação. Ao sair da conta num
+            dispositivo, os lembretes dele são desativados. Redefinir a senha
+            desativa os lembretes em todos os dispositivos; ao alterar a senha,
+            <strong>Desconectar dos outros dispositivos</strong> desativa os dos
+            outros e mantém os deste.
+          </p>
+        </section>
+
+        <section id="calendario">
+          <h2>Contas no seu calendário</h2>
+          <p>
+            Prefere ver no calendário? Com o
             <strong>Link do calendário</strong>, as suas contas pendentes
             aparecem no calendário que você já usa, como o Google Agenda ou o
             Calendário da Apple: cada uma como um evento de dia inteiro no dia
@@ -662,7 +762,7 @@ http_headers = { Authorization = "Bearer &lt;token&gt;" }</code></pre>
           <img
             class="shot"
             src="./screenshots/conta.png"
-            alt="O menu da conta aberto, com o nome e o e-mail no topo e os itens Configurações, Alterar nome, Alterar senha, Tokens de acesso, Link do calendário, Baixar meus dados, Guia, Sair e Excluir conta."
+            alt="O menu da conta aberto, com o nome e o e-mail no topo e os itens Configurações, Alterar nome, Alterar senha, Tokens de acesso, Lembretes, Link do calendário, Baixar meus dados, Guia, Sair e Excluir conta."
             width="1280"
             height="800"
             loading="lazy"

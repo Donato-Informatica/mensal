@@ -18,6 +18,8 @@ export interface Capture {
   view?: "list" | "table";
   /** Taken signed out, as someone without an account sees it. */
   signedOut?: boolean;
+  /** What to set up in the page before it loads, e.g. a stubbed browser API. */
+  init?: (page: Page) => Promise<void>;
   /** What to do on the page before the shot. */
   steps?: (page: Page) => Promise<void>;
 }
@@ -39,6 +41,58 @@ async function openAccountMenuItem(page: Page, item: string) {
   await openAccountMenu(page);
   await page.getByRole("menuitem", { name: item }).click();
   await page.getByRole("dialog").waitFor();
+}
+
+/**
+ * Stands in for the browser's Push API (PRD §7.17): a service worker
+ * registration whose push manager hands out a made-up registration, and a
+ * permission the user grants. The endpoint is on a reserved `.invalid` host
+ * and the keys are not a real key pair, so no push service is ever reached,
+ * not even by the API's confirmation, which fails and is only logged.
+ */
+async function stubPush(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    let permission: NotificationPermission = "default";
+    let subscription: PushSubscription | null = null;
+    const made = {
+      endpoint: "https://push.mensal-guia.invalid/dispositivo",
+      keys: { p256dh: "chave-do-guia", auth: "segredo-do-guia" },
+    };
+    const pushManager = {
+      getSubscription: async () => subscription,
+      subscribe: async () => {
+        subscription = {
+          endpoint: made.endpoint,
+          toJSON: () => made,
+          unsubscribe: async () => {
+            subscription = null;
+            return true;
+          },
+        } as unknown as PushSubscription;
+        return subscription;
+      },
+    };
+    const registration = {
+      pushManager,
+    } as unknown as ServiceWorkerRegistration;
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: { getRegistration: async () => registration },
+    });
+    Object.defineProperty(window, "PushManager", {
+      configurable: true,
+      value: function PushManager() {},
+    });
+    Object.defineProperty(window, "Notification", {
+      configurable: true,
+      value: {
+        get permission() {
+          return permission;
+        },
+        requestPermission: async () => (permission = "granted"),
+      },
+    });
+  });
 }
 
 export const captures: Capture[] = [
@@ -117,6 +171,21 @@ export const captures: Capture[] = [
       await page.getByLabel("Senha atual").fill(demoUser.password);
       await page.getByRole("button", { name: "Criar", exact: true }).click();
       await page.getByText("Copie o token agora").waitFor();
+    },
+  },
+  {
+    name: "lembretes",
+    path: "/",
+    viewport: "desktop",
+    // Ativado on this device: turned on through the stubbed Push API.
+    init: stubPush,
+    steps: async (page) => {
+      await openAccountMenuItem(page, "Lembretes");
+      const dialog = page.getByRole("dialog", { name: "Lembretes" });
+      await dialog
+        .getByRole("button", { name: "Ativar neste dispositivo" })
+        .click();
+      await dialog.getByText("Ativado", { exact: true }).waitFor();
     },
   },
   {
