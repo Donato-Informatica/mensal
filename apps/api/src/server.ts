@@ -6,6 +6,7 @@ import { readConfig } from "./config.ts";
 import { consoleEmail, resendEmail } from "./email.ts";
 import { exportedLog } from "./log.ts";
 import { webPushSender } from "./push.ts";
+import { startReminderJob } from "./reminder-job.ts";
 
 const { databaseURL, baseURL, secret, port, email, vapid } = readConfig(
   process.env
@@ -21,15 +22,19 @@ const auth = createAuth({
   email: email ? resendEmail(email) : consoleEmail(console.log),
 });
 
+const reminders = vapid && {
+  publicKey: vapid.publicKey,
+  push: webPushSender(vapid),
+};
+const info = exportedLog((message) => console.log(message), "INFO");
+const log = exportedLog((message) => console.error(message));
+
 const server = createApp({
   auth,
   db,
   activity,
-  ...(vapid && {
-    reminders: { publicKey: vapid.publicKey, push: webPushSender(vapid) },
-  }),
+  ...(reminders && { reminders }),
 }).listen(port, () => {
-  const info = exportedLog((message) => console.log(message), "INFO");
   info(`API listening on http://localhost:${port}`);
   info(
     email
@@ -43,7 +48,13 @@ const server = createApp({
   );
 });
 
+// The daily reminders (PRD §6.8); without the VAPID keys there is none.
+const stopReminders = reminders
+  ? startReminderJob({ db, reminders, now: () => new Date(), log, info })
+  : () => {};
+
 // In the container Node is PID 1, which ignores SIGTERM unless it is handled.
 process.on("SIGTERM", () => {
+  stopReminders();
   server.close(() => void db.$client.end());
 });
