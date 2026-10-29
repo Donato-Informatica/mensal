@@ -177,6 +177,11 @@ describe("telemetry privacy and identity", () => {
       info: exportedLog(() => {}, "INFO"),
     });
     expect(reminded).toEqual(["Vence hoje: Sentinel mcp PLM"]);
+    await request(api, "/api/v1/reminders/device", {
+      cookie,
+      method: "DELETE",
+      body: { endpoint: pushDevice.endpoint },
+    });
 
     const spans = exporter.getFinishedSpans();
     const records = logExporter.getFinishedLogRecords();

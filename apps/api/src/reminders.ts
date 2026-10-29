@@ -11,6 +11,8 @@ import type { Log } from "./log.ts";
 import {
   checkReminderDevice,
   readReminders,
+  turnRemindersOff,
+  turnRemindersOffEverywhere,
   turnRemindersOn,
   type Reminders,
 } from "./reminder-operations.ts";
@@ -62,6 +64,21 @@ export function remindersRouter({
       return;
     }
     res.json(await checkReminderDevice(context(res), parsed.data.endpoint));
+  });
+
+  router.delete("/", async (_req, res) => {
+    await turnRemindersOffEverywhere(context(res));
+    res.status(204).end();
+  });
+
+  router.delete("/device", async (req, res) => {
+    const parsed = ReminderDeviceCheckSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json(invalidInput(parsed.error));
+      return;
+    }
+    await turnRemindersOff(context(res), parsed.data.endpoint);
+    res.status(204).end();
   });
 
   return router;

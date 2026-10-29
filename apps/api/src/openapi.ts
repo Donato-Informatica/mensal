@@ -259,6 +259,11 @@ export function buildOpenApiSpec() {
           200: ok("The reminders", output(RemindersPayloadSchema)),
         },
       }),
+      delete: secured({
+        tags: ["Reminders"],
+        summary: "Turn reminders off on every device of the user",
+        responses: { 204: noContent },
+      }),
     },
     "/api/v1/reminders/device": {
       put: secured({
@@ -277,6 +282,13 @@ export function buildOpenApiSpec() {
             "REMINDERS_UNAVAILABLE"
           ),
         },
+      }),
+      delete: secured({
+        tags: ["Reminders"],
+        summary:
+          "Turn reminders off for the calling device, by its push endpoint; done also when it had none",
+        requestBody: body(ReminderDeviceCheckSchema),
+        responses: { 204: noContent, 400: invalidInput },
       }),
     },
     "/api/v1/reminders/device/check": {
