@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { PushRefused, type PushDevice, type PushMessage } from "../src/push.ts";
+import type { ReminderDevice } from "@mensal/shared";
+import { PushRefused, type ReminderMessage } from "../src/push.ts";
 import { runReminders } from "../src/reminder-job.ts";
 import type { Reminders } from "../src/reminder-operations.ts";
 import { approve, request, signUp, startApi, type TestApi } from "./api.ts";
@@ -21,10 +22,10 @@ function saoPaulo(date: string, time: string): Date {
   return new Date(`${date}T${time}:00-03:00`);
 }
 
-type Pushed = { device: PushDevice; message: PushMessage };
+type Pushed = { device: ReminderDevice; message: ReminderMessage };
 
 /** Reminders sending to a capturing sink; `fail` decides a device's fate. */
-function capturing(fail?: (device: PushDevice) => Error | undefined) {
+function capturing(fail?: (device: ReminderDevice) => Error | undefined) {
   const pushed: Pushed[] = [];
   const reminders: Reminders = {
     publicKey: "BTestVapidPublicKey",

@@ -1,8 +1,5 @@
 import type { Database } from "@mensal/database";
-import {
-  ReminderDeviceCheckSchema,
-  ReminderDeviceSchema,
-} from "@mensal/shared";
+import { ReminderDeviceSchema, ReminderEndpointSchema } from "@mensal/shared";
 import { Router, type Response } from "express";
 import type { RecordActivity } from "./activity.ts";
 import { answer } from "./answer.ts";
@@ -58,7 +55,7 @@ export function remindersRouter({
   });
 
   router.post("/device/check", async (req, res) => {
-    const parsed = ReminderDeviceCheckSchema.safeParse(req.body);
+    const parsed = ReminderEndpointSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json(invalidInput(parsed.error));
       return;
@@ -72,7 +69,7 @@ export function remindersRouter({
   });
 
   router.delete("/device", async (req, res) => {
-    const parsed = ReminderDeviceCheckSchema.safeParse(req.body);
+    const parsed = ReminderEndpointSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json(invalidInput(parsed.error));
       return;

@@ -1,5 +1,5 @@
 import type { PeriodItem } from "@mensal/shared";
-import type { PushMessage } from "./push.ts";
+import type { ReminderMessage } from "./push.ts";
 
 /** What a reminder reads of an occurrence: never its amount or notes. */
 export type RemindedOccurrence = Pick<PeriodItem, "direction" | "description">;
@@ -14,7 +14,7 @@ const LISTED = 3;
 export function reminderMessage(
   dueToday: readonly RemindedOccurrence[],
   overdue: readonly RemindedOccurrence[]
-): PushMessage | null {
+): ReminderMessage | null {
   const all = [...dueToday, ...overdue];
   if (all.length === 0) return null;
   const title =

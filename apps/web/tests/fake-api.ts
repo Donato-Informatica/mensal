@@ -19,8 +19,8 @@ import {
   parseVirtualId,
   RecurrenceEditSchema,
   RecurrenceListQuerySchema,
-  ReminderDeviceCheckSchema,
   ReminderDeviceSchema,
+  ReminderEndpointSchema,
   periodOfMonth,
   resolvePeriod,
   StatusChangeSchema,
@@ -574,7 +574,7 @@ export function fakeApi() {
   function checkReminderDevice(body: unknown): Response {
     if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
     if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
-    const input = ReminderDeviceCheckSchema.safeParse(body);
+    const input = ReminderEndpointSchema.safeParse(body);
     if (!input.success) return json(400, { code: "INVALID_INPUT" });
     const owner = reminderDevices.get(input.data.endpoint);
     if (owner === signedIn.id) return json(200, { mine: true });
@@ -586,7 +586,7 @@ export function fakeApi() {
   function deleteReminderDevice(body: unknown): Response {
     if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
     if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
-    const input = ReminderDeviceCheckSchema.safeParse(body);
+    const input = ReminderEndpointSchema.safeParse(body);
     if (!input.success) return json(400, { code: "INVALID_INPUT" });
     if (reminderDevices.get(input.data.endpoint) === signedIn.id)
       reminderDevices.delete(input.data.endpoint);

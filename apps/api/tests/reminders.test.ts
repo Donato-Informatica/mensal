@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { ActivityEvent } from "../src/activity.ts";
-import type { PushDevice, PushMessage } from "../src/push.ts";
+import type { ReminderDevice } from "@mensal/shared";
+import type { ReminderMessage } from "../src/push.ts";
 import {
   approve,
   cookieFrom,
@@ -14,7 +15,7 @@ import {
 
 const publicKey = "BTestVapidPublicKey";
 const events: ActivityEvent[] = [];
-const pushed: { device: PushDevice; message: PushMessage }[] = [];
+const pushed: { device: ReminderDevice; message: ReminderMessage }[] = [];
 let api: TestApi;
 let unconfigured: TestApi;
 beforeAll(async () => {

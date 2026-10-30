@@ -8,7 +8,8 @@ import type {
 import { and, count, eq, ne, sql } from "drizzle-orm";
 import type { RecordActivity } from "./activity.ts";
 import { describeError, type Log } from "./log.ts";
-import type { PushMessage, SendPush } from "./push.ts";
+import type { Transaction } from "./operations.ts";
+import type { ReminderMessage, SendPush } from "./push.ts";
 import { Refusal } from "./refusal.ts";
 
 const { reminderDevices } = schema;
@@ -37,7 +38,7 @@ export interface ReminderContext {
 }
 
 /** What a device is sent when the user turns reminders on there. */
-export const confirmation: PushMessage = {
+export const confirmation: ReminderMessage = {
   title: "Lembretes ativados",
   body: "Todo dia às 9h, neste dispositivo, sobre as contas que vencem no dia e as atrasadas.",
 };
@@ -68,14 +69,7 @@ export async function turnRemindersOn(
   if (!reminders) throw new Refusal(409, "REMINDERS_UNAVAILABLE");
   const { endpoint, keys } = device;
   const { id, inserted } = await db.transaction(async (tx) => {
-    await tx
-      .delete(reminderDevices)
-      .where(
-        and(
-          eq(reminderDevices.endpoint, endpoint),
-          ne(reminderDevices.userId, userId)
-        )
-      );
+    await dropOthersRegistration(tx, endpoint, userId);
     const [row] = await tx
       .insert(reminderDevices)
       .values({ userId, endpoint, ...keys, sessionId })
@@ -111,14 +105,7 @@ export async function checkReminderDevice(
   endpoint: string
 ): Promise<ReminderDeviceCheckResult> {
   return db.transaction(async (tx) => {
-    await tx
-      .delete(reminderDevices)
-      .where(
-        and(
-          eq(reminderDevices.endpoint, endpoint),
-          ne(reminderDevices.userId, userId)
-        )
-      );
+    await dropOthersRegistration(tx, endpoint, userId);
     const mine = await tx
       .update(reminderDevices)
       .set({ sessionId })
@@ -210,6 +197,22 @@ export async function keepRemindersOfSession(
       .set({ sessionId: successor })
       .where(eq(reminderDevices.userId, userId));
   });
+}
+
+/** Deletes another user's registration of `endpoint`, if there is one. */
+async function dropOthersRegistration(
+  tx: Transaction,
+  endpoint: string,
+  userId: string
+): Promise<void> {
+  await tx
+    .delete(reminderDevices)
+    .where(
+      and(
+        eq(reminderDevices.endpoint, endpoint),
+        ne(reminderDevices.userId, userId)
+      )
+    );
 }
 
 async function deviceCount(db: Database, userId: string): Promise<number> {

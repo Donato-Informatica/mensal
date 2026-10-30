@@ -363,11 +363,14 @@ export const ReminderDeviceCountSchema = z.object({
 });
 export type ReminderDeviceCount = z.infer<typeof ReminderDeviceCountSchema>;
 
-/** The body of `POST /reminders/device/check`: the browser's endpoint. */
-export const ReminderDeviceCheckSchema = z.object({
+/**
+ * The body of `POST /reminders/device/check` and `DELETE /reminders/device`:
+ * the browser's endpoint.
+ */
+export const ReminderEndpointSchema = z.object({
   endpoint: PushEndpointSchema,
 });
-export type ReminderDeviceCheck = z.output<typeof ReminderDeviceCheckSchema>;
+export type ReminderEndpoint = z.output<typeof ReminderEndpointSchema>;
 
 /** What `POST /reminders/device/check` answers: whether it is the user's. */
 export const ReminderDeviceCheckResultSchema = z.object({ mine: z.boolean() });

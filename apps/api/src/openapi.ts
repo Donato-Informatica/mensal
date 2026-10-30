@@ -14,9 +14,9 @@ import {
   RecurrenceListQuerySchema,
   RecurrenceSchema,
   ReminderDeviceCheckResultSchema,
-  ReminderDeviceCheckSchema,
   ReminderDeviceCountSchema,
   ReminderDeviceSchema,
+  ReminderEndpointSchema,
   RemindersPayloadSchema,
   StatusChangeSchema,
   SummariesPayloadSchema,
@@ -287,7 +287,7 @@ export function buildOpenApiSpec() {
         tags: ["Reminders"],
         summary:
           "Turn reminders off for the calling device, by its push endpoint; done also when it had none",
-        requestBody: body(ReminderDeviceCheckSchema),
+        requestBody: body(ReminderEndpointSchema),
         responses: { 204: noContent, 400: invalidInput },
       }),
     },
@@ -296,7 +296,7 @@ export function buildOpenApiSpec() {
         tags: ["Reminders"],
         summary:
           "Whether the browser's push endpoint is the user's; another user's registration of it is deleted",
-        requestBody: body(ReminderDeviceCheckSchema),
+        requestBody: body(ReminderEndpointSchema),
         responses: {
           200: ok(
             "Whether the device is the user's",

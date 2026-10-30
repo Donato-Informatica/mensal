@@ -1,32 +1,25 @@
+import type { ReminderDevice } from "@mensal/shared";
 import webPush from "web-push";
 import type { Vapid } from "./config.ts";
-
-/**
- * A browser's push registration (PRD §6.8), as its `PushManager` hands it
- * out. The endpoint is a capability URL: it is never logged or exported.
- */
-export interface PushDevice {
-  endpoint: string;
-  keys: { p256dh: string; auth: string };
-}
 
 /**
  * What a reminder device shows (pt-BR): the service worker puts `title` and
  * `body` on a notification. Never amounts or notes: the lock screen shows it.
  */
-export interface PushMessage {
+export interface ReminderMessage {
   title: string;
   body: string;
 }
 
 /**
  * Where pushes go: a real push service by default, a capturing sink in tests.
+ * The device's endpoint is a capability URL: it is never logged or exported.
  * Rejects when the push service refused the message; the error never carries
  * the endpoint.
  */
 export type SendPush = (
-  device: PushDevice,
-  message: PushMessage
+  device: ReminderDevice,
+  message: ReminderMessage
 ) => Promise<void>;
 
 /**
@@ -51,11 +44,16 @@ export function webPushSender(vapid: Vapid): SendPush {
   };
 }
 
-/** A push service's refusal, by its HTTP status (404 and 410: gone). */
+/** A push service's refusal, by its HTTP status. */
 export class PushRefused extends Error {
   readonly statusCode: number;
   constructor(statusCode: number) {
     super(`Push service answered ${statusCode}`);
     this.statusCode = statusCode;
+  }
+
+  /** Whether the registration is gone for good (404, 410): drop the device. */
+  get gone(): boolean {
+    return this.statusCode === 404 || this.statusCode === 410;
   }
 }

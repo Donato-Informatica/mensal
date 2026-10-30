@@ -1,10 +1,10 @@
 import { schema, type Database } from "@mensal/database";
-import { currentPeriod, today } from "@mensal/shared";
+import { currentPeriod, monthOf, today } from "@mensal/shared";
 import { trace } from "@opentelemetry/api";
 import { and, eq, exists, notExists } from "drizzle-orm";
 import { describeError, type Log } from "./log.ts";
 import { readPeriod } from "./operations.ts";
-import { PushRefused } from "./push.ts";
+import { PushRefused, type ReminderMessage } from "./push.ts";
 import type { Reminders } from "./reminder-operations.ts";
 import { reminderMessage } from "./reminder-message.ts";
 
@@ -103,48 +103,11 @@ export async function runReminders({
             .returning({ userId: reminderSends.userId });
           if (claimed.length === 0) continue;
 
-          const payload = await readPeriod(
-            { db, userId, now: () => at, record: () => {} },
-            currentPeriod(at).slice(0, 7)
-          );
-          const message = reminderMessage(
-            payload.items.filter(
-              (item) => item.status === "PENDING" && item.dueDate === date
-            ),
-            [
-              ...payload.overdueFromPreviousPeriods,
-              ...payload.items.filter((item) => item.overdue),
-            ]
-          );
+          const message = await todaysMessage(db, userId, at);
           if (!message) continue;
 
           counts.reminded++;
-          const devices = await db
-            .select()
-            .from(reminderDevices)
-            .where(eq(reminderDevices.userId, userId));
-          for (const { id, endpoint, p256dh, auth } of devices) {
-            try {
-              await reminders.push(
-                { endpoint, keys: { p256dh, auth } },
-                message
-              );
-              counts.sent++;
-            } catch (error) {
-              if (
-                error instanceof PushRefused &&
-                (error.statusCode === 404 || error.statusCode === 410)
-              ) {
-                await db
-                  .delete(reminderDevices)
-                  .where(eq(reminderDevices.id, id));
-                counts.dropped++;
-              } else {
-                log(`Reminder push failed: ${describeError(error)}`);
-                counts.failed++;
-              }
-            }
-          }
+          await sendToDevices({ db, reminders, log }, userId, message, counts);
         }
       } finally {
         span.setAttributes({
@@ -159,6 +122,69 @@ export async function runReminders({
         );
       }
     });
+}
+
+/** How a run's devices fared: sent to, failed, and dropped as gone. */
+interface DeviceCounts {
+  sent: number;
+  failed: number;
+  dropped: number;
+}
+
+/**
+ * The user's reminder for `at`'s day, from the current period as the monthly
+ * screen shows it, or null when nothing is due today or overdue.
+ */
+async function todaysMessage(
+  db: Database,
+  userId: string,
+  at: Date
+): Promise<ReminderMessage | null> {
+  const date = today(at);
+  const payload = await readPeriod(
+    { db, userId, now: () => at, record: () => {} },
+    monthOf(currentPeriod(at))
+  );
+  return reminderMessage(
+    payload.items.filter(
+      (item) => item.status === "PENDING" && item.dueDate === date
+    ),
+    [
+      ...payload.overdueFromPreviousPeriods,
+      ...payload.items.filter((item) => item.overdue),
+    ]
+  );
+}
+
+/**
+ * Sends `message` to each of the user's devices, counting each outcome. A
+ * device whose push service says it is gone is deleted; any other failure is
+ * logged, and the device kept.
+ */
+async function sendToDevices(
+  { db, reminders, log }: { db: Database; reminders: Reminders; log: Log },
+  userId: string,
+  message: ReminderMessage,
+  counts: DeviceCounts
+): Promise<void> {
+  const devices = await db
+    .select()
+    .from(reminderDevices)
+    .where(eq(reminderDevices.userId, userId));
+  for (const { id, endpoint, p256dh, auth } of devices) {
+    try {
+      await reminders.push({ endpoint, keys: { p256dh, auth } }, message);
+      counts.sent++;
+    } catch (error) {
+      if (error instanceof PushRefused && error.gone) {
+        await db.delete(reminderDevices).where(eq(reminderDevices.id, id));
+        counts.dropped++;
+      } else {
+        log(`Reminder send failed: ${describeError(error)}`);
+        counts.failed++;
+      }
+    }
+  }
 }
 
 const hourFormat = new Intl.DateTimeFormat("en-US", {
