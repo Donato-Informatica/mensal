@@ -1,9 +1,10 @@
 /// <reference lib="webworker" />
 // The service worker (PRD §7.16, §8.4, ADR-0006): installable, online only.
 // It precaches the built shell and nothing else, answers navigations to
-// client routes with index.html, and shows reminders (ADR-0009). Built by vite-plugin-pwa (injectManifest)
-// into sw.js; only the production build registers it. Type-checked on its own
-// (tsconfig.sw.json), with the WebWorker lib instead of the DOM's.
+// client routes with index.html, and shows reminders (ADR-0009). Built by
+// vite-plugin-pwa (injectManifest) into sw.js; only the production build
+// registers it. Type-checked on its own (tsconfig.sw.json), with the
+// WebWorker lib instead of the DOM's.
 import { clientsClaim } from "workbox-core";
 import {
   cleanupOutdatedCaches,

@@ -547,7 +547,7 @@ Every attribute, log body and span name the API, the browser or the Collector se
 - **Traces, API:** Node SDK auto-instrumentation of HTTP, Express and `pg`, loaded with `--import` before the app (in development and production, never in tests). MCP calls are traced like any other request.
 - **Traces, browser:** the OpenTelemetry web SDK traces document load and `fetch` calls to `/api`, propagating W3C `traceparent` so a browser span and its API span form one trace. No click or route-change spans.
 - **Logs:** the activity log (§8.7.1) at INFO, its fields as log attributes (`action`, `kind`, `id`, `via`, …), never a JSON string in the body. The free-text operator log (errors, healthcheck, email failures) at ERROR for failures and INFO otherwise. Browser errors (`error`, `unhandledrejection`) at ERROR. Every API log record carries the active `trace_id` and `span_id`. Everything still reaches stdout as before.
-- **The reminder job** (§6.8): one span per run, with one INFO log line of counts only: users reminded, devices sent to, failed and dropped. No user ids.
+- **The reminder job** (§6.8): one span per run that finds users to handle, with one INFO log line of counts only: users reminded, devices sent to, failed and dropped. No user ids. A run that finds nobody to handle, as most runs of the day do, emits no span and no line.
 - **Never exported:** the email text printed to the log while Resend is not configured (§8.2), since it holds reset links. It stays on stdout only.
 - **Sampling:** 100%. Spans for `GET /api/health`, static assets and `/otlp` itself are dropped.
 - **Resource:** `service.name` is `mensal-api` or `mensal-web`. `deployment.environment` is `production`, `pr-<n>` for previews, or `local`.
