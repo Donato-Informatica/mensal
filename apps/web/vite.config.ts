@@ -2,7 +2,6 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { canvas } from "./src/canvas.ts";
-import { notAnsweredByShell } from "./src/pwa-navigation.ts";
 
 export default defineConfig({
   plugins: [
@@ -23,10 +22,13 @@ export default defineConfig({
       },
     },
     // Installable, online only (PRD §7.16, ADR-0006): the service worker
-    // precaches the built shell and nothing else. Only the production build
-    // registers it (registerSW.js in index.html); dev and the web tests never do.
+    // (src/sw.ts, built into sw.js) precaches the built shell and nothing
+    // else. Only the production build registers it (registerSW.js in
+    // index.html); dev and the web tests never do.
     VitePWA({
-      strategies: "generateSW",
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
       injectRegister: "script",
       devOptions: { enabled: false },
       // The globPatterns below already precache the icons.
@@ -52,19 +54,8 @@ export default defineConfig({
           },
         ],
       },
-      workbox: {
+      injectManifest: {
         globPatterns: ["**/*.{js,css,html,woff2,png,svg}"],
-        navigateFallback: "/index.html",
-        // /api and the guide (/guia) are never cached nor answered by the
-        // shell: a navigation to /api/docs or /guia/ goes to the network
-        // (and fails offline).
-        navigateFallbackDenylist: notAnsweredByShell,
-        runtimeCaching: [],
-        // A new version takes over at once, with no prompt and no reload:
-        // open tabs keep their shell, the next open gets the new one.
-        skipWaiting: true,
-        clientsClaim: true,
-        cleanupOutdatedCaches: true,
       },
     }),
   ],

@@ -50,6 +50,20 @@
       "when": 1793166533579,
       "tag": "0006_calendar_links",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793307812735,
+      "tag": "0007_reminder_devices",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793309893715,
+      "tag": "0008_reminder_sends",
+      "breakpoints": true
     }
   ]
 }

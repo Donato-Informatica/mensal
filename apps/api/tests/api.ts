@@ -7,6 +7,7 @@ import { createApp } from "../src/app.ts";
 import { createAuth } from "../src/auth.ts";
 import type { SendEmail } from "../src/email.ts";
 import type { Log } from "../src/log.ts";
+import type { Reminders } from "../src/reminder-operations.ts";
 import { testDatabaseUrl } from "./database.ts";
 
 export interface TestApi {
@@ -22,8 +23,15 @@ export async function startApi({
   activity = () => {},
   rateLimit = false,
   email,
+  reminders = { publicKey: "BTestVapidPublicKey", push: async () => {} },
 }: {
   now?: () => Date;
+  /**
+   * Reminders' public key and push sink (PRD §6.8): on, sending nowhere, by
+   * default; null turns them off, as on a server without VAPID keys. Nothing
+   * ever calls a real push service in tests.
+   */
+  reminders?: Reminders | null;
   /** Where the API's own log lines go, instead of the console. */
   log?: Log;
   /** Where emails go: the log, as without Resend, by default. */
@@ -62,6 +70,7 @@ export async function startApi({
       activity,
       ...(now && { now }),
       ...(log && { log }),
+      ...(reminders && { reminders }),
     })
   );
   return {

@@ -1,6 +1,7 @@
 import { Avatar, Loader, Menu, Text, UnstyledButton } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
+  IconBell,
   IconBook,
   IconCalendar,
   IconDownload,
@@ -20,6 +21,7 @@ import { ChangePasswordModal } from "./change-password.tsx";
 import { DeleteAccountModal } from "./delete-account.tsx";
 import { DataDownloadFailure, useDataDownload } from "./download-data.tsx";
 import { guideHref } from "./guide-link.tsx";
+import { RemindersModal } from "./reminders.tsx";
 import { useSession } from "./session.ts";
 import { SettingsModal } from "./settings.tsx";
 import { SignOutModal } from "./sign-out-button.tsx";
@@ -27,7 +29,7 @@ import { SignOutModal } from "./sign-out-button.tsx";
 /**
  * The header's account menu: an avatar with the user icon, which opens their name and
  * email over Configurações, Alterar nome, Alterar senha, Tokens de acesso,
- * Link do calendário, Baixar meus dados, Guia, Sair and, last, Excluir conta. Each item opens its
+ * Lembretes, Link do calendário, Baixar meus dados, Guia, Sair and, last, Excluir conta. Each item opens its
  * modal, but Baixar meus dados, which keeps the menu open with a loader until
  * the archive arrives, and Guia, a plain link to the static guide (PRD §7.17).
  */
@@ -39,6 +41,7 @@ export function AccountMenu() {
   const [rename, renameHandlers] = useDisclosure(false);
   const [password, passwordHandlers] = useDisclosure(false);
   const [tokens, tokensHandlers] = useDisclosure(false);
+  const [reminders, remindersHandlers] = useDisclosure(false);
   const [calendar, calendarHandlers] = useDisclosure(false);
   const [signOut, signOutHandlers] = useDisclosure(false);
   const [deleting, deletingHandlers] = useDisclosure(false);
@@ -106,6 +109,12 @@ export function AccountMenu() {
             Tokens de acesso
           </Menu.Item>
           <Menu.Item
+            leftSection={<IconBell size={18} aria-hidden="true" />}
+            onClick={remindersHandlers.open}
+          >
+            Lembretes
+          </Menu.Item>
+          <Menu.Item
             leftSection={<IconCalendar size={18} aria-hidden="true" />}
             onClick={calendarHandlers.open}
           >
@@ -153,6 +162,7 @@ export function AccountMenu() {
       <ChangeNameModal opened={rename} onClose={renameHandlers.close} />
       <ChangePasswordModal opened={password} onClose={passwordHandlers.close} />
       <AccessTokensModal opened={tokens} onClose={tokensHandlers.close} />
+      <RemindersModal opened={reminders} onClose={remindersHandlers.close} />
       <CalendarLinkModal opened={calendar} onClose={calendarHandlers.close} />
       <SignOutModal opened={signOut} onClose={signOutHandlers.close} />
       <DeleteAccountModal opened={deleting} onClose={deletingHandlers.close} />

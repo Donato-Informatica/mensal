@@ -19,6 +19,8 @@ import {
   parseVirtualId,
   RecurrenceEditSchema,
   RecurrenceListQuerySchema,
+  ReminderDeviceSchema,
+  ReminderEndpointSchema,
   periodOfMonth,
   resolvePeriod,
   StatusChangeSchema,
@@ -32,6 +34,9 @@ import {
 } from "@mensal/shared";
 
 import type { Preference, Preferences } from "../src/session.ts";
+
+/** The fake server's VAPID public key, base64url as the API gives it (32 bytes). */
+export const fakeVapidPublicKey = "BFakeVapidPublicKey_0123456789-abcdefABCDEE";
 
 /** A new account's preferences (PRD §3.5): all on, in the dark theme, as a list. */
 const defaultPreferences: Preferences = {
@@ -523,6 +528,84 @@ export function fakeApi() {
     return new Response(null, { status: 204 });
   }
 
+  /** The server's VAPID public key, or null when reminders are off (PRD §8.4). */
+  let reminderPublicKey: string | null = fakeVapidPublicKey;
+  /** Each reminder device, by endpoint, to the id of the account it is on. */
+  const reminderDevices = new Map<string, string>();
+  /** Every endpoint sent the confirmation, oldest first. */
+  const confirmations: string[] = [];
+  /** Whether every `/api/v1/reminders` route answers 500. */
+  let remindersDown = false;
+
+  function deviceCountOf(account: Account): number {
+    return [...reminderDevices.values()].filter((id) => id === account.id)
+      .length;
+  }
+
+  /** GET /api/v1/reminders, behind the approval gate (PRD §6.8). */
+  function getReminders(): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    return json(200, {
+      publicKey: reminderPublicKey,
+      deviceCount: deviceCountOf(signedIn),
+    });
+  }
+
+  /**
+   * PUT /api/v1/reminders/device: takes the endpoint over, and confirms it
+   * when it is new to the user.
+   */
+  function putReminderDevice(body: unknown): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const input = ReminderDeviceSchema.safeParse(body);
+    if (!input.success) return json(400, { code: "INVALID_INPUT" });
+    if (!reminderPublicKey) return json(409, { code: "REMINDERS_UNAVAILABLE" });
+    const { endpoint } = input.data;
+    if (reminderDevices.get(endpoint) !== signedIn.id) {
+      reminderDevices.set(endpoint, signedIn.id);
+      confirmations.push(endpoint);
+    }
+    return json(200, { deviceCount: deviceCountOf(signedIn) });
+  }
+
+  /** POST /api/v1/reminders/device/check: drops another user's registration. */
+  function checkReminderDevice(body: unknown): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const input = ReminderEndpointSchema.safeParse(body);
+    if (!input.success) return json(400, { code: "INVALID_INPUT" });
+    const owner = reminderDevices.get(input.data.endpoint);
+    if (owner === signedIn.id) return json(200, { mine: true });
+    reminderDevices.delete(input.data.endpoint);
+    return json(200, { mine: false });
+  }
+
+  /** DELETE /api/v1/reminders/device: only the user's own; done also when none. */
+  function deleteReminderDevice(body: unknown): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    const input = ReminderEndpointSchema.safeParse(body);
+    if (!input.success) return json(400, { code: "INVALID_INPUT" });
+    if (reminderDevices.get(input.data.endpoint) === signedIn.id)
+      reminderDevices.delete(input.data.endpoint);
+    return new Response(null, { status: 204 });
+  }
+
+  /** DELETE /api/v1/reminders: every device of the user. */
+  function deleteAllReminderDevices(): Response {
+    if (!signedIn) return json(401, { code: "UNAUTHENTICATED" });
+    if (!signedIn.approved) return json(403, { code: "USER_NOT_APPROVED" });
+    deleteRemindersOf(signedIn);
+    return new Response(null, { status: 204 });
+  }
+
+  function deleteRemindersOf(account: Account) {
+    for (const [endpoint, id] of reminderDevices)
+      if (id === account.id) reminderDevices.delete(endpoint);
+  }
+
   const passwordChanges: {
     revokeOtherSessions: boolean;
     revokeAccessTokens: boolean;
@@ -637,6 +720,7 @@ export function fakeApi() {
       signedIn.occurrences = [];
       accessTokens.delete(signedIn.id);
       calendarLinks.delete(signedIn.id);
+      deleteRemindersOf(signedIn);
       signedIn = undefined;
       return json(200, { success: true, message: "User deleted" });
     },
@@ -659,6 +743,9 @@ export function fakeApi() {
       if (down) return serverError();
       const request = new Request(input, init);
       const { pathname, searchParams } = new URL(request.url);
+      if (remindersDown && pathname.startsWith("/api/v1/reminders")) {
+        return serverError();
+      }
       if (request.method === "GET" && pathname === "/api/v1/recurrences") {
         return getRecurrences(searchParams);
       }
@@ -686,6 +773,24 @@ export function fakeApi() {
         if (request.method === "POST") {
           return postCalendarLink(await request.json().catch(() => ({})));
         }
+      }
+      if (pathname === "/api/v1/reminders") {
+        if (request.method === "GET") return getReminders();
+        if (request.method === "DELETE") return deleteAllReminderDevices();
+      }
+      if (pathname === "/api/v1/reminders/device") {
+        if (request.method === "PUT") {
+          return putReminderDevice(await request.json().catch(() => ({})));
+        }
+        if (request.method === "DELETE") {
+          return deleteReminderDevice(await request.json().catch(() => ({})));
+        }
+      }
+      if (
+        request.method === "POST" &&
+        pathname === "/api/v1/reminders/device/check"
+      ) {
+        return checkReminderDevice(await request.json().catch(() => ({})));
       }
       const accessTokenMatch = /^\/api\/v1\/access-tokens\/([^/]+)$/.exec(
         pathname
@@ -825,6 +930,34 @@ export function fakeApi() {
     calendarLinkOf(email: string): CalendarLink | undefined {
       const account = accounts.get(email);
       return account && calendarLinks.get(account.id);
+    },
+
+    /** Turns reminders off on this server, as without VAPID keys (PRD §8.4). */
+    disableReminders() {
+      reminderPublicKey = null;
+    },
+
+    /** Makes the reminders routes, and only them, fail with 500. */
+    breakReminders() {
+      remindersDown = true;
+    },
+
+    /** Seeds a reminder device for the account, as if turned on before. */
+    addReminderDevice(email: string, endpoint: string) {
+      reminderDevices.set(endpoint, accounts.get(email)!.id);
+    },
+
+    /** The endpoints of the account's reminder devices, as the database holds them. */
+    reminderDevicesOf(email: string): string[] {
+      const account = accounts.get(email);
+      return [...reminderDevices]
+        .filter(([, id]) => id === account?.id)
+        .map(([endpoint]) => endpoint);
+    },
+
+    /** Every endpoint sent the confirmation push, oldest first. */
+    confirmationsSent(): readonly string[] {
+      return confirmations;
     },
 
     /** Seeds a recurrence for the account, as through Drizzle Studio. */

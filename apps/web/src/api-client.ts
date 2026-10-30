@@ -15,6 +15,10 @@ import {
   type Recurrence,
   type RecurrenceEdit,
   type RecurrenceListQuery,
+  type ReminderDevice,
+  type ReminderDeviceCheckResult,
+  type ReminderDeviceCount,
+  type RemindersPayload,
   type StatusChange,
   type SummariesPayload,
 } from "@mensal/shared";
@@ -52,7 +56,7 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
   }
 
   function sendJson<T>(
-    method: "POST" | "PATCH",
+    method: "POST" | "PUT" | "PATCH" | "DELETE",
     path: string,
     body: unknown
   ): Promise<T> {
@@ -87,6 +91,30 @@ export function createApiClient(fetchImpl: typeof fetch = fetch) {
     /** Deactivates the calendar link; done also when there is none. */
     revokeCalendarLink: () =>
       send<void>("/calendar-link", { method: "DELETE" }),
+
+    /** The server's VAPID public key, or null, and the user's device count (PRD §6.8). */
+    reminders: () => send<RemindersPayload>("/reminders"),
+
+    /** Turns reminders on for this browser's push registration. */
+    turnRemindersOn: (device: ReminderDevice) =>
+      sendJson<ReminderDeviceCount>("PUT", "/reminders/device", device),
+
+    /**
+     * Whether this browser's endpoint is the user's; the server drops another
+     * user's registration of it. The endpoint travels in the body, never the URL.
+     */
+    checkReminderDevice: (endpoint: string) =>
+      sendJson<ReminderDeviceCheckResult>("POST", "/reminders/device/check", {
+        endpoint,
+      }),
+
+    /** Turns reminders off for this browser's endpoint; done also when it had none. */
+    turnReminderDeviceOff: (endpoint: string) =>
+      sendJson<void>("DELETE", "/reminders/device", { endpoint }),
+
+    /** Turns reminders off on every device of the user. */
+    turnRemindersOffEverywhere: () =>
+      send<void>("/reminders", { method: "DELETE" }),
 
     /**
      * The archive of everything the user entered (PRD §6.5), with the file

@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { chooseFromAccountMenu } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
+import { fakePush } from "./fake-push.ts";
 import { openApp } from "./open-app.tsx";
 
 // Links from the app to the static guide (PRD §7.17). The guide is not part of
@@ -100,6 +101,18 @@ describe("links to the guide", () => {
         name: "Como conectar um agente",
       });
       expect(link).toHaveAttribute("href", guideHref("mcp"));
+    });
+
+    it("from Lembretes, with the rule, to the reminders section", async () => {
+      fakePush();
+      const user = userEvent.setup();
+      await chooseFromAccountMenu("Lembretes", user);
+      const dialog = await screen.findByRole("dialog", { name: "Lembretes" });
+
+      const link = await within(dialog).findByRole("link", {
+        name: "Como funcionam os lembretes",
+      });
+      expect(link).toHaveAttribute("href", guideHref("lembretes"));
     });
 
     it("from Link do calendário, below the caveats, to the calendar section", async () => {

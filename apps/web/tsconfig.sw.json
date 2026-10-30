@@ -1,0 +1,12 @@
+{
+  // The service worker (src/sw.ts): a worker, not a page, so the WebWorker
+  // lib instead of the DOM's. tsconfig.json leaves it out.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "lib": ["esnext", "webworker"],
+    "types": ["vite/client"]
+  },
+  "files": ["src/sw.ts"]
+}

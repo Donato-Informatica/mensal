@@ -143,11 +143,54 @@ describe("telemetry privacy and identity", () => {
     });
     await client.close();
 
+    // Turning reminders on for a device, by its capability URL and keys.
+    const pushDevice = {
+      endpoint: "https://push.example/send/SentinelEndpointRTY",
+      keys: { p256dh: "SentinelP256dhFGH", auth: "SentinelAuthVBN" },
+    };
+    const turnedOn = await request(api, "/api/v1/reminders/device", {
+      cookie,
+      method: "PUT",
+      body: pushDevice,
+    });
+    expect(turnedOn.status).toBe(200);
+    await request(api, "/api/v1/reminders/device/check", {
+      cookie,
+      body: { endpoint: pushDevice.endpoint },
+    });
+
+    // A run of the daily job on the day the MCP one-off is due, reminding the
+    // device of it by description.
+    const { runReminders } = await import("../src/reminder-job.ts");
+    const reminded: string[] = [];
+    await runReminders({
+      db: api.db,
+      reminders: {
+        publicKey: "BTestVapidPublicKey",
+        push: async (device, message) => {
+          if (device.endpoint === pushDevice.endpoint)
+            reminded.push(message.title);
+        },
+      },
+      now: () => new Date("2026-10-20T09:00:00-03:00"),
+      log: exportedLog(() => {}),
+      info: exportedLog(() => {}, "INFO"),
+    });
+    expect(reminded).toEqual(["Vence hoje: Sentinel mcp PLM"]);
+    await request(api, "/api/v1/reminders/device", {
+      cookie,
+      method: "DELETE",
+      body: { endpoint: pushDevice.endpoint },
+    });
+
     const spans = exporter.getFinishedSpans();
     const records = logExporter.getFinishedLogRecords();
     // The flows above did produce activity records.
     expect(
       records.some((r) => r.attributes.action === "occurrence.create")
+    ).toBe(true);
+    expect(
+      records.some((r) => r.attributes.action === "user.reminders-on")
     ).toBe(true);
     const exported = JSON.stringify([
       spans.map(({ name, attributes, events, resource, links }) => ({
@@ -174,8 +217,33 @@ describe("telemetry privacy and identity", () => {
       "Test User",
       token,
       password,
+      "SentinelEndpointRTY",
+      pushDevice.keys.p256dh,
+      pushDevice.keys.auth,
+      "Lembretes ativados",
+      "Vence hoje",
     ];
     for (const value of forbidden) expect(exported).not.toContain(value);
+
+    // The run left one span, its database queries under it, and one INFO
+    // line of counts.
+    const runs = spans.filter((s) => s.name === "reminders.run");
+    expect(runs).toHaveLength(1);
+    expect(
+      spans.some(
+        (s) => s.parentSpanContext?.spanId === runs[0]!.spanContext().spanId
+      )
+    ).toBe(true);
+    expect(
+      records.filter((r) => String(r.body).startsWith("Reminders: "))
+    ).toEqual([
+      expect.objectContaining({
+        severityText: "INFO",
+        body: expect.stringMatching(
+          /^Reminders: \d+ users reminded, \d+ devices sent, \d+ failed, \d+ dropped$/
+        ),
+      }),
+    ]);
 
     // The spans exist at all: HTTP, Express and pg.
     const scopes = new Set(spans.map((s) => s.instrumentationScope.name));

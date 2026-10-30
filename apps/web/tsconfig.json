@@ -8,5 +8,7 @@
     "lib": ["esnext", "dom", "dom.iterable"],
     "types": ["vite/client"]
   },
-  "include": ["**/*.ts", "**/*.tsx"]
+  "include": ["**/*.ts", "**/*.tsx"],
+  // A worker, type-checked by tsconfig.sw.json.
+  "exclude": ["src/sw.ts", "node_modules"]
 }

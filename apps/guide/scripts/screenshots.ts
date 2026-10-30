@@ -100,6 +100,7 @@ async function take(
     theme = "dark",
     view = "list",
     signedOut = false,
+    init,
     steps,
   }: Capture,
   storageState: StorageState
@@ -114,6 +115,7 @@ async function take(
   });
   try {
     const page = await context.newPage();
+    await init?.(page);
     // Every token the app creates during the steps, and every calendar link
     // key it shows, to keep off the capture.
     const tokens: RealToken[] = [];

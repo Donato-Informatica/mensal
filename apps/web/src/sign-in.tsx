@@ -7,21 +7,29 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
-import { Link, useLocation } from "@tanstack/react-router";
+import {
+  Link,
+  rootRouteId,
+  useLocation,
+  useRouteContext,
+} from "@tanstack/react-router";
 import { errorMessage } from "./api-error.ts";
 import { CardScreen } from "./card-screen.tsx";
 import { GuideLink } from "./guide-link.tsx";
 import { useSessionChange } from "./session.ts";
+import { checkThisDevice } from "./session-reminders.ts";
 
 export function SignIn() {
-  const signIn = useSessionChange(
-    (authClient, form: FormData) =>
-      authClient.signIn.email({
-        email: String(form.get("email")),
-        password: String(form.get("password")),
-      }),
-    "/"
-  );
+  const { api } = useRouteContext({ from: rootRouteId });
+  const signIn = useSessionChange(async (authClient, form: FormData) => {
+    const result = await authClient.signIn.email({
+      email: String(form.get("email")),
+      password: String(form.get("password")),
+    });
+    // A shared browser never shows the previous user's reminders (PRD §8.2).
+    if (!result.error) await checkThisDevice(api);
+    return result;
+  }, "/");
   // Where a deleted account's user lands (PRD §7.15).
   const accountDeleted = useLocation({
     select: (location) => location.state.accountDeleted === true,

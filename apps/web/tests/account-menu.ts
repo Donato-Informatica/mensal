@@ -9,6 +9,7 @@ export async function chooseFromAccountMenu(
     | "Alterar nome"
     | "Alterar senha"
     | "Tokens de acesso"
+    | "Lembretes"
     | "Link do calendário"
     | "Baixar meus dados"
     | "Sair"

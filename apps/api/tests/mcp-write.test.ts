@@ -390,8 +390,9 @@ describe("the write tools", () => {
 
 describe("the coverage guard", () => {
   /**
-   * Operations on /api/v1, /me, the access tokens, the calendar link and the
-   * data download apart (PRD §6.6, §8.9), without a tool.
+   * Operations on /api/v1, /me, the access tokens, the calendar link,
+   * reminders and the data download apart (PRD §6.6, §6.8, §8.9), without a
+   * tool.
    */
   function uncovered(app: ReturnType<typeof createApp>) {
     const spec = buildOpenApiSpec();
@@ -403,7 +404,7 @@ describe("the coverage guard", () => {
     return operations.filter(
       (operation) =>
         / \/api\/v1\//.test(operation) &&
-        !/ \/api\/v1\/(me|access-tokens|calendar-link|data)\b/.test(
+        !/ \/api\/v1\/(me|access-tokens|calendar-link|reminders|data)\b/.test(
           operation
         ) &&
         !covered.has(operation)

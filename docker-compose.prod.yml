@@ -44,6 +44,13 @@ services:
       # emails to the container log (ADR-0003). One without the other fails boot.
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
+      # Reminders (PRD §6.8, §8.4): set all three in Coolify, or none to turn
+      # them off. Some without the others fails boot. Generated once and kept:
+      # new keys silently invalidate every device. Left unset in Preview
+      # Deployments. No `:-default`, same reason as SEED_DEMO_DATA.
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      VAPID_SUBJECT: ${VAPID_SUBJECT}
       # Demo data on boot. Set to true ONLY in Coolify's Preview Deployments
       # environment, never in production's. No `:-default`: Coolify bakes a
       # default into each preview's generated compose using production's

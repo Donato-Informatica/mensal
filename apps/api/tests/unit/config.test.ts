@@ -108,6 +108,35 @@ describe("readConfig", () => {
     });
   });
 
+  describe("reminders", () => {
+    const vapid = {
+      VAPID_PUBLIC_KEY: "BPublicKey",
+      VAPID_PRIVATE_KEY: "privateKey",
+      VAPID_SUBJECT: "mailto:admin@mensal.example",
+    };
+
+    it("are on when the three VAPID variables are set", () => {
+      expect(readConfig({ ...development, ...vapid }).vapid).toEqual({
+        publicKey: "BPublicKey",
+        privateKey: "privateKey",
+        subject: "mailto:admin@mensal.example",
+      });
+    });
+
+    it("are off when none is set", () => {
+      expect(readConfig(development).vapid).toBeUndefined();
+    });
+
+    it("refuse to boot with only some set", () => {
+      expect(() =>
+        readConfig({ ...development, ...vapid, VAPID_PRIVATE_KEY: "" })
+      ).toThrow("VAPID_PRIVATE_KEY is not set");
+      expect(() =>
+        readConfig({ ...development, VAPID_SUBJECT: vapid.VAPID_SUBJECT })
+      ).toThrow("VAPID_PUBLIC_KEY is not set");
+    });
+  });
+
   it("lets development and test use the .env.example secret and plain http", () => {
     for (const NODE_ENV of [undefined, "development", "test"])
       expect(() => readConfig({ ...development, NODE_ENV })).not.toThrow();

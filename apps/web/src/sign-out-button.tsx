@@ -7,9 +7,11 @@ import {
   type ButtonProps,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { rootRouteId, useRouteContext } from "@tanstack/react-router";
 import { errorMessage } from "./api-error.ts";
 import { DialogActions } from "./dialog-actions.tsx";
 import { useSessionChange } from "./session.ts";
+import { forgetThisDevice } from "./session-reminders.ts";
 
 /** Signs out once confirmed. */
 export function SignOutButton(props: ButtonProps) {
@@ -46,10 +48,12 @@ export function SignOutModal({
 }
 
 function ConfirmSignOut({ onCancel }: { onCancel: () => void }) {
-  const signOut = useSessionChange(
-    (authClient) => authClient.signOut(),
-    "/entrar"
-  );
+  const { api } = useRouteContext({ from: rootRouteId });
+  const signOut = useSessionChange(async (authClient) => {
+    // Reminders outlive the session, but not a sign-out (PRD §8.2).
+    await forgetThisDevice(api);
+    return authClient.signOut();
+  }, "/entrar");
 
   return (
     <Stack gap="md">

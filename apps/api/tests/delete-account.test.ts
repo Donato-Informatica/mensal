@@ -91,7 +91,7 @@ describe("deleting the account (PRD §5.13, ADR-0005)", () => {
 
   /**
    * An approved user with a second device, an access token, a calendar link,
-   * a recurrence with a persisted occurrence of its own, and a one-off.
+   * reminders on for one device, a recurrence with a persisted occurrence of its own, and a one-off.
    */
   async function userWithEverything() {
     const user = await signUp(api);
@@ -109,6 +109,15 @@ describe("deleting the account (PRD §5.13, ADR-0005)", () => {
     });
     expect(generated.status).toBe(201);
     const calendarLink: string = (await generated.json()).link.url;
+    const turnedOn = await request(api, "/api/v1/reminders/device", {
+      cookie: user.cookie,
+      method: "PUT",
+      body: {
+        endpoint: `https://push.example/send/${user.userId}`,
+        keys: { p256dh: "p256dh", auth: "auth" },
+      },
+    });
+    expect(turnedOn.status).toBe(200);
     const recurrence = await insertRecurrence(api.db, { userId: user.userId });
     await insertOccurrence(api.db, {
       userId: user.userId,
@@ -128,7 +137,8 @@ describe("deleting the account (PRD §5.13, ADR-0005)", () => {
          (SELECT count(*)::int FROM recurrences WHERE user_id = $1) AS recurrences,
          (SELECT count(*)::int FROM occurrences WHERE user_id = $1) AS occurrences,
          (SELECT count(*)::int FROM apikeys WHERE reference_id = $1) AS apikeys,
-         (SELECT count(*)::int FROM calendar_links WHERE user_id = $1) AS "calendarLinks"`,
+         (SELECT count(*)::int FROM calendar_links WHERE user_id = $1) AS "calendarLinks",
+         (SELECT count(*)::int FROM reminder_devices WHERE user_id = $1) AS "reminderDevices"`,
       [userId]
     );
     return rows[0];
@@ -150,6 +160,7 @@ describe("deleting the account (PRD §5.13, ADR-0005)", () => {
       occurrences: 0,
       apikeys: 0,
       calendarLinks: 0,
+      reminderDevices: 0,
     });
     expect(await rowsOf(staying.userId)).toEqual(before);
     expect(before).toEqual({
@@ -160,6 +171,7 @@ describe("deleting the account (PRD §5.13, ADR-0005)", () => {
       occurrences: 2,
       apikeys: 1,
       calendarLinks: 1,
+      reminderDevices: 1,
     });
   });
 

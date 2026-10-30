@@ -44,7 +44,8 @@ export interface OperationContext {
 
 const { occurrences, recurrences } = schema;
 
-type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+/** A transaction opened on the database, as `db.transaction` hands it. */
+export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 type PersistedOccurrence = typeof occurrences.$inferSelect;
 

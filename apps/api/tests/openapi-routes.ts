@@ -8,7 +8,8 @@ interface Layer {
 }
 
 /** An operation the app serves, e.g. `GET /api/v1/recurrences/{id}`. */
-export type Operation = `${"GET" | "POST" | "PATCH" | "DELETE"} ${string}`;
+export type Operation =
+  `${"GET" | "POST" | "PUT" | "PATCH" | "DELETE"} ${string}`;
 
 /**
  * Every operation mounted on the app, found by walking its router stack.
