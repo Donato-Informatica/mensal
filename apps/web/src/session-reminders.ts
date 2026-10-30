@@ -1,4 +1,5 @@
 import type { ApiClient } from "./api-client.ts";
+import { ApiError } from "./api-error.ts";
 import { currentPushRegistration, pushSupported } from "./browser-push.ts";
 
 /**
@@ -22,7 +23,9 @@ export async function forgetThisDevice(api: ApiClient): Promise<void> {
 /**
  * After signing in: checks the browser's registration (`POST /device/check`)
  * and drops one the server says belongs to someone else; the user's own is
- * bound to the new session by the server.
+ * bound to the new session by the server. An unapproved user cannot have
+ * reminders, so the server refuses the check and the registration is dropped
+ * too, as on sign-out: its endpoint dies and the daily job drops the device.
  */
 export async function checkThisDevice(api: ApiClient): Promise<void> {
   const registration = await thisRegistration();
@@ -30,8 +33,10 @@ export async function checkThisDevice(api: ApiClient): Promise<void> {
   try {
     const { mine } = await api.checkReminderDevice(registration.endpoint);
     if (!mine) await registration.unsubscribe();
-  } catch {
-    // Checked again whenever the Lembretes screen opens.
+  } catch (error) {
+    if (error instanceof ApiError && error.code === "USER_NOT_APPROVED")
+      await registration.unsubscribe().catch(() => false);
+    // Otherwise checked again whenever the Lembretes screen opens.
   }
 }
 

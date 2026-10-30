@@ -119,6 +119,24 @@ describe("signing in", () => {
     expect(api.reminderDevicesOf(bruno)).toEqual([]);
   });
 
+  it("drops the browser's registration when an unapproved user signs in", async () => {
+    api.addAccount({
+      name: "Bia",
+      email: "bia@example.com",
+      password: "correct-horse",
+    });
+    const push = fakePush({ permission: "granted", subscribed: endpoint });
+    api.addReminderDevice(bruno, endpoint);
+    openApp(api, "/entrar");
+
+    await signIn("bia@example.com");
+
+    expect(
+      await screen.findByRole("heading", { name: "Aguardando aprovação" })
+    ).toBeInTheDocument();
+    await waitFor(() => expect(push.subscription()).toBeNull());
+  });
+
   it("keeps the user's own reminders on this browser", async () => {
     const push = fakePush({ permission: "granted", subscribed: endpoint });
     api.addReminderDevice(ana, endpoint);
