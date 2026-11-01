@@ -5,6 +5,7 @@ import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { trace } from "@opentelemetry/api";
 import { InMemoryLogRecordExporter } from "@opentelemetry/sdk-logs";
 import { InMemorySpanExporter } from "@opentelemetry/sdk-trace";
+import { currentPeriod } from "@mensal/shared";
 import {
   afterAll,
   beforeAll,
@@ -99,7 +100,7 @@ describe("telemetry privacy and identity", () => {
         description: secrets.recurrence,
         defaultAmount: secrets.recurrenceAmount,
         dueDay: 10,
-        startPeriod: "2026-10-01",
+        startPeriod: currentPeriod(),
         endPeriod: null,
         notes: null,
       },
