@@ -224,7 +224,7 @@ Only when $P$ is the current period, the payload also lists every overdue occurr
    $$\text{overdue} = (\text{status} = \text{PENDING}) \land (\text{dueDate} \neq \text{null}) \land (\text{dueDate} < \text{today})$$
    - Occurrences without a `dueDate` are never overdue.
    - "Today" is always computed in `America/Sao_Paulo` (shared helper in `@shared`).
-6. **Variable amounts:** when `defaultAmount` is null, the occurrence shows the amount as "to be defined". It can be persisted with a null amount (for example when skipped, or when only the due date changes). It can only be settled after an amount greater than zero is entered.
+6. **Amounts to be defined:** when `defaultAmount` is null, the occurrence shows the amount as "to be defined". It can be persisted with a null amount (for example when skipped, or when only the due date changes). It can only be settled after an amount greater than zero is entered.
 7. **Status transitions:** any transition between `PENDING`, `SETTLED` and `SKIPPED` is allowed, as long as the invariants hold:
    - `SETTLED` requires `amount > 0` (`AMOUNT_REQUIRED_TO_SETTLE`). `settledAt` defaults to today when not given.
    - Leaving `SETTLED` clears `settledAt`.

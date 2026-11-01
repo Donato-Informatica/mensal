@@ -228,7 +228,7 @@ Monochrome on black, with one highlighter and two signal colours that carry mean
 
 ### Signal
 
-- **Inflow Emerald** (`{colors.accent-emerald}`): the amounts of inflows (Entradas) in ledger rows, and success alerts. Outflows stay white; emerald is the only thing that sets money in apart from money out.
+- **Inflow Emerald** (`{colors.accent-emerald}`): the amounts of inflows (Entradas) in ledger rows, skipped ones aside, and success alerts. Outflows stay white; emerald is the only thing that sets money in apart from money out.
 - **Overdue Rose** (`{colors.accent-rose}`): the badge naming an earlier period's overdue row, error alerts, and destructive actions (Excluir). Light variants (tinted surface, rose text) carry alerts and the overdue badge; solid rose is reserved for the confirming destructive button.
 
 ### Neutral
@@ -269,7 +269,7 @@ Every role above has a light counterpart, prefixed `light-`. The page is Paper C
 - **Display** (`{typography.display-sm}`): the screen title, such as "Outubro 2026" in the period navigator, and the auth card titles. It is the largest type in the product: Sobra prevista takes the same step and never exceeds the title.
 - **Figure** (`{typography.figure}`): summary amounts under Previsto and Realizado, in white.
 - **Title** (`{typography.title-sm}`): summary block titles (Entradas, Saídas).
-- **Row title** (`{typography.row-title}`): an occurrence's or recurrence's description, in white, truncated on one line.
+- **Row title** (`{typography.row-title}`): an occurrence's or recurrence's description, in white (Pencil Grey and struck through when skipped), truncated on one line.
 - **Amount** (`{typography.amount}`): the row's amount, never wrapping; emerald for inflows, white for outflows, "A definir" is white on a dashed underline with a pencil, a button that opens the edit dialog on Valor. Every amount carries a direction arrow and a +/− sign, so colour is never the only cue. A skipped occurrence's description and amount are struck through in Pencil Grey, inflows included, and its "A definir" is plain text: struck through, grey means left out of the month, as on the trend's legend.
 - **Body** (`{typography.body-md}`): dialog copy and forms. The entity a dialog acts on is set in white at 600 inside the sentence, e.g. "**Aluguel** será liquidada por R$ 2.200,00."
 - **Small** (`{typography.body-sm}`): due dates, form hints and links on the auth screens, in Pencil Grey.
@@ -321,7 +321,7 @@ Header navigation between "Mês" and "Recorrências". The active tab is filled P
 ### Ledger panel and rows
 
 - **Panel:** Panel Black, a 1px Panel Edge border, 12px corners, rendered as a `ul`.
-- **Row:** settle checkbox, then description (white, 500, truncated) over its due date ("10/10" or "Sem vencimento", Pencil Grey, 14px), then amount, optional badge and a "Mais ações" (⋯) menu on the right. Rows after the first carry a 1px Ruling Line on top. From 576px the amount and badge are fixed columns; a panel holding any badge keeps the badge column, 8rem fixed, in every row, so its amounts line up. On phones the amount sits under the due date and the badge follows it, wrapping beneath when both do not fit.
+- **Row:** settle checkbox, then description (white, 500, truncated; Pencil Grey and struck through when skipped) over its due date ("10/10" or "Sem vencimento", Pencil Grey, 14px), then amount, optional badge and a "Mais ações" (⋯) menu on the right. Rows after the first carry a 1px Ruling Line on top. From 576px the amount and badge are fixed columns; a panel holding any badge keeps the badge column, 8rem fixed, in every row, so its amounts line up. On phones the amount sits under the due date and the badge follows it, wrapping beneath when both do not fit.
 - **Settle checkbox:** 20px, 8px corners. Checked is Highlighter Yellow with a black tick. One click settles. When the amount is still "A definir", a popover asks only for the amount.
 
 ### Summary blocks
@@ -355,7 +355,7 @@ In the header, the 28px logo mark, a 10px (`xs`) gap, then the wordmark. On the 
 ### Do:
 
 - **Do** keep at most one yellow button per view, and give it the act the view exists for.
-- **Do** colour inflow amounts emerald and outflow amounts white. Show "A definir" as a dashed-underlined button when there is no amount, and never let direction rest on colour alone (arrow, sign, hidden Entrada/Saída).
+- **Do** colour inflow amounts emerald and outflow amounts white. Show "A definir" as a dashed-underlined button when there is no amount, and never let direction rest on colour alone (arrow, sign, hidden Entrada/Saída). A skipped occurrence takes neither: its amount and "A definir" are struck through in Pencil Grey.
 - **Do** reserve rose for overdue, errors and destructive actions, using its light variant except on the confirming delete button.
 - **Do** put a group's rows in one 12px-cornered panel ruled by 1px lines.
 - **Do** name the entity in dialog copy in white at 600 weight, inside a plain sentence.

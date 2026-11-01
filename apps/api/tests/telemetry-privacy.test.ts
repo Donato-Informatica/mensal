@@ -1,11 +1,11 @@
 import { createRequire } from "node:module";
+import { currentPeriod } from "@mensal/shared";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { trace } from "@opentelemetry/api";
 import { InMemoryLogRecordExporter } from "@opentelemetry/sdk-logs";
 import { InMemorySpanExporter } from "@opentelemetry/sdk-trace";
-import { currentPeriod } from "@mensal/shared";
 import {
   afterAll,
   beforeAll,

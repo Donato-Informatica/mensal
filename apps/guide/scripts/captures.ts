@@ -102,11 +102,13 @@ export const captures: Capture[] = [
     name: "liquidar",
     path: "/",
     viewport: "phone",
-    // An "A definir" occurrence asks for its amount when settled.
+    // An "A definir" occurrence asks for its amount when settled. Scrolled so
+    // the skipped row's badge clears the floating Nova avulsa.
     steps: async (page) => {
       await page.getByRole("checkbox", { name: "Liquidar Freelance" }).click();
       const popover = page.getByRole("dialog", { name: "Liquidar Freelance" });
       await popover.getByLabel("Valor").fill("1200");
+      await page.evaluate(() => window.scrollBy(0, 120));
     },
   },
   {
