@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { chooseFromAccountMenu } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
+import { struckText } from "./struck-text.ts";
 
 const email = "ana@example.com";
 let api: FakeApi;
@@ -171,13 +172,9 @@ describe("the table", () => {
     const [skipped, settled] = within(await screen.findByRole("table"))
       .getAllByRole("row")
       .slice(1);
-    const struck = (row: HTMLElement) =>
-      [...row.querySelectorAll("s")].map((text) =>
-        text.textContent?.replace(/\s/g, " ")
-      );
 
-    expect(struck(skipped!)).toEqual(["Seguro", "−R$ 150,00"]);
-    expect(struck(settled!)).toEqual([]);
+    expect(struckText(skipped!)).toEqual(["Seguro", "−R$ 150,00"]);
+    expect(struckText(settled!)).toEqual([]);
   });
 
   it("shows every column of each occurrence, in the list's group order", async () => {

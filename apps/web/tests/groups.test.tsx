@@ -3,6 +3,7 @@ import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
+import { struckText } from "./struck-text.ts";
 
 const email = "ana@example.com";
 let api: FakeApi;
@@ -55,16 +56,12 @@ async function act(user: UserEvent, description: string, name: string) {
   );
 }
 
-/** The text struck through in the row `description`. */
-function struck(description: string) {
-  // Within a row: a notice about the change names it too.
-  const row = screen
-    .getByText(description, { selector: "li *" })
-    .closest("li")!;
-  return [...row.querySelectorAll("s")].map((text) =>
-    text.textContent?.replace(/\s/g, " ")
-  );
+/** The row `description`; a notice about a change names it too. */
+function rowOf(description: string) {
+  return screen.getByText(description, { selector: "li *" }).closest("li")!;
 }
+
+const struck = (description: string) => struckText(rowOf(description));
 
 describe("a skipped occurrence", () => {
   it("has its description and amount struck through, until it is resumed", async () => {
@@ -107,6 +104,28 @@ describe("a skipped occurrence", () => {
     expect(
       screen.getByRole("button", { name: "Editar Academia" })
     ).toBeInTheDocument();
+  });
+
+  it("gives up the inflow's colour but keeps its arrow and sign", async () => {
+    api.addOccurrence(email, {
+      description: "Salário",
+      direction: "INFLOW",
+      amount: 500000,
+      status: "SKIPPED",
+    });
+    api.addOccurrence(email, {
+      description: "Bônus",
+      direction: "INFLOW",
+      amount: 100000,
+    });
+    openApp(api, "/");
+    await screen.findByText("Salário");
+    const inflowColour = "--mensal-color-inflow";
+
+    expect(rowOf("Bônus").innerHTML).toContain(inflowColour);
+    expect(rowOf("Salário").innerHTML).not.toContain(inflowColour);
+    expect(struck("Salário")).toEqual(["Salário", "+R$ 5.000,00"]);
+    expect(within(rowOf("Salário")).getByText("Entrada")).toBeInTheDocument();
   });
 });
 

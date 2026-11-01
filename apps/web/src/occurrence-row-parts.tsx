@@ -86,7 +86,7 @@ export function FailureNotice({
 export function Description({
   item,
   ...props
-}: { item: PeriodItem } & TextProps) {
+}: { item: PeriodItem } & Pick<TextProps, "className" | "truncate">) {
   const skipped = item.status === "SKIPPED";
   return (
     <Text c={skipped ? "dimmed" : "bright"} fw={500} {...props}>
@@ -116,19 +116,7 @@ export function Amount({
       <VisuallyHidden>{directionLabel(item)}</VisuallyHidden>
     </>
   );
-  if (skipped) {
-    return (
-      <Group gap={6} wrap="nowrap" className={classes.amount}>
-        {direction}
-        <Text fw={600} c="dimmed" span>
-          <s>
-            <AmountFigure item={item} />
-          </s>
-        </Text>
-      </Group>
-    );
-  }
-  if (item.amount === null) {
+  if (item.amount === null && !skipped) {
     return (
       <EditOccurrenceButton
         item={item}
@@ -150,23 +138,23 @@ export function Amount({
       </EditOccurrenceButton>
     );
   }
+  const amount =
+    item.amount === null ? (
+      "A definir"
+    ) : (
+      <>
+        <span aria-hidden="true">{inflow ? "+" : "−"}</span>
+        {formatAmount(item.amount)}
+      </>
+    );
+  const color = inflow ? "var(--mensal-color-inflow)" : "bright";
   return (
     <Group gap={6} wrap="nowrap" className={classes.amount}>
       {direction}
-      <Text fw={600} c={inflow ? "var(--mensal-color-inflow)" : "bright"} span>
-        <AmountFigure item={item} />
+      <Text fw={600} c={skipped ? "dimmed" : color} span>
+        {skipped ? <s>{amount}</s> : amount}
       </Text>
     </Group>
-  );
-}
-
-function AmountFigure({ item }: { item: PeriodItem }) {
-  if (item.amount === null) return "A definir";
-  return (
-    <>
-      <span aria-hidden="true">{item.direction === "INFLOW" ? "+" : "−"}</span>
-      {formatAmount(item.amount)}
-    </>
   );
 }
 
