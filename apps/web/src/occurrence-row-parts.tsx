@@ -132,6 +132,7 @@ export function Amount({
     return (
       <EditOccurrenceButton
         item={item}
+        definingAmount
         label={`Definir valor de ${item.description}`}
         className={classes.pending}
       >

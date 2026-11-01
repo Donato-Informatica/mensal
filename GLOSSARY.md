@@ -134,6 +134,11 @@ To waive a recurrence's occurrence in a single period, without affecting the oth
 _UI (pt-BR)_: Pular
 _Avoid_: ignore, cancel
 
+**Amount to be defined**:
+The state of an occurrence or recurrence whose amount is not known yet: it stays out of the expected total, and an occurrence in this state cannot be settled until an amount is entered.
+_UI (pt-BR)_: A definir
+_Avoid_: variable amount, no fixed amount, open amount
+
 **Overdue**:
 A pending occurrence whose due date has already passed.
 _UI (pt-BR)_: Atrasada

@@ -391,7 +391,7 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 
 1. **Period navigator:** fixed month selector at the top (`< Outubro 2026 >`), moving back and forward with one click or the `←` / `→` keys. Away from the current period, a **Mês atual** button returns to it. Leaving for Recorrências and coming back via **Mês** keeps the month that was on screen (per tab, not saved; cleared on sign-out).
 2. **Summary bar:** one dominant figure, **Sobra prevista** (expected inflows minus expected outflows, computed by the client), with two supporting blocks, **Entradas** and **Saídas**, each with **Previsto** and **Realizado**.
-3. **One-click settle:** a checkbox or quick action on each row toggles between `PENDING` and `SETTLED`. If the amount is null, the click opens an inline popover asking only for the amount.
+3. **One-click settle:** a checkbox or quick action on each row toggles between `PENDING` and `SETTLED`. If the amount is null, the click opens an inline popover asking only for the amount. To fill it in without settling, the row's **A definir** button opens the edit dialog on **Valor**, with its "A definir" checkbox unticked; **Salvar** stays disabled until an amount is typed or the checkbox is ticked again. Opening the dialog from the description keeps the checkbox ticked and the focus on **Descrição**.
 4. **Groups (in this order):**
    - **Atrasadas**, including overdue occurrences from earlier periods (current period only), each labeled with its period;
    - **Vencem hoje**;

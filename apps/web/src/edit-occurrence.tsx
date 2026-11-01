@@ -31,11 +31,14 @@ import { datePickerProps } from "./pickers.ts";
  */
 export function EditOccurrenceButton({
   item,
+  definingAmount = false,
   label = `Editar ${item.description}`,
   className,
   children,
 }: {
   item: PeriodItem;
+  /** Opens on Valor with "A definir" unticked, to fill in the amount (PRD §7.3). */
+  definingAmount?: boolean;
   /** The button's accessible name, when it is not the row's main one. */
   label?: string;
   className?: string | undefined;
@@ -53,7 +56,12 @@ export function EditOccurrenceButton({
         {children}
       </UnstyledButton>
       <Modal opened={opened} onClose={close} title="Editar conta">
-        <EditOccurrenceForm item={item} onSaved={close} onCancel={close} />
+        <EditOccurrenceForm
+          item={item}
+          definingAmount={definingAmount}
+          onSaved={close}
+          onCancel={close}
+        />
       </Modal>
     </>
   );
@@ -61,10 +69,12 @@ export function EditOccurrenceButton({
 
 function EditOccurrenceForm({
   item,
+  definingAmount,
   onSaved,
   onCancel,
 }: {
   item: PeriodItem;
+  definingAmount: boolean;
   onSaved: () => void;
   onCancel: () => void;
 }) {
@@ -76,7 +86,7 @@ function EditOccurrenceForm({
     item.amount === null ? "" : item.amount / 100
   );
   const [amountToBeDefined, setAmountToBeDefined] = useState(
-    item.amount === null
+    item.amount === null && !definingAmount
   );
   const [dueDate, setDueDate] = useState(item.dueDate);
   const [settledAt, setSettledAt] = useState(item.settledAt);
@@ -117,7 +127,7 @@ function EditOccurrenceForm({
           onChange={(event) => setDescription(event.currentTarget.value)}
           maxLength={120}
           required
-          data-autofocus
+          data-autofocus={definingAmount ? undefined : true}
         />
         <SimpleGrid cols={2} spacing="md">
           <Stack gap="xs">
@@ -134,6 +144,7 @@ function EditOccurrenceForm({
               decimalScale={2}
               allowNegative={false}
               hideControls
+              data-autofocus={definingAmount ? true : undefined}
             />
             {/* A settled occurrence needs its amount (PRD §5.6). */}
             {!settled && (
