@@ -270,7 +270,7 @@ Every role above has a light counterpart, prefixed `light-`. The page is Paper C
 - **Figure** (`{typography.figure}`): summary amounts under Previsto and Realizado, in white.
 - **Title** (`{typography.title-sm}`): summary block titles (Entradas, Saídas).
 - **Row title** (`{typography.row-title}`): an occurrence's or recurrence's description, in white, truncated on one line.
-- **Amount** (`{typography.amount}`): the row's amount, never wrapping; emerald for inflows, white for outflows, "A definir" is white on a dashed underline with a pencil, a button that opens the edit dialog. Every amount carries a direction arrow and a +/− sign, so colour is never the only cue.
+- **Amount** (`{typography.amount}`): the row's amount, never wrapping; emerald for inflows, white for outflows, "A definir" is white on a dashed underline with a pencil, a button that opens the edit dialog. Every amount carries a direction arrow and a +/− sign, so colour is never the only cue. A skipped occurrence's description and amount are struck through in Pencil Grey, inflows included, and its "A definir" is plain text: struck through, grey means left out of the month, as on the trend's legend.
 - **Body** (`{typography.body-md}`): dialog copy and forms. The entity a dialog acts on is set in white at 600 inside the sentence, e.g. "**Aluguel** será liquidada por R$ 2.200,00."
 - **Small** (`{typography.body-sm}`): due dates, form hints and links on the auth screens, in Pencil Grey.
 - **Label** (`{typography.caption-uppercase}`): group headings (ATRASADAS, A VENCER NO MÊS) and the Previsto/Realizado labels. Uppercase, tracked 1.5px, Pencil Grey, or rose for Atrasadas.

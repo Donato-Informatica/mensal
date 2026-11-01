@@ -1,4 +1,4 @@
-import { Badge, Box, Group, Paper, Table, Text } from "@mantine/core";
+import { Badge, Box, Group, Paper, Table } from "@mantine/core";
 import { VisuallyHidden } from "@mantine/core";
 import {
   directionLabel,
@@ -14,6 +14,7 @@ import { formatDate } from "./format.ts";
 import { occurrenceRows, type OccurrenceRow } from "./occurrence-rows.ts";
 import {
   Amount,
+  Description,
   DirectionIcon,
   FailureNotice,
   overdueBadge,
@@ -117,9 +118,7 @@ function TableRow({
         </Table.Td>
         <Table.Td>
           <EditOccurrenceButton item={item} className={classes.describe}>
-            <Text c="bright" fw={500} className={classes.clip}>
-              {item.description}
-            </Text>
+            <Description item={item} className={classes.clip} />
           </EditOccurrenceButton>
         </Table.Td>
         <Table.Td className={classes.nowrap}>

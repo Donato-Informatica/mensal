@@ -151,6 +151,35 @@ describe("the table", () => {
     api.setPreferences(email, { occurrenceView: "table" });
   });
 
+  it("strikes through only the description and amount of a skipped occurrence", async () => {
+    api.addOccurrence(email, {
+      description: "Seguro",
+      amount: 15000,
+      dueDate: "2026-10-28",
+      status: "SKIPPED",
+    });
+    api.addOccurrence(email, {
+      description: "Salário",
+      direction: "INFLOW",
+      dueDate: null,
+      amount: 500000,
+      status: "SETTLED",
+      settledAt: "2026-10-05",
+    });
+    openApp(api, "/");
+
+    const [skipped, settled] = within(await screen.findByRole("table"))
+      .getAllByRole("row")
+      .slice(1);
+    const struck = (row: HTMLElement) =>
+      [...row.querySelectorAll("s")].map((text) =>
+        text.textContent?.replace(/\s/g, " ")
+      );
+
+    expect(struck(skipped!)).toEqual(["Seguro", "−R$ 150,00"]);
+    expect(struck(settled!)).toEqual([]);
+  });
+
   it("shows every column of each occurrence, in the list's group order", async () => {
     api.addOccurrence(email, {
       description: "Escola",

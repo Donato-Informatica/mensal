@@ -55,6 +55,61 @@ async function act(user: UserEvent, description: string, name: string) {
   );
 }
 
+/** The text struck through in the row `description`. */
+function struck(description: string) {
+  // Within a row: a notice about the change names it too.
+  const row = screen
+    .getByText(description, { selector: "li *" })
+    .closest("li")!;
+  return [...row.querySelectorAll("s")].map((text) =>
+    text.textContent?.replace(/\s/g, " ")
+  );
+}
+
+describe("a skipped occurrence", () => {
+  it("has its description and amount struck through, until it is resumed", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    api.addOccurrence(email, {
+      description: "Academia",
+      amount: 15000,
+      status: "SKIPPED",
+    });
+    api.addOccurrence(email, {
+      description: "Aluguel",
+      amount: 220000,
+      status: "SETTLED",
+      settledAt: "2026-10-09",
+    });
+    openApp(api, "/");
+    await screen.findByText("Academia");
+
+    expect(struck("Academia")).toEqual(["Academia", "−R$ 150,00"]);
+    expect(struck("Aluguel")).toEqual([]);
+
+    await act(user, "Academia", "Retomar");
+
+    await waitFor(() => expect(struck("Academia")).toEqual([]));
+  });
+
+  it("asks for no amount to be defined, and can still be edited", async () => {
+    api.addOccurrence(email, {
+      description: "Academia",
+      amount: null,
+      status: "SKIPPED",
+    });
+    openApp(api, "/");
+    await screen.findByText("Academia");
+
+    expect(struck("Academia")).toEqual(["Academia", "A definir"]);
+    expect(
+      screen.queryByRole("button", { name: "Definir valor de Academia" })
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Editar Academia" })
+    ).toBeInTheDocument();
+  });
+});
+
 describe("the month's groups", () => {
   it("groups the occurrences into overdue, due today, upcoming, and settled or skipped, in that order", async () => {
     api.addOccurrence(email, {

@@ -1,4 +1,12 @@
-import { Badge, Box, Button, Group, Text, VisuallyHidden } from "@mantine/core";
+import {
+  Badge,
+  Box,
+  Button,
+  Group,
+  Text,
+  VisuallyHidden,
+  type TextProps,
+} from "@mantine/core";
 import {
   directionLabel,
   type PeriodItem,
@@ -74,9 +82,23 @@ export function FailureNotice({
   );
 }
 
+/** The row's description; a skipped occurrence's is struck through and dimmed. */
+export function Description({
+  item,
+  ...props
+}: { item: PeriodItem } & TextProps) {
+  const skipped = item.status === "SKIPPED";
+  return (
+    <Text c={skipped ? "dimmed" : "bright"} fw={500} {...props}>
+      {skipped ? <s>{item.description}</s> : item.description}
+    </Text>
+  );
+}
+
 /**
  * The amount, led by a sign and an arrow so direction never rests on colour
- * alone; "A definir" is a button that opens the edit dialog to fill it in.
+ * alone; "A definir" is a button that opens the edit dialog to fill it in. A
+ * skipped occurrence's is struck through and dimmed, and asks for nothing.
  */
 export function Amount({
   item,
@@ -87,12 +109,25 @@ export function Amount({
   showDirection?: boolean;
 }) {
   const inflow = item.direction === "INFLOW";
+  const skipped = item.status === "SKIPPED";
   const direction = showDirection && (
     <>
-      <DirectionIcon inflow={inflow} />
+      <DirectionIcon inflow={inflow} dimmed={skipped} />
       <VisuallyHidden>{directionLabel(item)}</VisuallyHidden>
     </>
   );
+  if (skipped) {
+    return (
+      <Group gap={6} wrap="nowrap" className={classes.amount}>
+        {direction}
+        <Text fw={600} c="dimmed" span>
+          <s>
+            <AmountFigure item={item} />
+          </s>
+        </Text>
+      </Group>
+    );
+  }
   if (item.amount === null) {
     return (
       <EditOccurrenceButton
@@ -118,10 +153,19 @@ export function Amount({
     <Group gap={6} wrap="nowrap" className={classes.amount}>
       {direction}
       <Text fw={600} c={inflow ? "var(--mensal-color-inflow)" : "bright"} span>
-        <span aria-hidden="true">{inflow ? "+" : "−"}</span>
-        {formatAmount(item.amount)}
+        <AmountFigure item={item} />
       </Text>
     </Group>
+  );
+}
+
+function AmountFigure({ item }: { item: PeriodItem }) {
+  if (item.amount === null) return "A definir";
+  return (
+    <>
+      <span aria-hidden="true">{item.direction === "INFLOW" ? "+" : "−"}</span>
+      {formatAmount(item.amount)}
+    </>
   );
 }
 
@@ -150,13 +194,20 @@ export function RowMenu({
 }
 
 /** The arrow that leads an amount or a Tipo cell; never the only cue. */
-export function DirectionIcon({ inflow }: { inflow: boolean }) {
+export function DirectionIcon({
+  inflow,
+  dimmed = false,
+}: {
+  inflow: boolean;
+  /** Keeps the arrow of a skipped amount out of the inflow's colour. */
+  dimmed?: boolean;
+}) {
   const Icon = inflow ? IconArrowDownLeft : IconArrowUpRight;
   return (
     <Icon
       size={14}
       stroke={2.5}
-      color={inflow ? "var(--mensal-color-inflow)" : undefined}
+      color={inflow && !dimmed ? "var(--mensal-color-inflow)" : undefined}
       style={{ flex: "none", color: "var(--mantine-color-dimmed)" }}
       aria-hidden="true"
     />

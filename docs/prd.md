@@ -396,7 +396,7 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
    - **Atrasadas**, including overdue occurrences from earlier periods (current period only), each labeled with its period;
    - **Vencem hoje**;
    - **A vencer no mês**, with pending occurrences without a due date at the end;
-   - **Liquidadas e puladas**.
+   - **Liquidadas e puladas**. A skipped occurrence has its description and amount struck through and dimmed, in the list and the table (§7.9); its badge and the other columns are unchanged, and "A definir" is plain text, not a button. Settled occurrences are never struck through.
 5. **Optimistic UI:** status changes update the screen instantly through TanStack Query, with rollback on failure.
 6. **Recurrences screen:** a second screen listing recurrences (filter active/all) with edit, end and delete actions. The same actions are reachable from an occurrence row.
 7. **One-off and recurrence dialog:** creating a one-off occurrence or a recurrence from the monthly screen.
