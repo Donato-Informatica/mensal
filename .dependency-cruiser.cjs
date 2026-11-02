@@ -95,6 +95,9 @@ module.exports = {
     // },
   ],
   options: {
+    // Built output, not source: its chunks import each other in cycles. Anchored,
+    // since a bare `dist/` would also drop dependencies in node_modules/*/dist/.
+    exclude: { path: "^apps/[^/]+/dist/" },
     doNotFollow: { path: "node_modules" },
     tsConfig: { fileName: "tsconfig.json" },
     enhancedResolveOptions: {
