@@ -1,6 +1,6 @@
 import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   chooseFromAccountMenu,
   expectClickOutsideToKeepDialog,
@@ -21,6 +21,7 @@ beforeEach(() => {
   api.signIn(email);
 });
 afterEach(() => {
+  vi.useRealTimers();
   localStorage.clear();
 });
 
@@ -248,6 +249,11 @@ describe("settings", () => {
   });
 
   it("settles with one click once confirmations are turned off", async () => {
+    // Today is 2026-10-12 in São Paulo: the recurrence's only occurrence so far.
+    vi.useFakeTimers({
+      toFake: ["Date"],
+      now: new Date("2026-10-12T15:00:00Z"),
+    });
     const user = userEvent.setup();
     api.addRecurrence(email, { description: "Aluguel", defaultAmount: 220000 });
     openApp(api, "/");

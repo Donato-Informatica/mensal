@@ -157,10 +157,11 @@ async function take(
               headers: { "content-type": "application/json" },
               body: JSON.stringify(body),
             })
-          ).ok,
+          ).status,
         { colorScheme: theme, occurrenceView: view }
       );
-      if (!saved) fail(`${name}: could not save the account's preferences.`);
+      if (saved !== 200)
+        fail(`${name}: could not save the account's preferences (${saved}).`);
     }
 
     await page.goto(`${webUrl}${path}`);

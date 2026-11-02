@@ -207,3 +207,74 @@ describe("editing an occurrence", () => {
     ).toBeDisabled();
   });
 });
+
+describe("defining an amount", () => {
+  async function openFromAmount(description: string) {
+    await user.click(
+      await screen.findByRole("button", {
+        name: `Definir valor de ${description}`,
+      })
+    );
+    return screen.findByRole("dialog", { name: "Editar conta" });
+  }
+
+  it("opens on Valor with A definir unticked, ready to save what is typed", async () => {
+    api.addOccurrence(email, { description: "Academia", amount: null });
+    openApp(api, "/");
+    const dialog = await openFromAmount("Academia");
+
+    const amount = within(dialog).getByLabelText("Valor");
+    await waitFor(() => expect(amount).toHaveFocus());
+    expect(within(dialog).getByLabelText("A definir")).not.toBeChecked();
+    expect(
+      within(dialog).getByRole("button", { name: "Salvar" })
+    ).toBeDisabled();
+
+    await user.keyboard("150,90{Enter}");
+
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    expect(api.occurrencesOf(email)).toEqual([
+      expect.objectContaining({ amount: 15090 }),
+    ]);
+  });
+
+  it("keeps the amount to be defined when A definir is ticked again", async () => {
+    api.addOccurrence(email, { description: "Academia", amount: null });
+    openApp(api, "/");
+    const dialog = await openFromAmount("Academia");
+
+    await user.click(within(dialog).getByLabelText("A definir"));
+    await user.type(within(dialog).getByLabelText("Observações"), "Plano novo");
+    await save(dialog);
+
+    expect(api.occurrencesOf(email)).toEqual([
+      expect.objectContaining({ amount: null, notes: "Plano novo" }),
+    ]);
+  });
+
+  it("leaves a virtual occurrence virtual when cancelled", async () => {
+    api.addRecurrence(email, {
+      description: "Energia",
+      defaultAmount: null,
+      dueDay: 25,
+    });
+    openApp(api, "/");
+    const dialog = await openFromAmount("Energia");
+
+    await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
+
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    expect(api.occurrencesOf(email)).toEqual([]);
+  });
+
+  it("opens on Descrição with A definir ticked from the description", async () => {
+    api.addOccurrence(email, { description: "Academia", amount: null });
+    openApp(api, "/");
+    const dialog = await openEdit("Academia");
+
+    await waitFor(() =>
+      expect(within(dialog).getByLabelText("Descrição")).toHaveFocus()
+    );
+    expect(within(dialog).getByLabelText("A definir")).toBeChecked();
+  });
+});

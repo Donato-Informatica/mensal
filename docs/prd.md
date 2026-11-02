@@ -224,7 +224,7 @@ Only when $P$ is the current period, the payload also lists every overdue occurr
    $$\text{overdue} = (\text{status} = \text{PENDING}) \land (\text{dueDate} \neq \text{null}) \land (\text{dueDate} < \text{today})$$
    - Occurrences without a `dueDate` are never overdue.
    - "Today" is always computed in `America/Sao_Paulo` (shared helper in `@shared`).
-6. **Variable amounts:** when `defaultAmount` is null, the occurrence shows the amount as "to be defined". It can be persisted with a null amount (for example when skipped, or when only the due date changes). It can only be settled after an amount greater than zero is entered.
+6. **Amounts to be defined:** when `defaultAmount` is null, the occurrence shows the amount as "to be defined". It can be persisted with a null amount (for example when skipped, or when only the due date changes). It can only be settled after an amount greater than zero is entered.
 7. **Status transitions:** any transition between `PENDING`, `SETTLED` and `SKIPPED` is allowed, as long as the invariants hold:
    - `SETTLED` requires `amount > 0` (`AMOUNT_REQUIRED_TO_SETTLE`). `settledAt` defaults to today when not given.
    - Leaving `SETTLED` clears `settledAt`.
@@ -391,12 +391,12 @@ All UI text is Brazilian Portuguese, written directly in the components (no i18n
 
 1. **Period navigator:** fixed month selector at the top (`< Outubro 2026 >`), moving back and forward with one click or the `←` / `→` keys. Away from the current period, a **Mês atual** button returns to it. Leaving for Recorrências and coming back via **Mês** keeps the month that was on screen (per tab, not saved; cleared on sign-out).
 2. **Summary bar:** one dominant figure, **Sobra prevista** (expected inflows minus expected outflows, computed by the client), with two supporting blocks, **Entradas** and **Saídas**, each with **Previsto** and **Realizado**.
-3. **One-click settle:** a checkbox or quick action on each row toggles between `PENDING` and `SETTLED`. If the amount is null, the click opens an inline popover asking only for the amount.
+3. **One-click settle:** a checkbox or quick action on each row toggles between `PENDING` and `SETTLED`. If the amount is null, the click opens an inline popover asking only for the amount. To fill it in without settling, the row's **A definir** button opens the edit dialog on **Valor**, with its "A definir" checkbox unticked; **Salvar** stays disabled until an amount is typed or the checkbox is ticked again. Opening the dialog from the description keeps the checkbox ticked and the focus on **Descrição**.
 4. **Groups (in this order):**
    - **Atrasadas**, including overdue occurrences from earlier periods (current period only), each labeled with its period;
    - **Vencem hoje**;
    - **A vencer no mês**, with pending occurrences without a due date at the end;
-   - **Liquidadas e puladas**.
+   - **Liquidadas e puladas**. A skipped occurrence has its description and amount struck through and dimmed, in the list and the table (§7.9); its badge and the other columns are unchanged, and "A definir" is plain text, not a button. Settled occurrences are never struck through.
 5. **Optimistic UI:** status changes update the screen instantly through TanStack Query, with rollback on failure.
 6. **Recurrences screen:** a second screen listing recurrences (filter active/all) with edit, end and delete actions. The same actions are reachable from an occurrence row.
 7. **One-off and recurrence dialog:** creating a one-off occurrence or a recurrence from the monthly screen.

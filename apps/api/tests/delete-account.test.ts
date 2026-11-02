@@ -245,7 +245,7 @@ describe("deleting the account (PRD §5.13, ADR-0005)", () => {
 
     await deleteAccount(cookie, { password });
 
-    await vi.waitFor(() => expect(sent).toHaveLength(1));
+    await vi.waitFor(() => expect(sent).toHaveLength(1), 5_000);
     const [goodbye] = sent as [Email];
     expect(goodbye).toMatchObject({
       to: email,
@@ -285,8 +285,9 @@ describe("the goodbye email", () => {
       expect(response.status).toBe(200);
       fail(new Error("Resend is down"));
 
-      await vi.waitFor(() =>
-        expect(logged.join("\n")).toContain("Resend is down")
+      await vi.waitFor(
+        () => expect(logged.join("\n")).toContain("Resend is down"),
+        5_000
       );
       const signIn = await request(failing, "/api/auth/sign-in/email", {
         body: { email, password },

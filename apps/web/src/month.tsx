@@ -51,6 +51,7 @@ import { NewOneOffButton } from "./new-one-off.tsx";
 import { groupOccurrences, type OccurrenceGroup } from "./occurrence-groups.ts";
 import {
   Amount,
+  Description,
   FailureNotice,
   RowMenu,
   StatusBadge,
@@ -649,9 +650,7 @@ function Row({
           <Box className={classes.text}>
             <EditOccurrenceButton item={item}>
               <Stack gap={0} miw={0}>
-                <Text c="bright" fw={500} truncate>
-                  {item.description}
-                </Text>
+                <Description item={item} truncate />
                 <Text fz="sm" c="dimmed">
                   {item.dueDate === null
                     ? "Sem vencimento"

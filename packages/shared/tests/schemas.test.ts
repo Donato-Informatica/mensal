@@ -79,7 +79,7 @@ describe("NewRecurrenceSchema", () => {
     expect(NewRecurrenceSchema.parse(newRecurrence)).toEqual(newRecurrence);
   });
 
-  it("accepts a variable amount, no due day, no end and no notes", () => {
+  it("accepts an amount to be defined, no due day, no end and no notes", () => {
     const open = {
       ...newRecurrence,
       defaultAmount: null,

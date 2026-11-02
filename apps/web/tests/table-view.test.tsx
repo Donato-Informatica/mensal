@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { chooseFromAccountMenu } from "./account-menu.ts";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
+import { struckText } from "./struck-text.ts";
 
 const email = "ana@example.com";
 let api: FakeApi;
@@ -149,6 +150,31 @@ describe("the view preference", () => {
 describe("the table", () => {
   beforeEach(() => {
     api.setPreferences(email, { occurrenceView: "table" });
+  });
+
+  it("strikes through only the description and amount of a skipped occurrence", async () => {
+    api.addOccurrence(email, {
+      description: "Seguro",
+      amount: 15000,
+      dueDate: "2026-10-28",
+      status: "SKIPPED",
+    });
+    api.addOccurrence(email, {
+      description: "Salário",
+      direction: "INFLOW",
+      dueDate: null,
+      amount: 500000,
+      status: "SETTLED",
+      settledAt: "2026-10-05",
+    });
+    openApp(api, "/");
+
+    const [skipped, settled] = within(await screen.findByRole("table"))
+      .getAllByRole("row")
+      .slice(1);
+
+    expect(struckText(skipped!)).toEqual(["Seguro", "−R$ 150,00"]);
+    expect(struckText(settled!)).toEqual([]);
   });
 
   it("shows every column of each occurrence, in the list's group order", async () => {

@@ -3,6 +3,7 @@ import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeApi, type FakeApi } from "./fake-api.ts";
 import { openApp } from "./open-app.tsx";
+import { struckText } from "./struck-text.ts";
 
 const email = "ana@example.com";
 let api: FakeApi;
@@ -54,6 +55,79 @@ async function act(user: UserEvent, description: string, name: string) {
     await screen.findByText(name, { selector: "[role=menuitem] *" })
   );
 }
+
+/** The row `description`; a notice about a change names it too. */
+function rowOf(description: string) {
+  return screen.getByText(description, { selector: "li *" }).closest("li")!;
+}
+
+const struck = (description: string) => struckText(rowOf(description));
+
+describe("a skipped occurrence", () => {
+  it("has its description and amount struck through, until it is resumed", async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    api.addOccurrence(email, {
+      description: "Academia",
+      amount: 15000,
+      status: "SKIPPED",
+    });
+    api.addOccurrence(email, {
+      description: "Aluguel",
+      amount: 220000,
+      status: "SETTLED",
+      settledAt: "2026-10-09",
+    });
+    openApp(api, "/");
+    await screen.findByText("Academia");
+
+    expect(struck("Academia")).toEqual(["Academia", "−R$ 150,00"]);
+    expect(struck("Aluguel")).toEqual([]);
+
+    await act(user, "Academia", "Retomar");
+
+    await waitFor(() => expect(struck("Academia")).toEqual([]));
+  });
+
+  it("asks for no amount to be defined, and can still be edited", async () => {
+    api.addOccurrence(email, {
+      description: "Academia",
+      amount: null,
+      status: "SKIPPED",
+    });
+    openApp(api, "/");
+    await screen.findByText("Academia");
+
+    expect(struck("Academia")).toEqual(["Academia", "A definir"]);
+    expect(
+      screen.queryByRole("button", { name: "Definir valor de Academia" })
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Editar Academia" })
+    ).toBeInTheDocument();
+  });
+
+  it("gives up the inflow's colour but keeps its arrow and sign", async () => {
+    api.addOccurrence(email, {
+      description: "Salário",
+      direction: "INFLOW",
+      amount: 500000,
+      status: "SKIPPED",
+    });
+    api.addOccurrence(email, {
+      description: "Bônus",
+      direction: "INFLOW",
+      amount: 100000,
+    });
+    openApp(api, "/");
+    await screen.findByText("Salário");
+    const inflowColour = "--mensal-color-inflow";
+
+    expect(rowOf("Bônus").innerHTML).toContain(inflowColour);
+    expect(rowOf("Salário").innerHTML).not.toContain(inflowColour);
+    expect(struck("Salário")).toEqual(["Salário", "+R$ 5.000,00"]);
+    expect(within(rowOf("Salário")).getByText("Entrada")).toBeInTheDocument();
+  });
+});
 
 describe("the month's groups", () => {
   it("groups the occurrences into overdue, due today, upcoming, and settled or skipped, in that order", async () => {

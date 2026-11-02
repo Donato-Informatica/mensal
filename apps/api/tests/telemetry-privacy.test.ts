@@ -1,19 +1,12 @@
 import { createRequire } from "node:module";
+import { currentPeriod } from "@mensal/shared";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { trace } from "@opentelemetry/api";
 import { InMemoryLogRecordExporter } from "@opentelemetry/sdk-logs";
 import { InMemorySpanExporter } from "@opentelemetry/sdk-trace";
-import {
-  afterAll,
-  beforeAll,
-  describe,
-  expect,
-  it,
-  vi,
-  type MockInstance,
-} from "vitest";
+import { beforeAll, describe, expect, it, vi, type MockInstance } from "vitest";
 import { exportedLog } from "../src/log.ts";
 import type { TestApi } from "./api.ts";
 
@@ -22,7 +15,6 @@ import type { TestApi } from "./api.ts";
 // does in production, hence the dynamic imports below.
 const exporter = new InMemorySpanExporter();
 const logExporter = new InMemoryLogRecordExporter();
-let stop: () => Promise<void>;
 let api: TestApi;
 let helpers: typeof import("./api.ts");
 let stdout: MockInstance<typeof console.log>;
@@ -32,7 +24,6 @@ beforeAll(async () => {
     await import("../src/telemetry.ts");
   registerModuleHooks();
   const telemetry = startTelemetry({}, { exporter, logExporter });
-  stop = () => telemetry!.shutdown();
   // The test runner has loaded or will load these its own way: a CommonJS require now is
   // what lets the HTTP instrumentation patch them.
   const require = createRequire(import.meta.url);
@@ -43,11 +34,12 @@ beforeAll(async () => {
   const { consoleActivity } = await import("../src/activity.ts");
   stdout = vi.spyOn(console, "log").mockImplementation(() => {});
   api = await helpers.startApi({ activity: consoleActivity });
-});
-afterAll(async () => {
-  stdout.mockRestore();
-  await api.close();
-  await stop();
+  // Returned, so a setup that failed reports only its own error.
+  return async () => {
+    stdout.mockRestore();
+    await api.close();
+    await telemetry!.shutdown();
+  };
 });
 
 const secrets = {
@@ -99,7 +91,7 @@ describe("telemetry privacy and identity", () => {
         description: secrets.recurrence,
         defaultAmount: secrets.recurrenceAmount,
         dueDay: 10,
-        startPeriod: "2026-10-01",
+        startPeriod: currentPeriod(),
         endPeriod: null,
         notes: null,
       },

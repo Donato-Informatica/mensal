@@ -11,7 +11,7 @@ import { approve, request, signUp, startApi, type TestApi } from "./api.ts";
 // each test looks only at the pushes to its own devices.
 let api: TestApi;
 beforeAll(async () => {
-  api = await startApi();
+  api = await startApi({ now: () => new Date("2026-10-12T15:00:00Z") });
 });
 afterAll(async () => {
   await api.close();

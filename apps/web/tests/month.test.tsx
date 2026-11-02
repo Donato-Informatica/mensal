@@ -386,7 +386,10 @@ describe("tab title and month picker", () => {
       await screen.findByRole("button", { name: /Outubro 2026/ })
     );
 
-    await user.click(await screen.findByRole("button", { name: "Março 2026" }));
+    // By its label: a role query over a calendar is slow in jsdom.
+    await user.click(
+      await screen.findByLabelText("Março 2026", { selector: "button" })
+    );
     await screen.findByRole("heading", { name: "Março 2026" });
     expect(document.title).toBe("Mensal | Março 2026");
   });
