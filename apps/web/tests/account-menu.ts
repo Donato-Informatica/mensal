@@ -17,7 +17,11 @@ export async function chooseFromAccountMenu(
   user: UserEvent = userEvent.setup()
 ) {
   await user.click(await screen.findByRole("button", { name: "Conta" }));
-  await user.click(await screen.findByRole("menuitem", { name }));
+  // By its text: a role query over the whole page is slow in jsdom, and the
+  // dropdown counts as hidden until its transition ends.
+  await user.click(
+    await screen.findByText(name, { selector: "[role=menuitem] *" })
+  );
 }
 
 /**
@@ -27,6 +31,8 @@ export async function chooseFromAccountMenu(
 export async function expectClickOutsideToKeepDialog(user: UserEvent) {
   await user.click(document.querySelector(".mantine-Modal-overlay")!);
   await expect(
-    waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
+    waitFor(() => expect(screen.queryByRole("dialog")).toBeNull(), {
+      timeout: 1_000,
+    })
   ).rejects.toThrow();
 }

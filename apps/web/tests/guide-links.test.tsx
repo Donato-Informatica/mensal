@@ -69,8 +69,15 @@ describe("links to the guide", () => {
         await screen.findByRole("button", { name: "Conta" })
       );
 
-      const item = await screen.findByRole("menuitem", { name: "Guia" });
-      expect(item).toHaveAttribute("href", guideHref());
+      // By its text: a role query over the whole page is slow in jsdom, and
+      // the dropdown counts as hidden until its transition ends.
+      const label = await screen.findByText("Guia", {
+        selector: "[role=menuitem] *",
+      });
+      expect(label.closest("[role=menuitem]")).toHaveAttribute(
+        "href",
+        guideHref()
+      );
     });
 
     it("from Tokens de acesso, to the MCP section", async () => {

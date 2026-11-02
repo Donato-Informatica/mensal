@@ -277,8 +277,12 @@ describe("editing a recurrence from the monthly screen", () => {
         name: "Mais ações para Aluguel de outubro",
       })
     );
+    // By its text: a role query over the whole page is slow in jsdom, and the
+    // dropdown counts as hidden until its transition ends.
     await user.click(
-      await screen.findByRole("menuitem", { name: "Editar recorrência" })
+      await screen.findByText("Editar recorrência", {
+        selector: "[role=menuitem] *",
+      })
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Editar recorrência",

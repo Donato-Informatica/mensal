@@ -26,6 +26,13 @@ export default defineConfig({
           include: [integration],
           exclude: [apiUnit],
           globalSetup: ["apps/api/tests/global-setup.ts"],
+          // A test's sign-ups and password checks take it to ~3 s when every
+          // worker runs at once, and over the 5 s default on a busy machine.
+          testTimeout: 15_000,
+          // The telemetry tests load the app in `beforeAll`, behind the module
+          // hooks, whose own thread each import waits on: ~3 s on an idle
+          // machine, but a minute with every core taken.
+          hookTimeout: 120_000,
         },
       },
       {

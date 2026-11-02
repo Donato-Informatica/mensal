@@ -1,6 +1,10 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
+import { cleanup, configure } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
+
+// One query over a whole page can take most of the 1 s default for `findBy*`
+// and `waitFor` when every worker runs at once.
+configure({ asyncUtilTimeout: 5_000 });
 
 // Browser APIs Mantine relies on that jsdom does not implement.
 vi.stubGlobal(

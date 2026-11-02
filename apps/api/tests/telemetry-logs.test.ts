@@ -1,22 +1,13 @@
 import { createRequire } from "node:module";
 import { InMemoryLogRecordExporter } from "@opentelemetry/sdk-logs";
 import { InMemorySpanExporter } from "@opentelemetry/sdk-trace";
-import {
-  afterAll,
-  beforeAll,
-  describe,
-  expect,
-  it,
-  vi,
-  type MockInstance,
-} from "vitest";
+import { beforeAll, describe, expect, it, vi, type MockInstance } from "vitest";
 import type { TestApi } from "./api.ts";
 
 // The real app with the real default sinks, exporting to memory (PRD §8.7.1).
 // Telemetry starts before express and the app are loaded, as `--import` does.
 const spanExporter = new InMemorySpanExporter();
 const logExporter = new InMemoryLogRecordExporter();
-let stop: () => Promise<void>;
 let api: TestApi;
 let helpers: typeof import("./api.ts");
 let stdout: MockInstance<typeof console.log>;
@@ -26,7 +17,6 @@ beforeAll(async () => {
     await import("../src/telemetry.ts");
   registerModuleHooks();
   const telemetry = startTelemetry({}, { exporter: spanExporter, logExporter });
-  stop = () => telemetry!.shutdown();
   const require = createRequire(import.meta.url);
   require("node:http");
   require("express");
@@ -35,11 +25,12 @@ beforeAll(async () => {
   stdout = vi.spyOn(console, "log").mockImplementation(() => {});
   // No `log` and no `email`: the defaults, as in production without Resend.
   api = await helpers.startApi({ activity: consoleActivity });
-});
-afterAll(async () => {
-  stdout.mockRestore();
-  await api.close();
-  await stop();
+  // Returned, so a setup that failed reports only its own error.
+  return async () => {
+    stdout.mockRestore();
+    await api.close();
+    await telemetry!.shutdown();
+  };
 });
 
 describe("activity and operator logs as OpenTelemetry records", () => {
@@ -124,12 +115,14 @@ describe("activity and operator logs as OpenTelemetry records", () => {
     });
     expect(response.status).toBe(200);
 
-    await vi.waitFor(() =>
-      expect(
-        stdout.mock.calls.some(([line]) =>
-          String(line).includes("reset-password")
-        )
-      ).toBe(true)
+    await vi.waitFor(
+      () =>
+        expect(
+          stdout.mock.calls.some(([line]) =>
+            String(line).includes("reset-password")
+          )
+        ).toBe(true),
+      5_000
     );
     const exported = JSON.stringify(
       logExporter

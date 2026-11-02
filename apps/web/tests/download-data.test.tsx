@@ -59,11 +59,14 @@ describe("downloading the user's data", () => {
     await user.click(await screen.findByRole("button", { name: "Conta" }));
     api.stall();
 
-    await user.click(
-      await screen.findByRole("menuitem", { name: "Baixar meus dados" })
-    );
+    // By its text: a role query over the whole page is slow in jsdom, and the
+    // dropdown counts as hidden until its transition ends.
+    const label = await screen.findByText("Baixar meus dados", {
+      selector: "[role=menuitem] *",
+    });
+    await user.click(label);
 
-    const item = screen.getByRole("menuitem", { name: "Baixar meus dados" });
+    const item = label.closest("[role=menuitem]");
     expect(item).toHaveAttribute("aria-busy", "true");
     expect(item).toBeDisabled();
     expect(downloads).toEqual([]);
