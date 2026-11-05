@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "snow" boolean DEFAULT true NOT NULL;

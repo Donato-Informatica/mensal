@@ -64,6 +64,11 @@ The preference that sets how the monthly screen shows its occurrences: as a grou
 _UI (pt-BR)_: Visualização (Lista, Tabela)
 _Avoid_: layout, mode, display
 
+**Snow**:
+The preference that lets falling snow decorate the product during the holiday season, from 3 November through 5 January each year; on by default. In code, `snow`: `true` or `false`.
+_UI (pt-BR)_: Neve (Mostrar neve nas festas de fim de ano)
+_Avoid_: effect, animation, holiday mode
+
 ## Time
 
 **Period**:

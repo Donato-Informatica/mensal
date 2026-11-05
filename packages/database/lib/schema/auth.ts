@@ -26,6 +26,7 @@ export const users = pgTable("users", {
     .notNull(),
   colorScheme: text("color_scheme").default("dark").notNull(),
   occurrenceView: text("occurrence_view").default("list").notNull(),
+  snow: boolean("snow").default(true).notNull(),
 });
 
 export const sessions = pgTable(

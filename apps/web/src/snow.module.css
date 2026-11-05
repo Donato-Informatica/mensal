@@ -1,0 +1,38 @@
+/* A layer over the whole app that takes no clicks (PRD §7). */
+.snow {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Neutral, never the accent yellow (DESIGN.md): white at night. */
+.flake {
+  position: absolute;
+  top: -10px;
+  left: var(--x);
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: var(--mantine-color-white);
+  opacity: 0.7;
+  animation: fall var(--duration) linear var(--delay) infinite;
+}
+
+/* On paper, DESIGN.md's light-muted-soft grey, so it shows on white. */
+:where([data-mantine-color-scheme="light"]) .flake {
+  background: #a3a3a3;
+}
+
+@keyframes fall {
+  to {
+    transform: translate(var(--drift), calc(100vh + 20px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .snow {
+    display: none;
+  }
+}

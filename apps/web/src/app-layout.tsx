@@ -4,6 +4,7 @@ import { Link, useMatchRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { AccountMenu } from "./account-menu.tsx";
 import classes from "./app-layout.module.css";
+import { Snow } from "./snow.tsx";
 import { useViewedMonth } from "./viewed-month.ts";
 import { Wordmark } from "./wordmark.tsx";
 
@@ -49,6 +50,7 @@ export function AppLayout({
       <Container component="main" size="xl" className={classes.main}>
         {children}
       </Container>
+      <Snow />
     </>
   );
 }
