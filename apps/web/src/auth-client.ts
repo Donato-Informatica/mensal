@@ -42,6 +42,12 @@ export function createAuthClient(fetchImpl: typeof fetch = fetch) {
             defaultValue: defaultOccurrenceView,
             input: true,
           },
+          snow: {
+            type: "boolean",
+            required: true,
+            defaultValue: true,
+            input: true,
+          },
         },
       }),
     ],

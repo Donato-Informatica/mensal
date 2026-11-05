@@ -126,6 +126,7 @@ describe("settings", () => {
         confirmStatusChanges: false,
         colorScheme: "dark",
         occurrenceView: "list",
+        snow: true,
       })
     );
   });

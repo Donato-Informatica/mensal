@@ -31,6 +31,7 @@ describe("preferences (PRD §3.5)", () => {
       confirmStatusChanges: true,
       colorScheme: "dark",
       occurrenceView: "list",
+      snow: true,
     });
   });
 
@@ -63,13 +64,14 @@ describe("preferences (PRD §3.5)", () => {
 
     const response = await request(api, "/api/auth/update-user", {
       cookie,
-      body: { showSummary: false, confirmStatusChanges: false },
+      body: { showSummary: false, confirmStatusChanges: false, snow: false },
     });
 
     expect(response.status).toBe(200);
     expect(await sessionUser(cookie)).toMatchObject({
       showSummary: false,
       confirmStatusChanges: false,
+      snow: false,
     });
   });
 

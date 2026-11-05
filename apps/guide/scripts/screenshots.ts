@@ -158,7 +158,8 @@ async function take(
               body: JSON.stringify(body),
             })
           ).status,
-        { colorScheme: theme, occurrenceView: view }
+        // No snow, so a shot looks the same whatever day it is taken.
+        { colorScheme: theme, occurrenceView: view, snow: false }
       );
       if (saved !== 200)
         fail(`${name}: could not save the account's preferences (${saved}).`);

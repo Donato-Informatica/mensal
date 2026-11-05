@@ -81,11 +81,14 @@ function SettingsForm() {
   const [showSummary, setShowSummary, summaryFailure] = useShowSummary();
   const [confirmStatusChanges, setConfirmStatusChanges, confirmFailure] =
     useConfirmStatusChanges();
+  // Falling snow in the holiday season (Neve), also a preference.
+  const [snow, setSnow, snowFailure] = usePreference("snow");
   const failures: Record<Preference, SaveFailure | undefined> = {
     colorScheme: themeFailure,
     occurrenceView: viewFailure,
     showSummary: summaryFailure,
     confirmStatusChanges: confirmFailure,
+    snow: snowFailure,
   };
   // The Alert reports the latest change only: starting one forgets the others.
   const failure = Object.values(failures).find(Boolean);
@@ -160,6 +163,16 @@ function SettingsForm() {
         onChange={(event) => {
           forgetOtherFailures("confirmStatusChanges");
           setConfirmStatusChanges(event.currentTarget.checked);
+        }}
+      />
+      <Switch
+        {...switchProps}
+        label="Mostrar neve nas festas de fim de ano"
+        description="De 3 de novembro a 5 de janeiro"
+        checked={snow}
+        onChange={(event) => {
+          forgetOtherFailures("snow");
+          setSnow(event.currentTarget.checked);
         }}
       />
     </Box>

@@ -46,6 +46,7 @@ export interface Preferences {
   confirmStatusChanges: boolean;
   colorScheme: ColorScheme;
   occurrenceView: OccurrenceView;
+  snow: boolean;
 }
 
 /** A preference, by name. */

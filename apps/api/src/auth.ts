@@ -234,6 +234,13 @@ export function createAuth({
           input: true,
           validator: { input: OccurrenceViewSchema },
         },
+        // Falling snow in the holiday season (PRD §3.5, §7).
+        snow: {
+          type: "boolean",
+          required: true,
+          defaultValue: true,
+          input: true,
+        },
       },
     },
     // Describes the sign-in routes for /api/openapi.json; its own reference

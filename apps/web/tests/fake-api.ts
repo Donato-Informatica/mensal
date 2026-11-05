@@ -44,6 +44,7 @@ const defaultPreferences: Preferences = {
   confirmStatusChanges: true,
   colorScheme: defaultColorScheme,
   occurrenceView: defaultOccurrenceView,
+  snow: true,
 };
 
 interface Account {
